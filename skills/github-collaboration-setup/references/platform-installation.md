@@ -1,6 +1,6 @@
 # 安装两个协作 Skill
 
-用于 `github-collaboration-setup` 的安装，以及向项目参与者说明如何安装日常 `github-collaboration`。开始前先按 [预检与身份](preflight-and-identity.md) 确认项目和客户端；已有包的处理见 [升级与诊断](upgrade-and-diagnosis.md)。安装 Skill 本身不授予 Leader 权限，也不修改 Agent 全局规则。
+用于 `github-collaboration-setup` 的安装，以及向项目参与者说明如何安装日常 `github-collaboration`。客户端包安装先只读检查本地客户端、目标目录和固定来源；已有包的处理见 [升级与诊断](upgrade-and-diagnosis.md)。包安装需目标目录拥有者批准精确提案，不要求先有 Leader 或初始化 GitHub 项目。涉及项目治理文件或其 Git 操作时，另按 [预检与身份](preflight-and-identity.md) 完成项目预检与授权流程。安装 Skill 本身不授予 Leader 权限，也不修改 Agent 全局规则。
 
 ## 先确定来源和目标
 
