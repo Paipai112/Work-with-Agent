@@ -26,7 +26,7 @@
 | 资源缺失或只复制了 `SKILL.md` | 对照固定 Commit 的完整包清单、发布摘要和相对引用，提出补全目录的差异；发现本地改动时先询问。 |
 | Windows native 测试失败而 WSL 成功 | 分别报告两个环境的客户端、用户目录、shell 与项目路径。Windows 目标用 `$env:USERPROFILE` 和 PowerShell `-LiteralPath`；WSL 的 `~` 属于 Linux，不能当作原生 Windows 成功证据。 |
 
-诊断输出必须写明 `PASS`、`FAIL` 或 `UNVERIFIED`，每项附客户端版本、会话、真实 Skill 路径、来源 Commit/摘要、项目位置及证据。缺少真实机器时填 `UNVERIFIED`；九组合合同不等于九组合已经完成实测。Pi 所指上游原 URL `https://github.com/badlogic/pi-mono` 于 2026-09-26 直接重定向至 `https://github.com/earendil-works/pi`，版本与发现规则仍以[当前官方 Skill 文档](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md)及[Windows 文档](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/windows.md)为准。另参考 [Codex 官方 Skill 文档](https://learn.chatgpt.com/docs/build-skills)和[Claude Code 官方 Skill 文档](https://code.claude.com/docs/en/skills)。
+诊断输出必须写明 `PASS`、`FAIL` 或 `UNVERIFIED`，每项附客户端版本、会话、真实 Skill 路径、来源 Commit/摘要、项目位置及证据；没有项目时，项目位置记为“不适用”。缺少真实机器时填 `UNVERIFIED`；九组合合同不等于九组合已经完成实测。Pi 所指上游原 URL `https://github.com/badlogic/pi-mono` 于 2026-09-26 直接重定向至 `https://github.com/earendil-works/pi`，版本与发现规则仍以[当前官方 Skill 文档](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md)及[Windows 文档](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/windows.md)为准。另参考 [Codex 官方 Skill 文档](https://learn.chatgpt.com/docs/build-skills)和[Claude Code 官方 Skill 文档](https://code.claude.com/docs/en/skills)。
 
 ## 验收与回滚
 

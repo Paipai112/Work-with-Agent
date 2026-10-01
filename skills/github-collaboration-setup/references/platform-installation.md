@@ -4,7 +4,7 @@
 
 ## 先确定来源和目标
 
-1. 记录客户端名称、确切版本、macOS/Linux/Windows native、当前工作目录和仓库根目录。Windows 下若 Agent 实际运行在 WSL，按独立的 **Linux/WSL** 环境记录、安装、测试；不能算 Windows native 通过。
+1. 记录客户端名称、确切版本、macOS/Linux/Windows native、当前工作目录和仓库根目录（若存在）。Windows 下若 Agent 实际运行在 WSL，按独立的 **Linux/WSL** 环境记录、安装、测试；不能算 Windows native 通过。
 2. 使用维护者指定、当前用户可访问的**真实发行仓库 URL、Release 标签、该标签解析后的完整 Commit SHA**；发行仓库可以公开或私有，私有仓库访问权不等于开源许可。核对 GitHub 仓库身份、Release 与 Commit 指向，取得该 Commit 的只读源树；运行仓库的包校验，并记录两个完整 Skill 目录各自的文件清单和 SHA-256 摘要。拒绝搜索结果、未经核验的 Fork、浮动 `main`、只给标签而没有 Commit、缺少资源的单文件下载。发布 URL/Commit 尚未确定时，以“待发布”报告并停止安装，不能把候选项目配置当作已完成配置。
 3. 列出当前用户级、项目级、插件/包/设置添加的发现位置，已有同名 Skill、实际生效路径、版本和禁用/覆盖设置。先检查目标路径是否已存在或是符号链接，以及现有文件是否与记录的发布摘要相符；不因想安装新包而覆盖已修改的目录。默认使用**复制完整目录**，保留 `SKILL.md`、`references/`、`assets/`、`scripts/`、`agents/` 与 `RESOURCE_MANIFEST.json`（存在的文件）；不依赖源码仓库仍留在用户机器上，也不要求符号链接权限。
 4. 给用户一份具体安装提案：来源 URL、Release、完整 Commit SHA、包摘要、Skill 名称、客户端/版本、目标目录、已有同名项及差异、计划复制的文件、所需批准。取得批准后才复制。目标不存在时建立父目录并复制到**精确目标目录**；目标已存在时按升级流程提出选择，不做合并、清空或覆盖。复制后重新计算目标摘要。
@@ -33,4 +33,4 @@ PowerShell 示例中的 `Join-Path` 返回**路径**；`$<skill>` 是上表 Code
 
 Pi 的项目级默认选共享 `.agents/skills/`，以便从仓库嵌套目录继续工作。2026-10-01 的 macOS／Pi 0.87.1 原生加载器实测中，根目录 `.pi/skills/` 只在从根目录启动时被发现，从 `nested/child` 启动不会向上发现它；根目录 `.agents/skills/` 在根、嵌套和含空格目录均可发现。若明确固定从仓库根启动，可另外选择 `.pi/skills/`，但不能据此声称嵌套目录可用。已有 `.pi/skills/` 安装先报告实际路径和此边界，不自动移动或额外复制同名包。该实测不代替 Linux／Windows 原生验证，也不代替下述完整新会话验收。
 
-在每个计划支持的客户端/操作系统组合上记载**真实运行**的客户端版本、OS/架构、native 或 WSL、来源 Commit、安装摘要、目标路径、实际发现路径及验证时间。分别从仓库根、嵌套目录、含空格路径的新会话运行显式调用，要求 Agent 报告其实际读取的 `SKILL.md` 路径、版本、可打开的相对 `references/`、`assets/`、`scripts/` 资源，以及项目入口文件位置。仅“命令出现在菜单”或“文件在磁盘上”不算通过。若发现了别的同名包、入口被覆盖/截断、Skill 禁用或项目未信任，记录失败及实际路径；按 [诊断](upgrade-and-diagnosis.md) 提议修复，不能宣称兼容。Windows native 还需实际检查 PowerShell 路径、Git for Windows（客户端需要时）、CRLF、UTF-8 BOM；WSL 结果单列。
+在每个计划支持的客户端/操作系统组合上记载**真实运行**的客户端版本、OS/架构、native 或 WSL、来源 Commit、安装摘要、目标路径、实际发现路径及验证时间。从计划使用目录的新会话运行显式调用，要求 Agent 报告其实际读取的 `SKILL.md` 路径、版本和可打开的相对 `references/`、`assets/`、`scripts/` 资源。用于已配置项目时，分别从仓库根、嵌套目录、含空格路径验证，并读取项目入口文件；仅用户级包安装不要求先创建项目入口。仅“命令出现在菜单”或“文件在磁盘上”不算通过。若发现了别的同名包、入口被覆盖/截断、Skill 禁用或项目未信任，记录失败及实际路径；按 [诊断](upgrade-and-diagnosis.md) 提议修复，不能宣称兼容。Windows native 还需实际检查 PowerShell 路径、Git for Windows（客户端需要时）、CRLF、UTF-8 BOM；WSL 结果单列。
