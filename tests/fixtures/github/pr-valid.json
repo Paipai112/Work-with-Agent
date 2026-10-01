@@ -1,0 +1,67 @@
+{
+  "trusted_ref_verified": true,
+  "trusted_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "repository": {
+    "id": 123,
+    "full_name": "sample/repo",
+    "default_branch": "main"
+  },
+  "pull": {
+    "number": 12,
+    "base": {
+      "ref": "main"
+    },
+    "head": {
+      "ref": "agent/backend-api/issue-7-fix-timeout",
+      "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "user": {
+      "id": 1001,
+      "login": "developer"
+    },
+    "body": "## Summary\nRetry transient timeouts in src/api.py; no governance changes.\n\nCloses #7\n\n## Evidence\nAcceptance: one retry, no duplicate payment. pytest passed; live gateway untested.\n\n## Merge Danger\nRevert the change to restore behavior. No handoff remaining; Actions notice recorded.\n\n<!-- agent-collaboration:metadata\n{\n  \"schema_version\": 1,\n  \"primary_issue\": 7,\n  \"closes_issues\": [\n    7\n  ],\n  \"actor_id\": \"backend-api\",\n  \"controlled_by\": \"developer\",\n  \"controlled_by_id\": 1001,\n  \"runtime\": \"codex\",\n  \"session_id\": \"run-1\",\n  \"skill_version\": \"0.1.0\",\n  \"head_sha\": \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n  \"base_branch\": \"main\",\n  \"claim_urls\": [\n    \"https://github.com/sample/repo/issues/7#issuecomment-1\"\n  ],\n  \"workflow\": \"daily\"\n}\n-->"
+  },
+  "files": [
+    {
+      "filename": "src/api.py"
+    }
+  ],
+  "issues": [
+    {
+      "number": 7,
+      "state": "open",
+      "pull_request": null
+    }
+  ],
+  "reviews": [],
+  "config": {
+    "schema_version": 1,
+    "minimum_runtime_skill_version": "0.1.0",
+    "managed_paths": {
+      "protocol": ".github/agent-collaboration/PROTOCOL.md",
+      "authorization": ".github/agent-collaboration/authorization.yml",
+      "managed_resources": ".github/agent-collaboration/managed-resources.yml",
+      "pull_request_template": ".github/PULL_REQUEST_TEMPLATE/agent-change.md",
+      "entry_files": [
+        "AGENTS.md",
+        "CLAUDE.md",
+        "CONTRIBUTING.md"
+      ]
+    },
+    "branch_policy": {
+      "integration_branches": []
+    }
+  },
+  "authorization": {
+    "schema_version": 1,
+    "repository": {
+      "hostname": "github.com",
+      "repository_id": 123,
+      "owner": "sample",
+      "name": "repo",
+      "default_branch": "main",
+      "default_branch_source_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "leader_delegations": []
+  }
+}

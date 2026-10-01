@@ -1,0 +1,16 @@
+event: resume
+event_id: github-comment-1003
+previous_event_id: github-comment-1002
+controlled_by: github-user
+controlled_by_id: 1234
+actor_id: backend-api
+session_id: session-20260918-090000
+runtime: claude-code
+scope:
+  - src/auth/**
+branch: agent/backend-api/issue-123-auth-fix
+base_head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+handoff_event_id: github-comment-1002
+github_comment_id: 1002
+github_comment_url: https://github.com/example-org/example-repo/issues/123#issuecomment-1002
+head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb

@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.github-agent-collaboration.dev/v1/authorization.schema.json",
+  "$comment": "Format-bearing values are security validation inputs. Consumers must validate with Draft202012Validator and jsonschema.FormatChecker.",
+  "title": "GitHub Agent Collaboration leader authorization",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "repository", "leader_delegations"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "repository": {"$ref": "#/$defs/repository"},
+    "leader_delegations": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/leaderDelegation"}
+    }
+  },
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40,64}$"
+    },
+    "actorId": {
+      "type": "string",
+      "description": "A responsibility name. Exact platform names (codex, claude, claude-code, pi, pi-agent), role names (leader, member), and names with a numeric hyphen suffix such as member-01 or backend-api-01 are forbidden.",
+      "allOf": [
+        {"pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"},
+        {"not": {"enum": ["codex", "claude", "claude-code", "pi", "pi-agent", "leader", "member"]}},
+        {"not": {"pattern": "^.*-[0-9]+$"}}
+      ]
+    },
+    "permission": {
+      "enum": ["read", "triage", "write", "maintain", "admin"]
+    },
+    "leaderAccountPermission": {
+      "enum": ["maintain", "admin"]
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["hostname", "repository_id", "owner", "name", "default_branch", "default_branch_source_sha"],
+      "properties": {
+        "hostname": {"type": "string", "minLength": 1},
+        "repository_id": {"type": "integer", "minimum": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "default_branch": {"type": "string", "minLength": 1},
+        "default_branch_source_sha": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "approvalEvidence": {
+      "type": "object",
+      "description": "Bind human approval to the governance proposal HEAD at approval time. Merge commit SHA is external post-merge read-back evidence, not a prerequisite for this proposal record.",
+      "additionalProperties": true,
+      "required": ["github_pr_url", "approved_by", "approved_at", "approved_head_sha"],
+      "properties": {
+        "github_pr_url": {"type": "string", "format": "uri"},
+        "approved_by": {"type": "string", "minLength": 1},
+        "approved_at": {"type": "string", "format": "date-time"},
+        "approved_head_sha": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "leaderDelegation": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "actor_id",
+        "controlled_by",
+        "controlled_by_id",
+        "permission_ceiling",
+        "account_permission_at_grant",
+        "approval_evidence",
+        "status",
+        "granted_at"
+      ],
+      "properties": {
+        "actor_id": {"$ref": "#/$defs/actorId"},
+        "controlled_by": {"type": "string", "minLength": 1},
+        "controlled_by_id": {"type": "integer", "minimum": 1},
+        "permission_ceiling": {"$ref": "#/$defs/permission"},
+        "account_permission_at_grant": {"$ref": "#/$defs/leaderAccountPermission"},
+        "approval_evidence": {"$ref": "#/$defs/approvalEvidence"},
+        "status": {"enum": ["active", "revoked", "superseded"]},
+        "granted_at": {"type": "string", "format": "date-time"},
+        "revoked_at": {"type": "string", "format": "date-time"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"account_permission_at_grant": {"const": "maintain"}},
+            "required": ["account_permission_at_grant"]
+          },
+          "then": {
+            "properties": {
+              "permission_ceiling": {"enum": ["read", "triage", "write", "maintain"]}
+            }
+          }
+        }
+      ]
+    }
+  }
+}

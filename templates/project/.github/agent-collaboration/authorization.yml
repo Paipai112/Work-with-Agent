@@ -1,0 +1,10 @@
+# Repository-specific values are injected by github-collaboration-setup.
+schema_version: 1
+repository:
+  hostname: __SETUP_REQUIRED__
+  repository_id: __SETUP_REQUIRED__
+  owner: __SETUP_REQUIRED__
+  name: __SETUP_REQUIRED__
+  default_branch: __SETUP_REQUIRED__
+  default_branch_source_sha: __SETUP_REQUIRED__
+leader_delegations: []

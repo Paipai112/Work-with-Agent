@@ -1,0 +1,18 @@
+# The comment ID/URL below identify the PREVIOUS claim, not this future handoff comment.
+# For research set task_kind: research, omit branch/base_head/head_sha, add artifact_urls.
+event: handoff
+event_id: example-handoff-issue-123
+previous_event_id: example-claim-issue-123
+controlled_by: alex
+controlled_by_id: 1234
+actor_id: backend-api
+session_id: example-office-session
+runtime: codex
+scope:
+  - src/api/**
+  - tests/api/**
+branch: agent/backend-api/issue-123-timeout
+base_head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+github_comment_id: 1001
+github_comment_url: https://github.com/example-org/example-repo/issues/123#issuecomment-1001
+head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb

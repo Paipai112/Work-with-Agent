@@ -1,0 +1,13 @@
+event: claim
+event_id: github-comment-1001
+previous_event_id: null
+controlled_by: github-user
+controlled_by_id: 1234
+actor_id: backend-api
+session_id: session-20260917-142530
+runtime: codex
+scope:
+  - src/auth/**
+branch: agent/backend-api/issue-123-auth-fix
+base_head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+expected_handoff: pull-request

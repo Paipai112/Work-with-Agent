@@ -1,0 +1,9 @@
+schema_version: 1
+installation_id: install-20260917-example-repo
+resources:
+  - kind: workflow
+    stable_id: .github/workflows/agent-collaboration-check.yml
+    template_version: 0.1.0
+    managed_fields_baseline_digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    applied_digest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    baseline_reference: git:main:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

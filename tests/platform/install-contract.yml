@@ -1,0 +1,115 @@
+# Native-host contract for the setup Skill. The same directory rules apply to
+# github-collaboration; substitute that folder and invocation name when testing it.
+# An observed installation is recorded separately with runtime version and path.
+matrix:
+  - agent: codex
+    os: macos
+    user_skill_path: ~/.agents/skills/github-collaboration-setup
+    project_skill_path: .agents/skills/github-collaboration-setup
+    entrypoint: SKILL.md
+    explicit_invocation: $github-collaboration-setup
+    daily_explicit_invocation: $github-collaboration
+    new_session_required: true
+    check_actual_discovery_path: true
+    check_same_name_collision: true
+    check_disabled_or_override: true
+    official_skill_documentation: https://learn.chatgpt.com/docs/build-skills
+  - agent: codex
+    os: linux
+    user_skill_path: ~/.agents/skills/github-collaboration-setup
+    project_skill_path: .agents/skills/github-collaboration-setup
+    entrypoint: SKILL.md
+    explicit_invocation: $github-collaboration-setup
+    daily_explicit_invocation: $github-collaboration
+    new_session_required: true
+    check_actual_discovery_path: true
+    check_same_name_collision: true
+    check_disabled_or_override: true
+    official_skill_documentation: https://learn.chatgpt.com/docs/build-skills
+  - agent: codex
+    os: windows-native
+    user_skill_path: '$env:USERPROFILE\.agents\skills\github-collaboration-setup'
+    project_skill_path: .agents/skills/github-collaboration-setup
+    entrypoint: SKILL.md
+    explicit_invocation: $github-collaboration-setup
+    daily_explicit_invocation: $github-collaboration
+    new_session_required: true
+    wsl_is_separate: true
+    check_actual_discovery_path: true
+    check_same_name_collision: true
+    check_disabled_or_override: true
+    official_skill_documentation: https://learn.chatgpt.com/docs/build-skills
+  - agent: claude-code
+    os: macos
+    user_skill_path: ~/.claude/skills/github-collaboration-setup
+    project_skill_path: .claude/skills/github-collaboration-setup
+    entrypoint: SKILL.md
+    explicit_invocation: /github-collaboration-setup
+    daily_explicit_invocation: /github-collaboration
+    new_session_required: true
+    check_actual_discovery_path: true
+    check_same_name_collision: true
+    check_disabled_or_override: true
+    official_skill_documentation: https://code.claude.com/docs/en/skills
+  - agent: claude-code
+    os: linux
+    user_skill_path: ~/.claude/skills/github-collaboration-setup
+    project_skill_path: .claude/skills/github-collaboration-setup
+    entrypoint: SKILL.md
+    explicit_invocation: /github-collaboration-setup
+    daily_explicit_invocation: /github-collaboration
+    new_session_required: true
+    check_actual_discovery_path: true
+    check_same_name_collision: true
+    check_disabled_or_override: true
+    official_skill_documentation: https://code.claude.com/docs/en/skills
+  - agent: claude-code
+    os: windows-native
+    user_skill_path: '$env:USERPROFILE\.claude\skills\github-collaboration-setup'
+    project_skill_path: .claude/skills/github-collaboration-setup
+    entrypoint: SKILL.md
+    explicit_invocation: /github-collaboration-setup
+    daily_explicit_invocation: /github-collaboration
+    new_session_required: true
+    wsl_is_separate: true
+    check_actual_discovery_path: true
+    check_same_name_collision: true
+    check_disabled_or_override: true
+    official_skill_documentation: https://code.claude.com/docs/en/skills
+  - agent: pi-agent
+    os: macos
+    user_skill_path: ~/.pi/agent/skills/github-collaboration-setup
+    project_skill_path: .agents/skills/github-collaboration-setup
+    entrypoint: SKILL.md
+    explicit_invocation: /skill:github-collaboration-setup
+    daily_explicit_invocation: /skill:github-collaboration
+    new_session_required: true
+    check_actual_discovery_path: true
+    check_same_name_collision: true
+    check_disabled_or_override: true
+    official_skill_documentation: https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md
+  - agent: pi-agent
+    os: linux
+    user_skill_path: ~/.pi/agent/skills/github-collaboration-setup
+    project_skill_path: .agents/skills/github-collaboration-setup
+    entrypoint: SKILL.md
+    explicit_invocation: /skill:github-collaboration-setup
+    daily_explicit_invocation: /skill:github-collaboration
+    new_session_required: true
+    check_actual_discovery_path: true
+    check_same_name_collision: true
+    check_disabled_or_override: true
+    official_skill_documentation: https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md
+  - agent: pi-agent
+    os: windows-native
+    user_skill_path: '$env:USERPROFILE\.pi\agent\skills\github-collaboration-setup'
+    project_skill_path: .agents/skills/github-collaboration-setup
+    entrypoint: SKILL.md
+    explicit_invocation: /skill:github-collaboration-setup
+    daily_explicit_invocation: /skill:github-collaboration
+    new_session_required: true
+    wsl_is_separate: true
+    check_actual_discovery_path: true
+    check_same_name_collision: true
+    check_disabled_or_override: true
+    official_skill_documentation: https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md

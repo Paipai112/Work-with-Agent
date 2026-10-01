@@ -1,0 +1,15 @@
+# Example values only. Replace after fresh preflight; validate against the frozen schema.
+event: claim
+event_id: example-claim-issue-123
+previous_event_id: null
+controlled_by: alex
+controlled_by_id: 1234
+actor_id: backend-api
+session_id: example-office-session
+runtime: codex
+scope:
+  - src/api/**
+  - tests/api/**
+branch: agent/backend-api/issue-123-timeout
+base_head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+expected_handoff: handoff

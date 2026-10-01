@@ -1,0 +1,29 @@
+{
+  "manifest_version": 1,
+  "resources": [
+    {
+      "copied_sha256": "1e787cbbc3a5122d171765c89adb44851783e04e3727b4aab9ae61858ca31bcb",
+      "destination": "references/schemas/authorization.schema.json",
+      "source": "schemas/authorization.schema.json",
+      "source_sha256": "1e787cbbc3a5122d171765c89adb44851783e04e3727b4aab9ae61858ca31bcb"
+    },
+    {
+      "copied_sha256": "37872897a6d657d87188f3c8cb45272cef7a79ea1fbad7c1b5fb12ab277265b4",
+      "destination": "references/schemas/collaboration-event.schema.json",
+      "source": "schemas/collaboration-event.schema.json",
+      "source_sha256": "37872897a6d657d87188f3c8cb45272cef7a79ea1fbad7c1b5fb12ab277265b4"
+    },
+    {
+      "copied_sha256": "d8c2f51b475163bcfaf7e4ccd48941bc10a8a814bbcf34685996b8e28661730e",
+      "destination": "references/schemas/config.schema.json",
+      "source": "schemas/config.schema.json",
+      "source_sha256": "d8c2f51b475163bcfaf7e4ccd48941bc10a8a814bbcf34685996b8e28661730e"
+    },
+    {
+      "copied_sha256": "c271b563aaecc7d0c62ee6f948d78f295decbcefce4d9cf7d46b3642940c7946",
+      "destination": "references/schemas/managed-resources.schema.json",
+      "source": "schemas/managed-resources.schema.json",
+      "source_sha256": "c271b563aaecc7d0c62ee6f948d78f295decbcefce4d9cf7d46b3642940c7946"
+    }
+  ]
+}

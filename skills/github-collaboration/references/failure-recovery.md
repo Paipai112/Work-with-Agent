@@ -1,0 +1,10 @@
+# Failure recovery without destructive shortcuts
+
+At any failed or ambiguous write, stop further mutations and preserve the local worktree, index, untracked files, commits, and remote evidence. Do not force-push, reset destructively, discard another collaborator's work, bypass reviews/checks, or infer that a timeout means the operation failed. Record the attempted operation, target repository/ref/Issue/PR, expected SHA, request or comment identifier if available, and what is actually known. Do not expose credentials in logs.
+
+1. Read-only inspect `git status`, local/remote refs, GitHub PR and Issue state, comment/event IDs, and default-branch HEAD. Fetch only after preserving the existing work and understanding whether remote changes conflict. Distinguish **confirmed success**, **confirmed failure**, and **unknown**; an unknown result remains blocked for retry until read-back resolves it.
+2. For push divergence, compare expected and actual remote HEAD plus commit ancestry and claim/handoff/reassign state. Preserve both histories and coordinate a scoped reconciliation. Do not repair by force push or destructive reset. For uncertain push/merge, read the remote ref, PR state, merge SHA and approved target-branch reachability before retry. An integration merge alone does not establish default-branch delivery.
+3. For changed PR HEAD, new checks/reviews required, permission downgrade, missing reviewer, unresolved conversation, or governance contamination, stop at the relevant gate. Re-run current-HEAD review and checks; route governance to setup as a separate proposal. Never reuse old approvals or test results.
+4. After a verified merge but failed Issue/event update, re-read the Issue and existing comments. Retry only the missing idempotent update, bind it to the verified PR/merge SHA, and read it back. Do not close twice, issue duplicate handoffs, or rewrite the merge to fix metadata.
+
+Report the observed facts, unknowns, preserved work, exact blocker, safe recovery options, and any user/Leader decision needed. Continue only after the required authority and current remote state are re-established.

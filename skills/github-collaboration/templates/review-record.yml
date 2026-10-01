@@ -1,0 +1,19 @@
+# Illustrative protocol record. Replace every example value with verified facts;
+# publish it in the PR discussion and read it back. It is not a native GitHub Approve.
+record_type: protocol-review
+repository_id: 501
+pull_request_number: 87
+reviewed_head_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+implementation_actor_id: backend-api
+reviewer_actor_id: release-coordination
+reviewer_account_id: 1002
+reviewer_account_login: project-owner
+reviewed_at: '2026-01-01T00:00:00Z'
+scope_reviewed:
+  - src/api/**
+evidence:
+  - Checked the PR diff, Issue acceptance criteria, current-HEAD test results, and claim scope.
+  - Reused linked engineering review for this exact HEAD; verified its findings and addressed protocol gaps.
+decision: approve
+limitations:
+  - This protocol record does not replace a required GitHub native review.

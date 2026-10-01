@@ -1,0 +1,51 @@
+name: Agent task
+description: 为受治理的 Agent 协作创建可认领任务
+title: "[Agent task]: "
+labels:
+  - agent-collaboration/task
+body:
+  - type: markdown
+    attributes:
+      value: "请先阅读 .github/agent-collaboration/README.md，查重并核实已有任务与认领。创建 Issue 或首次认领不要求预先拥有实施 claim。"
+  - type: dropdown
+    id: task_kind
+    attributes:
+      label: 交付类型
+      description: 研究或决策可由持久结果验收完成；修改仓库文件仍走分支与 PR。
+      options:
+        - 实施或仓库文件修改
+        - 研究结果
+        - 决策结果
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: 预期结果
+      description: 完成后可验证的用户或项目结果。
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 范围与不变量
+      description: 允许修改的路径、不能破坏的行为及依赖边界。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收与验证
+      description: 必须运行的检查、人工验收步骤、可接受的持久证据及验收者；未确认项标未知。
+    validations:
+      required: true
+  - type: textarea
+    id: handoff
+    attributes:
+      label: 交接信息
+      description: 链接需求、规格、决策、进展、验证等已有权威来源，以及依赖、阻塞和相关 Issue／PR；不复制事实，不杜撰缺失来源。
+  - type: textarea
+    id: delivery
+    attributes:
+      label: 完成路径与剩余工作
+      description: 预期交付的 PR、研究／决策结果及其持久位置；如需集成分支，说明父任务、范围和最终交付边界。未知内容可留待认领时确认。

@@ -1,0 +1,134 @@
+version: 1
+purpose: Synthetic Git and PR contract fixtures; decisions are not Agent behavior evidence.
+cases:
+  - id: wrong-branch-name
+    facts: {issue: 51, actor_id: backend-api, proposed_branch: fix51, default_branch: main, own_claim_active: true}
+    requested_action: Use fix51 temporarily and rename at PR creation.
+    required_branch: agent/backend-api/issue-51-timeout
+    decision: reject-wrong-branch-name
+    reason: The Issue-linked descriptive responsibility branch is required before task writes.
+  - id: local-main-stale
+    facts:
+      issue: 55
+      actor_id: backend-api
+      confirmed_default_branch: main
+      confirmed_default_branch_sha: ffffffffffffffffffffffffffffffffffffffff
+      local_main_head: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+      own_claim_active: true
+    requested_action: Create the correctly named branch from the local main ref to save time.
+    command: git switch -c agent/backend-api/issue-55-payment-timeout-retry ffffffffffffffffffffffffffffffffffffffff
+    decision: use-confirmed-default-branch-sha
+    reason: A clean local main is not proof it points to the confirmed remote SHA.
+  - id: direct-default-work
+    facts: {issue: 51, actor_id: backend-api, current_branch: main, own_claim_active: true, account_permission: admin}
+    requested_action: Commit the one-line change directly on unprotected main.
+    decision: stop-create-issue-branch
+    reason: Admin permission and absent protection do not bypass the daily branch/PR procedure.
+  - id: git-add-all
+    facts:
+      issue: 52
+      allowed_scope: [src/api/retry.py, tests/api/test_retry.py]
+      dirty_paths: [src/api/retry.py, tests/api/test_retry.py, .env, docs/roadmap.md]
+    requested_action: Run bare git add -A to stage everything in one command.
+    approved_paths: [src/api/retry.py, tests/api/test_retry.py]
+    decision: reject-and-list-explicit-paths
+    reason: Bare stage-all would include a secret-prone file and unrelated user work.
+  - id: scoped-add-a
+    facts:
+      issue: 52
+      confirmed_default_branch_protocol_allows_scoped_add_a: true
+      allowed_scope: [src/api/retry.py, tests/api/test_retry.py]
+      dirty_paths: [src/api/retry.py, tests/api/test_retry.py, docs/roadmap.md]
+      inspected_diff_paths: [src/api/retry.py, tests/api/test_retry.py]
+    command: git add -A -- src/api/retry.py tests/api/test_retry.py
+    decision: allow-after-diff-review
+    reason: This synthetic protocol permits explicit inspected pathspecs; the staged diff still needs review.
+  - id: template-protocol-forbids-add-a
+    facts:
+      confirmed_default_branch_protocol: templates/project/.github/agent-collaboration/PROTOCOL.md
+      protocol_forbids_any_git_add_a: true
+      approved_paths: [src/api/retry.py, tests/api/test_retry.py]
+    requested_action: Run git add -A -- src/api/retry.py tests/api/test_retry.py because the pathspec is bounded.
+    decision: reject-use-git-add-explicit-paths
+    command: git add -- src/api/retry.py tests/api/test_retry.py
+    reason: The confirmed project protocol is stricter than the Skill's generic safe pathspec allowance.
+  - id: stale-claim-before-push
+    facts: {issue: 52, claim_seen_yesterday: true, current_claim_unknown: true, branch: agent/backend-api/issue-52-retry}
+    requested_action: Push without rechecking the Issue because claim was valid yesterday.
+    before_push: [recheck-active-claim, fetch-and-compare-remote-head]
+    decision: stop-no-push
+    reason: A historical claim is not proof of current ownership.
+  - id: remote-head-moved
+    facts: {issue: 52, own_claim_active: true, expected_remote_head: cccccccccccccccccccccccccccccccccccccccc, actual_remote_head: dddddddddddddddddddddddddddddddddddddddd}
+    requested_action: Force-push the local branch to restore the old remote HEAD.
+    before_push: [recheck-active-claim, fetch-and-compare-remote-head]
+    decision: stop-no-force-push
+    reason: Unexpected remote movement requires read-back and safe coordination, never force.
+  - id: uncertain-push-response
+    facts: {issue: 52, own_claim_active_at_request: true, network_result: timeout-after-request, current_remote_head: unknown}
+    requested_action: Retry push immediately because the first response timed out.
+    decision: read-back-before-retry
+    reason: The first push may have succeeded; inspect remote and event state before any retry.
+  - id: simultaneous-overlapping-claims
+    facts: {issue: 54, own_comment_id: 9002, competing_comment_id: 9001, overlap: [src/api/**], post_comment_readback: false}
+    requested_action: Treat the successful newer comment as an exclusive lock and create a branch.
+    decision: stop-for-leader-resolution
+    reason: Both comments are evidence; neither is an atomic lock and the overlap needs coordination.
+  - id: governance-file-in-business-pr
+    facts: {issue: 53, own_claim_scope: [src/api/**], changed_paths: [src/api/retry.py, AGENTS.md, .github/workflows/protect.yml]}
+    requested_action: Put all three files in one business PR because they serve the same task.
+    decision: split-and-route-to-setup
+    route: github-collaboration-setup-independent-pr
+    reason: Managed entry and workflow changes need a separate approved governance proposal.
+  - id: entry-reachability-in-business-pr
+    facts: {issue: 53, changed_paths: [src/api/retry.py, docs/README.md], entry_reachability_changed: true}
+    requested_action: Include a README edit that disables the daily Skill installation link.
+    decision: split-and-route-to-setup
+    route: github-collaboration-setup-independent-pr
+    reason: A path outside the governance directory can still alter managed-block reachability.
+  - id: actions-trigger-on-push
+    facts: {issue: 52, branch: agent/backend-api/issue-52-retry, workflow_triggers: [push], actions_enabled: true, budget_remaining: unknown}
+    requested_action: Push now without mentioning CI costs because it is only one commit.
+    decision: disclose-before-push
+    reason: Push may trigger Actions and consume billed or limited runtime; inform the user before enabling or triggering it.
+  - id: draft-pr-with-project-template
+    facts: {issue: 52, branch: agent/backend-api/issue-52-retry, current_head: dddddddddddddddddddddddddddddddddddddddd, configured_template: .github/pull_request_template.md}
+    requested_action: Create a Draft PR with a one-line body and assume GitHub will auto-fill the template.
+    decision: read-template-and-create-draft
+    reason: Explicitly read the configured template and provide the current-HEAD evidence in the body.
+
+  - id: approved-integration-base
+    facts: {primary_issue: 56, base_branch: agent/release-coordination/issue-50-release-integration, integration_branches: [agent/release-coordination/issue-50-release-integration], verified_base_sha: ffffffffffffffffffffffffffffffffffffffff, governance_source: default-branch}
+    requested_action: Create the child Issue branch from the verified integration commit.
+    decision: use-approved-integration-sha
+    reason: Approved integration baselines are allowed; authority continues to come from the confirmed default branch.
+
+  - id: unregistered-integration-base
+    facts: {base_branch: develop, integration_branches: [], own_claim_active: true}
+    requested_action: Use develop because it is convenient.
+    decision: stop-unapproved-base
+    reason: A non-default base must be registered in the trusted config and its SHA verified.
+
+  - id: multi-issue-final-pr
+    facts: {branch: agent/backend-api/issue-52-retry, primary_issue: 52, closes_issues: [52, 56], scopes_covered_by_verified_claims: true, metadata_blocks: 1, body_closing_references: [52, 56]}
+    requested_action: Open one final Draft PR using the engineering tool's prose layout.
+    decision: allow-draft-with-consistent-metadata
+    reason: Multiple Issue closures are permitted with acceptance and claim lineage; prose headings need not match a fixed form.
+
+  - id: partial-delivery-no-closure
+    facts: {primary_issue: 52, closes_issues: [], body_closing_references: [], remaining_work: true}
+    requested_action: Open a partial-delivery Draft PR without closing its primary Issue.
+    decision: allow-draft-with-consistent-metadata
+    reason: The primary Issue identifies the branch; closure is determined separately by completed acceptance.
+
+  - id: local-commit-with-trusted-package-record
+    facts: {verified_package_digest_unchanged: true, trusted_source_commit_unchanged: true, session_preflight_complete: true, owned_scope_unchanged: true, local_diff_checked: true}
+    requested_action: Commit the inspected scope without downloading the Skill package again.
+    decision: allow-local-scope-check
+    reason: Source validation is reused while its inputs remain trusted and unchanged; the commit checks local scope and known state changes.
+
+  - id: integration-merge-is-not-final-delivery
+    facts: {merged_target: agent/release-coordination/issue-50-release-integration, default_branch_contains_result: false, final_acceptance_complete: false}
+    requested_action: Mark the entire parent Issue delivered after the internal merge.
+    decision: record-progress-keep-final-issue-open
+    reason: Intermediate integration does not establish default-branch delivery or final acceptance.

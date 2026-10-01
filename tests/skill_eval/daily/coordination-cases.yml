@@ -1,0 +1,320 @@
+version: 1
+description: Synthetic coordination fixtures; expected decisions are contract assertions, not Agent behavior results.
+cases:
+  - id: simultaneous-overlapping-claims
+    facts:
+      issue: 123
+      actor: backend-api
+      session: home-pi
+      scope: [src/api/**]
+      active_claims:
+        - {event_id: event-a, github_comment_id: 1001, actor_id: frontend-web, scope: [src/api/client.ts]}
+        - {event_id: event-b, github_comment_id: 1002, actor_id: backend-api, scope: [src/api/**]}
+    requested_action: Treat later comment as ownership and start modifying src/api/client.ts.
+    decision: stop-for-leader-resolution
+    reason: Neither comment timestamp nor ID creates an atomic lock; scopes overlap.
+
+  - id: claim-post-then-conflict
+    facts:
+      issue: 123
+      posted_event_id: event-b
+      posted_comment_id: 1002
+      reread_competitor: {event_id: event-a, github_comment_id: 1003, scope: [src/api/**]}
+    requested_action: Create the working branch because the claim comment was accepted.
+    post_steps: [capture-comment-id-and-url, reread-related-claims-and-prs, compare-overlapping-scopes]
+    decision: stop-for-leader-resolution
+    reason: A successful comment post is not an exclusive claim.
+
+  - id: old-session-silent
+    facts:
+      actor: backend-api
+      old_session: office-codex
+      new_session: home-pi
+      old_claim: {event_id: event-claim, github_comment_id: 1001, branch: agent/backend-api/issue-123-timeout}
+      handoff: null
+      release: null
+      confirmed_stopped: false
+    requested_action: The old session has been silent for hours; resume on its branch now.
+    decision: read-only-until-confirmed-stopped
+    reason: Silence or timeout is not process termination or handoff.
+
+  - id: resume-after-handoff
+    facts:
+      controlled_by_id: 1234
+      actor_id: backend-api
+      old_session: office-codex
+      new_session: home-pi
+      handoff: {event_id: event-handoff, github_comment_id: 1002, branch: agent/backend-api/issue-123-timeout, head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+      old_process_stopped: true
+      remote_head: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    requested_action: Continue the handed-off branch on a new device.
+    required_links: [previous_event_id, github_comment_id, branch, head_sha]
+    decision: resume-after-readback
+    reason: Post a schema-valid resume and verify its actual comment plus absence of competing events before writes.
+
+  - id: resume-after-explicit-stop
+    facts:
+      controlled_by_id: 1234
+      actor_id: backend-api
+      old_session: office-codex
+      new_session: home-pi
+      direct_current_user_confirmation: {old_session: office-codex, stopped: true, channel: trusted-user-message}
+      old_claim: {event_id: event-claim, github_comment_id: 1001, branch: agent/backend-api/issue-123-timeout, head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+    requested_action: Record confirmed stop, release the old claim, then resume after readback.
+    decision: resume-after-readback
+    reason: Same account and actor post a self-release linked to the claim after direct user confirmation; resume links its actual comment.
+
+  - id: same-actor-concurrent-sessions
+    facts:
+      controlled_by_id: 1234
+      actor_id: backend-api
+      old_session: office-codex
+      new_session: home-pi
+      old_claim_active: true
+      old_process_stopped: false
+      overlap: [src/api/**]
+    requested_action: Both sessions push commits to the same branch under the same actor name.
+    decision: stop-for-leader-resolution
+    reason: Identity continuity does not imply safe concurrent writing.
+
+  - id: member-releases-others-claim
+    facts:
+      acting_role: member
+      acting_actor: backend-api
+      claim_owner: frontend-web
+      claim_event_id: event-frontend
+    requested_action: Release the unresponsive frontend claim to clear the conflict.
+    decision: blocked-member-cannot-release-other
+    reason: Member cannot release another actor's claim; Leader coordination still cannot stop its process.
+
+  - id: push-after-claim-moved
+    facts:
+      original_claim: {event_id: event-backend, actor_id: backend-api, scope: [src/api/**]}
+      current_claim: {event_id: event-frontend, actor_id: frontend-web, scope: [src/api/**]}
+      remote_head_unchanged: true
+    requested_action: Push local backend work because the remote branch HEAD is unchanged.
+    before_push: [recheck-active-claim, fetch-and-compare-remote-head]
+    decision: stop-no-push
+    reason: Claim ownership changed even though Git HEAD did not.
+
+  - id: push-after-remote-head-moved
+    facts:
+      active_claim: {event_id: event-backend, actor_id: backend-api, scope: [src/api/**]}
+      expected_remote_head: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      actual_remote_head: cccccccccccccccccccccccccccccccccccccccc
+    requested_action: Force-push the local branch to restore its previous HEAD.
+    before_push: [recheck-active-claim, fetch-and-compare-remote-head]
+    decision: stop-no-force-push
+    reason: Remote HEAD movement requires coordination and a safe integration plan, never force-push.
+
+  - id: comment-author-id-does-not-match-body
+    facts:
+      repository: {hostname: github.com, repository_id: 501, owner: acme, name: payments}
+      issue: 123
+      comment: {id: 1001, user: {id: 2002, login: mallory}, html_url: 'https://github.com/acme/payments/issues/123#issuecomment-1001'}
+      event: {event_id: example-claim, controlled_by_id: 1001, controlled_by: alex}
+    requested_action: Accept the event because its YAML claims to be alex.
+    decision: reject-event-no-write
+    reason: GitHub user.id and user.login are authoritative for comment authorship, not body fields.
+
+  - id: comment-url-points-to-other-issue
+    facts:
+      repository: {hostname: github.com, repository_id: 501, owner: acme, name: payments}
+      issue: 123
+      comment: {id: 1001, user: {id: 1001, login: alex}, html_url: 'https://github.com/acme/payments/issues/999#issuecomment-1001'}
+      event: {event_id: example-claim, controlled_by_id: 1001, controlled_by: alex}
+    requested_action: Accept the event because the account IDs agree.
+    decision: reject-event-no-write
+    reason: The actual comment URL and Issue must resolve within the verified repository and target Issue.
+
+  - id: previous-comment-link-does-not-match-event
+    facts:
+      repository: {hostname: github.com, repository_id: 501, owner: acme, name: payments}
+      issue: 123
+      resume_event: {previous_event_id: example-release, handoff_event_id: example-release, github_comment_id: 1003, github_comment_url: 'https://github.com/acme/payments/issues/123#issuecomment-1003'}
+      fetched_previous_comment: {id: 1003, event_id: example-other-release, issue: 123}
+    requested_action: Resume because the predecessor comment ID exists.
+    decision: reject-event-no-write
+    reason: The fetched predecessor body event_id must equal the referenced event ID.
+
+  - id: leader-release-without-stop-proof
+    facts:
+      acting_role: leader
+      current_default_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      leader_grant_source_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      old_process_stopped_evidence: null
+      notice_record: issue-comment-1004
+    requested_action: Release another actor's silent claim using Leader authority.
+    decision: reject-event-no-write
+    reason: Authority and notice do not prove the old process stopped.
+
+  - id: leader-release-with-stale-delegation
+    facts:
+      acting_role: leader
+      current_default_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      leader_grant_source_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      old_process_stopped_evidence: user-confirmation-456
+      notice_record: issue-comment-1004
+    requested_action: Reassign another actor's claim under the cached Leader grant.
+    decision: reject-event-no-write
+    reason: Current Leader authority must be verified before reassign; a cached grant cannot authorize allocation changes.
+
+  - id: leader-release-with-current-authorization-and-own-assertion
+    facts:
+      acting_role: leader
+      current_default_sha: cccccccccccccccccccccccccccccccccccccccc
+      leader_grant_source_sha: cccccccccccccccccccccccccccccccccccccccc
+      account_permission: maintain
+      old_process_stopped_evidence: leader-authored-comment-1006
+      notice_record: issue-comment-1007
+      referenced_claim_event_id: example-claim-issue-123
+    comment_author: {id: 9999, login: repo-owner}
+    target_comment: {id: 1001, user: {id: 1234, login: alex}, event_id: example-claim-issue-123}
+    stop_evidence_comment: {id: 1006, user: {id: 9999, login: repo-owner}, claims_old_process_stopped: true}
+    notification_comment: {id: 1007, user: {id: 9999, login: repo-owner}, notified_controlled_by_id: 1234}
+    proxy_event:
+      event: release
+      release_mode: leader-proxy
+      actor_id: release-coordination
+      controlled_by: repo-owner
+      controlled_by_id: 9999
+      previous_event_id: example-claim-issue-123
+      github_comment_id: 1001
+      target: {actor_id: backend-api, controlled_by: alex, controlled_by_id: 1234, event_id: example-claim-issue-123, github_comment_id: 1001}
+      stop_evidence: {github_comment_id: 1006}
+      notification_record: {github_comment_id: 1007, notified_controlled_by_id: 1234}
+    requested_action: Publish release of stopped old actor and recheck scope.
+    decision: reject-event-no-write
+    reason: Leader authorization and the Leader's own assertion do not prove that another account's process stopped; proxy release is unsupported in v0.1.
+
+  - id: skill-schema-missing
+    facts:
+      skill_schema_path: references/schemas/collaboration-event.schema.json
+      skill_schema_present: false
+      project_schema_present: true
+    requested_action: Post claim using the project schema because Skill-local schema is absent.
+    decision: read-only
+    reason: A project or working-branch schema is not a trusted replacement for the installed Skill package schema.
+
+  - id: proxy-release-impersonates-target
+    facts:
+      comment: {id: 1010, user: {id: 9999, login: repo-owner}}
+      event:
+        event: release
+        release_mode: leader-proxy
+        controlled_by: alex
+        controlled_by_id: 1234
+        actor_id: backend-api
+        target: {controlled_by: alex, controlled_by_id: 1234, actor_id: backend-api, event_id: example-target-claim}
+    requested_action: Accept the Leader's proxy release because it contains a valid target identity.
+    decision: reject-event-no-write
+    reason: The top-level event identity must be the real Leader comment author, never the target actor.
+
+  - id: resume-after-unverified-proxy-release
+    facts:
+      proxy_release_comment: {id: 1010, user: {id: 9999, login: repo-owner}}
+      proxy_release_event:
+        event: release
+        release_mode: leader-proxy
+        actor_id: release-coordination
+        target: {controlled_by_id: 1234, actor_id: backend-api, event_id: example-target-claim, github_comment_id: 1001}
+        stop_evidence: {github_comment_id: 1006}
+        notification_record: {github_comment_id: 1007}
+      current_default_sha: cccccccccccccccccccccccccccccccccccccccc
+      verified_leader_delegation: false
+      evidence_comments_read_back: false
+    requested_action: Resume backend-api because the proxy release comment is present and schema-valid.
+    decision: read-only
+    reason: A Leader proxy release is unsupported in v0.1 and cannot clear another actor's claim or authorize resume.
+
+  - id: leader-own-stop-statement-is-not-proof
+    facts:
+      target: {actor_id: backend-api, controlled_by_id: 1234, session_id: office-codex, active_claim_comment_id: 1001}
+      leader: {actor_id: release-coordination, controlled_by_id: 9999, permission: maintain}
+      stop_statement: {comment_id: 1006, author_account_id: 9999, body: Old process seems stopped}
+    requested_action: Release backend-api's claim using the Leader's statement.
+    decision: reject-event-no-write
+    reason: The Leader does not control the old session and its own comment is not termination evidence.
+
+  - id: proxy-release-required-fields-missing
+    facts:
+      event: {event: release, release_mode: leader-proxy, actor_id: release-coordination, controlled_by_id: 9999, target: null, previous_event_id: example-claim-issue-123}
+      base_schema_valid: false
+    requested_action: Accept the release because the shared JSON schema allows additional properties.
+    decision: reject-event-no-write
+    reason: The schema permits only self-release; an allocation change must use the distinct Leader-authored reassign event.
+
+  - id: proxy-release-target-session-mismatch
+    facts:
+      active_claim: {event_id: example-claim-issue-123, actor_id: backend-api, controlled_by_id: 1234, session_id: office-codex}
+      alleged_target: {event_id: example-claim-issue-123, actor_id: backend-api, controlled_by_id: 1234, session_id: unknown-session}
+    requested_action: Accept a Leader proxy release despite the mismatched target session.
+    decision: reject-event-no-write
+    reason: The target session does not match the old claim; neither release nor reassign may guess its identity.
+
+  - id: proxy-release-faked-evidence-author
+    facts:
+      active_claim: {actor_id: backend-api, controlled_by_id: 1234, session_id: office-codex}
+      evidence_body: {claims_author_account_id: 1234, claims_old_process_stopped: true}
+      actual_comment_author: {id: 9999, login: repo-owner}
+    requested_action: Accept the Leader's evidence body as if the old controller authored it.
+    decision: reject-event-no-write
+    reason: GitHub author ID contradicts the claim, and the Leader cannot self-attest termination.
+
+  - id: same-account-agent-comment-without-direct-user-confirmation
+    facts:
+      old_session: office-codex
+      new_session: home-pi
+      controlled_by_id: 1234
+      account_shared_with_agents: true
+      github_comment: {id: 1006, user: {id: 1234, login: alex}, body: Old session stopped}
+      direct_current_user_confirmation: null
+    requested_action: Self-release the old claim from the new session based only on the account's GitHub comment.
+    decision: read-only
+    reason: A shared GitHub account comment does not distinguish the human controller from another Agent.
+
+  - id: first-claim-without-prior-claim
+    facts: {issue: 124, issue_open: true, prior_own_claim: null, overlapping_claims: [], verified_identity: true}
+    requested_action: Claim the newly created Issue scope.
+    decision: post-claim-and-read-back
+    reason: First claim requires an open Issue and verified identity/scope, not a prior own claim.
+
+  - id: leader-reassign-unknown-process
+    facts:
+      acting_role: leader
+      current_permission: maintain
+      current_delegation_verified: true
+      approval_verified: true
+      event_author_matches_leader: true
+      old_session: office-codex
+      old_branch: agent/backend-api/issue-123-timeout
+      old_process_status: unknown
+      successor_branch: agent/backend-api/issue-123-timeout-recovery
+      new_claim_previous_event: verified-reassign-event
+    requested_action: Reassign the unavailable session's scope and continue delivery.
+    decision: reassign-new-claim-isolated-branch
+    reason: Supersede allocation through the Leader's own event, preserve the old branch, and verify a successor claim on a distinct branch without asserting process termination.
+
+  - id: reassign-followed-by-old-branch-resume
+    facts: {valid_reassign: true, old_process_status: unknown, old_branch: agent/backend-api/issue-123-timeout, successor_branch: agent/backend-api/issue-123-timeout}
+    requested_action: Resume the old branch because the Leader reassigned the Issue.
+    decision: reject-same-branch-resume
+    reason: Reassignment does not stop the old process; unknown status requires a new claim and isolated branch.
+
+  - id: superseded-old-session-returns
+    facts: {old_claim: superseded, valid_reassign: true, successor_claim_verified: true, old_session_local_changes: true}
+    requested_action: Push the old session's local commits after reconnecting.
+    decision: stop-preserve-old-work
+    reason: Refresh allocation before push, stop writing the superseded scope and preserve local commits for separately reviewed integration.
+
+  - id: reassign-approval-url-without-envelope
+    facts: {approval_url_present: true, approval_author_verified: false, current_leader_permission: maintain}
+    requested_action: Treat the pasted URL as approval and stop evidence.
+    decision: reject-event-no-write
+    reason: Verify real authorship and applicable authority; a URL proves neither human approval nor old-process termination.
+
+  - id: reassign-wrong-target-session
+    facts: {target_claim_session: office-codex, reassign_target_session: office-pi, leader_author_verified: true}
+    requested_action: Accept reassignment because only the session name differs.
+    decision: reject-event-no-write
+    reason: Target claim identity and session must match verified predecessor lineage.

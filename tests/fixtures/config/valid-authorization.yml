@@ -1,0 +1,21 @@
+schema_version: 1
+repository:
+  hostname: github.com
+  repository_id: 123456789
+  owner: example-org
+  name: example-repo
+  default_branch: main
+  default_branch_source_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+leader_delegations:
+  - actor_id: release-coordination
+    controlled_by: github-user
+    controlled_by_id: 1234
+    permission_ceiling: maintain
+    account_permission_at_grant: maintain
+    approval_evidence:
+      github_pr_url: https://github.com/example-org/example-repo/pull/42
+      approved_by: repository-owner
+      approved_at: "2026-09-17T15:30:00+08:00"
+      approved_head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    status: active
+    granted_at: "2026-09-17T15:30:00+08:00"

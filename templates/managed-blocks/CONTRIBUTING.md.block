@@ -1,0 +1,9 @@
+## Agent collaboration
+
+Agent 参与协作前先阅读项目协议：
+[`.github/agent-collaboration/README.md`](.github/agent-collaboration/README.md)。Agent 的日常 GitHub
+写操作必须使用 `github-collaboration` `>=0.1.0`。未安装、过期或不兼容时只能读取和
+检查；按项目内[安装说明](.github/agent-collaboration/INSTALL_SKILL.md)安装并在新会话验证。所有 Agent 默认是 Member，不能
+自行提权；治理配置或修复仅可由获授权 Leader 使用 `github-collaboration-setup`。
+人类可按项目协议直接参与。创建 Issue、首次认领、评论和审查不要求预先拥有实施 claim；
+范围内实施、提交和推送需要有效 claim。

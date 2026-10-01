@@ -1,0 +1,91 @@
+version: 1
+purpose: Setup file and resource protection decisions; a plan or prior approval is never permission to overwrite drifted state.
+cases:
+  - id: dirty-entry-file
+    resource: AGENTS.md
+    observed_state: Target has uncommitted user edits, even if the proposed managed block would append after them.
+    decision: stop-and-ask
+    write_allowed: false
+    next_action: Show the dirty diff and candidate separately; ask whether to preserve, merge, or defer these edits before a new exact-diff approval.
+  - id: duplicate-block
+    resource: AGENTS.md
+    observed_state: Two complete github-agent-collaboration managed blocks exist.
+    decision: stop-and-ask
+    write_allowed: false
+    next_action: Show both byte ranges and candidate choices; ask which content to retain without changing bytes outside the selected block.
+  - id: broken-marker
+    resource: CLAUDE.md
+    observed_state: A start marker has no matching exact end marker, or marker syntax is damaged.
+    decision: stop-and-ask
+    write_allowed: false
+    next_action: Show the malformed region and a manual repair candidate; ask for an explicit choice and approval.
+  - id: similar-unmanaged-rule
+    resource: AGENTS.md
+    observed_state: Existing prose or a near-marker describes GitHub collaboration without an exact managed block.
+    decision: stop-and-ask
+    write_allowed: false
+    next_action: Show semantic overlap and alternative merge locations; ask whether to retain, consolidate, or omit the new block.
+  - id: suspicious-symlink
+    resource: CLAUDE.md
+    observed_state: Target or a path component is a symbolic link or resolves outside the verified project root.
+    decision: stop-and-ask
+    write_allowed: false
+    next_action: Resolve link ownership and target with the user; do not follow it during planning or apply.
+  - id: unknown-template-owner
+    resource: .github/ISSUE_TEMPLATE/feature.yml
+    observed_state: A same-path Issue Form exists without a verified managed baseline.
+    decision: stop-and-ask
+    write_allowed: false
+    next_action: Show current file and bundled template with a three-way comparison only if a trustworthy prior baseline is recovered; otherwise ask for explicit takeover or a new path.
+  - id: approval-digest-drift
+    resource: .github/agent-collaboration/config.yml
+    observed_state: Bytes or managed-field values no longer match the digest bound to the approved proposal.
+    decision: stop-and-ask
+    write_allowed: false
+    next_action: Re-read and rebuild the proposal; show the new diff and request a new item-specific approval.
+  - id: missing-managed-baseline
+    resource: .github/workflows/agent-collaboration-check.yml
+    observed_state: Existing workflow has a registry entry but its previous applied bytes cannot be recovered or verified.
+    decision: stop-and-ask
+    write_allowed: false
+    next_action: Report the missing ancestor; ask whether to leave untouched, recover a verified baseline, or explicitly take over with a reviewed diff.
+  - id: same-name-unmanaged-ruleset
+    resource: GitHub Ruleset ID 842
+    observed_state: Ruleset name matches the template, but stable remote ID and managed-field baseline are absent from the registry.
+    decision: stop-and-ask
+    write_allowed: false
+    next_action: Read remote fields by ID, display field-level differences and existing protection; ask for explicit takeover without weakening the rule.
+  - id: network-result-unknown
+    resource: GitHub Label ID 123
+    observed_state: Remote request timed out after submission; success or failure is unknown.
+    decision: query-stable-id-before-retry
+    write_allowed: false
+    next_action: Query Label ID 123 and compare approved fields; record observed success or seek renewed approval for a changed proposal before retry.
+  - id: clean-lf-entry
+    resource: AGENTS.md
+    fixture: managed-block/plain-lf.md
+    observed_state: Clean regular file with LF endings and no managed block or semantically similar rule.
+    decision: show-candidate-and-request-diff-approval
+    write_allowed: false
+    next_action: Render a separate candidate, show exact diff and both SHA-256 digests, then request approval for this file.
+  - id: clean-crlf-entry
+    resource: AGENTS.md
+    fixture: managed-block/plain-crlf.md
+    observed_state: Clean regular file with CRLF endings and no managed block or semantically similar rule.
+    decision: show-candidate-and-request-diff-approval
+    write_allowed: false
+    next_action: Preserve existing bytes and line endings in a separate candidate; request exact-diff approval.
+  - id: clean-bom-entry
+    resource: CLAUDE.md
+    fixture: managed-block/utf8-bom.md
+    observed_state: Clean regular file with a UTF-8 BOM and no managed block or semantically similar rule.
+    decision: show-candidate-and-request-diff-approval
+    write_allowed: false
+    next_action: Preserve BOM and preexisting bytes in a separate candidate; request exact-diff approval.
+  - id: clean-no-final-newline-entry
+    resource: AGENTS.md
+    fixture: managed-block/no-final-newline.md
+    observed_state: Clean regular file without a final newline or managed block or semantically similar rule.
+    decision: show-candidate-and-request-diff-approval
+    write_allowed: false
+    next_action: Add only the separator needed for the block while preserving original bytes; request exact-diff approval.

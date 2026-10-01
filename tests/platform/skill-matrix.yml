@@ -1,0 +1,92 @@
+# Evidence ledger, not a declaration of platform support. WSL is supplementary
+# and cannot replace a native Windows row. Never mark verified from static tests.
+unverified_checks: &unverified_checks
+  install: unverified
+  explicit_invocation: unverified
+  project_entry_discovery: unverified
+  resource_loading: unverified
+  upgrade: unverified
+  conflict: unverified
+  disablement: unverified
+  missing_skill_stop_write: unverified
+
+rows:
+  - agent: codex
+    os: macos
+    status: unverified
+    client_version: codex-cli 0.159.3
+    skill_release_tag: null
+    skill_commit_sha: null
+    evidence:
+      - docs/VALIDATION.md
+    local_probe:
+      metadata_discovery: verified
+      package_file_access: verified
+      model_invocation: verified
+      default_user_path: unverified
+      boundary: pre-release macOS read-only explicit invocations; root fixtures only; see sanitized evidence scope
+    checks: *unverified_checks
+  - agent: codex
+    os: linux
+    status: unverified
+    client_version: null
+    skill_release_tag: null
+    skill_commit_sha: null
+    evidence: []
+    checks: *unverified_checks
+  - agent: codex
+    os: windows-native
+    status: unverified
+    client_version: null
+    skill_release_tag: null
+    skill_commit_sha: null
+    evidence: []
+    checks: *unverified_checks
+  - agent: claude-code
+    os: macos
+    status: unverified
+    client_version: null
+    skill_release_tag: null
+    skill_commit_sha: null
+    evidence: []
+    checks: *unverified_checks
+  - agent: claude-code
+    os: linux
+    status: unverified
+    client_version: null
+    skill_release_tag: null
+    skill_commit_sha: null
+    evidence: []
+    checks: *unverified_checks
+  - agent: claude-code
+    os: windows-native
+    status: unverified
+    client_version: null
+    skill_release_tag: null
+    skill_commit_sha: null
+    evidence: []
+    checks: *unverified_checks
+  - agent: pi-agent
+    os: macos
+    status: unverified
+    client_version: null
+    skill_release_tag: null
+    skill_commit_sha: null
+    evidence: []
+    checks: *unverified_checks
+  - agent: pi-agent
+    os: linux
+    status: unverified
+    client_version: null
+    skill_release_tag: null
+    skill_commit_sha: null
+    evidence: []
+    checks: *unverified_checks
+  - agent: pi-agent
+    os: windows-native
+    status: unverified
+    client_version: null
+    skill_release_tag: null
+    skill_commit_sha: null
+    evidence: []
+    checks: *unverified_checks

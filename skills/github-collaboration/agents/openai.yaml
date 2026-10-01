@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Agent Collaboration"
+  short_description: "Coordinate daily Agent work through GitHub"
+  default_prompt: "Use $github-collaboration to coordinate this repository task."

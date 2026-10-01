@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.github-agent-collaboration.dev/v1/managed-resources.schema.json",
+  "title": "GitHub Agent Collaboration managed resource registry",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "installation_id", "resources"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "installation_id": {"type": "string", "minLength": 1},
+    "resources": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/resource"}
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "resource": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "kind",
+        "stable_id",
+        "template_version",
+        "managed_fields_baseline_digest",
+        "applied_digest",
+        "baseline_reference"
+      ],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "stable_id": {"type": "string", "minLength": 1},
+        "template_version": {"type": "string", "minLength": 1},
+        "managed_fields_baseline_digest": {"$ref": "#/$defs/digest"},
+        "applied_digest": {"$ref": "#/$defs/digest"},
+        "baseline_reference": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

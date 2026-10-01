@@ -1,0 +1,180 @@
+version: 1
+purpose: Independent approval, ownership, capability, and read-back decisions for GitHub setup resources.
+required_approval_order:
+  - local-file-diff
+  - commit
+  - actions-trigger-and-cost
+  - push
+  - create-pr
+  - labels
+  - actions-setting
+  - required-check
+  - ruleset-or-branch-protection
+resources:
+  - kind: label
+    discover: List all repository labels with pagination, then GET the exact candidate label by name; capture id, node_id, name, color, description, archived_at and owner repository ID.
+    stable_id: Repository ID plus returned label id; the name is only an API lookup key and is not proof of ownership.
+    managed_fields: Only explicitly registered name, color and description; archived state is never changed by default.
+    display_diff: Show baseline, current and proposed managed fields, user drift, and all untouched fields.
+    permission_check: Effective Leader, current account at least Maintain, and endpoint Issues or Pull requests write capability; verify API eligibility before write.
+    approval_gate: labels
+    approval_question: "是否批准只在仓库 <owner/repo> 创建或修改 Label <name/id> 的所列字段与差异？其他 Label 不变。"
+    apply: Re-read and compare approved digest; POST one absent label or PATCH only approved fields for a registered label.
+    read_back: GET by returned/current name, verify stable id, approved fields and untouched fields; record id and digest.
+  - kind: issue-template
+    discover: Read default-branch SHA and every .github/ISSUE_TEMPLATE path, current bytes, template chooser config and prior managed baseline.
+    chooser_config_path: .github/ISSUE_TEMPLATE/config.yml
+    stable_id: Repository ID plus exact case-sensitive path; record default-branch commit/blob SHA separately as content version.
+    managed_fields: Approved file bytes or verified three-way changed regions; preserve unrelated chooser entries and templates.
+    display_diff: Show file byte diff, path collisions, chooser effect, baseline/current/proposed hashes and user edits.
+    permission_check: Effective Leader, account at least Maintain, repository contents write, and existing branch protections satisfied.
+    approval_gate: local-file-diff
+    approval_question: "是否批准在治理分支按所示差异新增或更新 Issue 模板 <path>，保留其余模板及 chooser 设置？"
+    apply: Re-read default-branch source and path, stage only approved file, commit/push/PR under separate gates; no direct default-branch write.
+    read_back: After approved merge, read default-branch path/blob and chooser behavior; compare approved bytes and record merged SHA.
+  - kind: pr-template
+    discover: Read project .github/agent-collaboration/config.yml managed_paths.pull_request_template, then default-branch root/docs/.github default PR template locations and PULL_REQUEST_TEMPLATE directories, current bytes and prior baseline; inspect existing default template and exact chosen path. Do not use .github/ISSUE_TEMPLATE/config.yml for PR selection.
+    project_config_selector: .github/agent-collaboration/config.yml:managed_paths.pull_request_template
+    missing_selector_decision: read-only-discover-and-ask
+    stable_id: Repository ID plus exact template path; record default-branch commit/blob SHA separately as content version.
+    stable_id_components: [repository-id, exact-template-path]
+    selection:
+      web: template-query-parameter
+      cli_api: explicit-body-from-selected-template
+    managed_fields: Approved file bytes or verified three-way changed regions; no takeover of an existing default template.
+    display_diff: Show exact bytes, existing default-template precedence, selected project-config path and web template query parameter or explicit CLI/API body effect. If selector absent, show discovered candidates and ask user to choose; do not guess.
+    permission_check: Effective Leader, account at least Maintain, repository contents write, and existing branch protections satisfied.
+    approval_gate: local-file-diff
+    approval_question: "是否批准仅按所示差异新增或更新项目协作 config.yml 选定（或本次由您选定）的 PR 模板 <path>，网页创建 PR 时用 template 查询参数选定它、CLI/API 创建 PR 时明确用该文件构造正文，且不覆盖现有默认模板？"
+    apply: Re-read ownership and approved digest, change one file on governance branch, then separately approve commit/push/PR.
+    read_back: After merge, re-read project config selector and selected path at default-branch SHA, verify bytes and chosen path agree; check web template parameter resolves the chosen file and CLI/API body is built from that file when creating a PR.
+    read_back_checks: [project-config-selected-path-matches, default-branch-template-bytes, web-template-parameter-resolves-selected-file, cli-api-body-built-from-selected-file]
+  - kind: workflow-file
+    discover: Read default-branch .github/workflows paths, target bytes, prior baseline, current Actions policy, triggers, runner and repository visibility.
+    stable_id: Repository ID plus exact workflow path; record GitHub workflow id after it exists on default branch.
+    managed_fields: Approved workflow file bytes, triggers, permissions, runner, dependencies pinned by SHA and validation logic.
+    display_diff: Show exact file diff plus trigger and cost impact, including existing workflows this push/PR can run.
+    permission_check: Effective Leader, account at least Maintain, contents/workflow write capability and allowed Actions policy; verify actual access.
+    approval_gate: local-file-diff-and-actions-trigger-and-cost-before-push
+    approval_question: "是否批准所示 workflow 文件差异，以及在推送前另行批准列出的触发、Runner、频率和可能费用？"
+    apply: Change only approved path on governance branch; obtain separate commit, Actions-trigger/cost and push approvals before first triggering push.
+    read_back: After merge, read default-branch path/workflow id and observe an actual trusted run at the expected SHA; compare check name/source.
+  - kind: actions-setting
+    discover: GET repository Actions permissions, allowed-actions policy, default GITHUB_TOKEN workflow permissions and parent organization policy.
+    stable_id: Repository ID plus exact Actions-settings endpoint.
+    managed_fields: Only approved enabled/allowed_actions or default_workflow_permissions fields; preserve other policy fields.
+    display_diff: Show current, baseline and proposed per setting plus organization-imposed ceiling and expected run/cost effect.
+    permission_check: Effective Admin-ceiling Leader and current Administration write capability; Maintain alone cannot set repository Actions policy.
+    approval_gate: actions-setting
+    approval_question: "是否批准仅把仓库 <id> 的 Actions 设置 <endpoint/fields> 改成所示值，其他策略保持不变？"
+    apply: Re-read each endpoint, verify digest and permission; call the matching setting endpoint with only approved fields.
+    read_back: GET the same endpoint and parent policy, verify approved values and untouched fields.
+  - kind: codeowners
+    discover: Read active CODEOWNERS search paths on the default branch, line order, matching results for governance paths and candidate owner account/team eligibility.
+    stable_id: Repository ID plus active path and default-branch blob SHA.
+    managed_fields: Only approved appended or modified lines; preserve existing order and later-match effect.
+    display_diff: Show exact line diff and before/after effective owners for every affected path.
+    permission_check: Effective Leader, account at least Maintain, contents write; owners must have GitHub write access and native required owner review needs an eligible second account.
+    approval_gate: local-file-diff; effect-on-ownership-additional-approval
+    approval_question: "是否批准 CODEOWNERS <path> 的所示行差异及逐路径归属变化，并确认列出的第二个合格审查账号？"
+    apply: Re-read active file and owner eligibility; submit only approved governance PR under existing protections.
+    read_back: Read active default-branch CODEOWNERS and effective match/eligibility after merge; verify owners and approved bytes.
+  - kind: required-check
+    discover: GET effective branch rules/protection and recent check runs/status for the target PR head, including exact context, source App and merge queue use.
+    stable_id: Repository ID plus target branch/ruleset ID plus exact check context and source App ID where supported.
+    managed_fields: Only newly approved required check reference; preserve all existing required contexts/checks.
+    display_diff: Show previous and candidate required checks, observed run result/source and impact on merge availability.
+    permission_check: Effective Admin-ceiling Leader with Administration write or verified custom rules-edit right; verify endpoint/plan availability.
+    approval_gate: required-check-after-trusted-run
+    approval_question: "可信 workflow 已在 <SHA> 实际通过；是否单独批准将检查 <context/app-id> 加入 <branch/ruleset-id> 的必需项，保留所有现有检查？"
+    apply: Re-read current rule and actual check source; add only this check through its governing ruleset/protection API after separate approval.
+    read_back: GET effective rule and new PR status; verify context/source is required and can run and pass without self-dependency.
+  - kind: ruleset
+    discover: List repository and inherited organization rulesets, GET each candidate ID including source_type, enforcement, target, conditions, rules and bypass actors if visible.
+    stable_id: Repository ID plus ruleset numeric id and source_type; name alone never establishes ownership.
+    managed_fields: Only registered approved enforcement, conditions and rule entries; preserve bypass actors and unowned/stricter rules.
+    display_diff: Show baseline/current/proposed fields, inherited effect and effective protection of target branches.
+    permission_check: Effective Admin-ceiling Leader and GitHub Admin or verified custom edit-repository-rules right; plan/API availability checked live.
+    approval_gate: ruleset-or-branch-protection
+    approval_question: "是否批准仅创建或修改仓库 Ruleset <id/source> 的所列字段，并保留其他及继承门槛？"
+    update_method: PUT
+    update_requires:
+      - GET-current-full-object-by-id
+      - preserve-unmanaged-fields-and-complete-arrays
+      - approve-each-changed-field
+      - PUT-complete-preservation-safe-payload
+      - GET-by-id-and-verify-approved-and-untouched-fields
+    apply: Re-read ID and digest; POST a new uniquely identified ruleset only after verified absence. For a registered repository Ruleset, GET the current complete object by ID, retain every unowned field and complete conditions/rules/bypass_actors arrays, obtain approval for each changed field, and PUT the complete preservation-safe payload to that ID. Stop if any field cannot be read or preserved; never submit a partial bundled template as the complete body.
+    read_back: GET returned/current ID and effective branch rules, verify approved and untouched fields, inherited protections and no weaker/bypass setting.
+  - kind: branch-protection
+    discover: GET target branch protection, status checks, reviews, force-push/deletion restrictions and effective inherited rules.
+    stable_id: Repository ID plus exact target branch ref and protection endpoint; 404 is absence, not authority.
+    managed_fields: Only approved protection fields/checks/review settings; never null or reduce existing stricter fields.
+    display_diff: Show full before/after payload implications because protection PUT can replace omitted settings; include native review satisfiability.
+    permission_check: Effective Admin-ceiling Leader and GitHub Administration write; verify plan/API feature and branch scope.
+    approval_gate: ruleset-or-branch-protection
+    approval_question: "是否批准在分支 <ref> 上按所示完整保护差异配置这些字段，保留既有更强门槛？"
+    apply: Re-read all protection fields, construct complete preservation-safe payload for required PUT/PATCH endpoint, then apply only after exact approval.
+    read_back: GET protection and effective rules; verify each approved and untouched field, required reviewers/checks and no weaker protection.
+cases:
+  - id: registered-ruleset-update
+    observed_state: A registered repository Ruleset has additional unmanaged rules, conditions, and bypass actors; the bundled candidate changes one approved managed field.
+    decision: put-preserved-full-object-after-field-approval
+    partial-template_write_allowed: false
+    next_action: GET the complete current Ruleset by ID, preserve every unmanaged field and complete arrays, show and approve each changed field, PUT the complete preservation-safe payload, then GET by ID and verify approved and untouched fields and effective rules. Stop if any field cannot be read or preserved.
+  - id: workflow-push-before-actions-approval
+    observed_state: Local commit includes new workflow with push trigger; user approved Commit and says push now, but no trigger/runner/cost approval exists.
+    decision: stop-before-push
+    write_allowed: false
+    next_action: Show trigger and cost disclosure; request separate Actions execution approval before push, or offer a separately approved proposal without the workflow.
+  - id: existing-workflow-triggered-by-setup-push
+    observed_state: New workflow is absent, but existing repository workflow matches the proposed governance branch push or PR event.
+    decision: disclose-and-approve-before-push
+    write_allowed: false
+    next_action: Inventory existing workflow triggers, runner, visibility, frequency and possible billing; get trigger/cost approval before push.
+  - id: actions-approved-required-check-not-approved
+    observed_state: User approved and observed a workflow run but gave no approval to make its context a Required Check.
+    decision: stop-before-required-check
+    write_allowed: false
+    next_action: Show exact context/source, successful trusted run and branch impact; ask a new Required Check question.
+  - id: required-check-not-observed
+    observed_state: Candidate check exists in YAML but has never run from trusted default-branch code on a real PR.
+    decision: test-check-before-proposing-requirement
+    write_allowed: false
+    next_action: Complete human bootstrap review and merge under current protections; observe the check run and verify its stable name/source before proposing a requirement.
+  - id: same-name-unmanaged-ruleset
+    observed_state: Ruleset 842 has the candidate name, requires two reviewers, but has no registered stable ID or verified baseline; candidate would require only one.
+    decision: stop-and-ask
+    write_allowed: false
+    next_action: Show ID 842 and inherited/owned rule fields; leave two-reviewer protection intact and offer a compliant new resource or explicit nonweakening takeover diff.
+  - id: same-name-unmanaged-label
+    observed_state: Label called agent:ready exists but its numeric ID has no verified managed baseline.
+    decision: stop-and-ask
+    write_allowed: false
+    next_action: Show its ID, color and description; ask whether to leave it, choose another name, or explicitly adopt its exact approved fields.
+  - id: remote-update-timeout
+    observed_state: API call to update registered label ID 123 timed out after sending request.
+    decision: query-stable-id-before-retry
+    write_allowed: false
+    next_action: GET label ID 123 or exact repository/name lookup, compare approved fields and record observed result; retry only after renewed validity check.
+  - id: approval-digest-drift
+    observed_state: Ruleset managed fields changed after the approval-bound proposal digest was recorded.
+    decision: replan-and-reapprove
+    write_allowed: false
+    next_action: Re-read fields, rebuild three-way diff and ask for approval of the new exact candidate.
+  - id: one-account-required-review
+    observed_state: Only the PR author GitHub account can review; two Agents share its credential and no eligible second account is verified.
+    decision: do-not-enable-native-required-review
+    write_allowed: false
+    next_action: Preserve protocol review evidence, report missing eligible second account and defer new native Required Reviews/CODEOWNERS enforcement.
+  - id: same-account-agent-review
+    observed_state: A second responsibility Agent comments under the same GitHub account that authored the PR.
+    decision: protocol-evidence-only
+    native_approval_count: 0
+    write_allowed: false
+    next_action: Bind the comment to current PR head as protocol review evidence; obtain a separate eligible account for native Approve if required.
+  - id: existing-stricter-protection
+    observed_state: Existing branch or inherited ruleset requires two reviewers; candidate from bundled template requires one, and installation is blocked.
+    decision: preserve-protection-and-report-blocker
+    write_allowed: false
+    next_action: Keep the two-reviewer requirement; ask a qualifying second reviewer or report the setup blocker without bypassing or lowering protection.

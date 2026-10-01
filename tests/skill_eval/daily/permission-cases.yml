@@ -1,0 +1,256 @@
+version: 1
+purpose: Declarative daily permission fixtures, not evidence that an Agent or CLI executed decisions.
+fixtures:
+  repository: &repository {hostname: github.com, repository_id: 501, default_branch: main, head_sha: cccccccccccccccccccccccccccccccccccccccc}
+  config: &config
+    schema_version: 1
+    protocol_version: 0.1.0
+    minimum_runtime_skill_version: 0.1.0
+    setup_skill_version: 0.1.0
+    managed_paths:
+      protocol: .github/agent-collaboration/PROTOCOL.md
+      authorization: .github/agent-collaboration/authorization.yml
+      managed_resources: .github/agent-collaboration/managed-resources.yml
+      entry_files: [AGENTS.md, CLAUDE.md]
+    label_namespace: agent-collaboration/
+    enforcement: {actions_enabled: false, required_checks_enabled: false, rulesets_enabled: false}
+  source: &source
+    ref: default-branch
+    path: .github/agent-collaboration/authorization.yml
+    read_at_sha: cccccccccccccccccccccccccccccccccccccccc
+    approval_verified: true
+    repository: &source_repository {hostname: github.com, repository_id: 501, owner: acme, name: payments, default_branch: main, default_branch_source_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+  actor: &actor {actor_id: release-coordination, controlled_by: alex, controlled_by_id: 1001, session_id: codex-office}
+  maintain_grant: &maintain_grant
+    actor_id: release-coordination
+    controlled_by: alex
+    controlled_by_id: 1001
+    status: active
+    permission_ceiling: maintain
+    account_permission_at_grant: maintain
+    approval_evidence: &evidence
+      github_pr_url: https://github.com/acme/payments/pull/3
+      approved_by: repository-owner
+      approved_at: '2026-09-20T10:00:00+08:00'
+      approved_head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    granted_at: '2026-09-20T11:00:00+08:00'
+  admin_grant: &admin_grant
+    <<: *maintain_grant
+    permission_ceiling: admin
+    account_permission_at_grant: admin
+  other_account_grant: &other_account_grant
+    <<: *admin_grant
+    controlled_by: bob
+    controlled_by_id: 1002
+  other_actor_grant: &other_actor_grant
+    <<: *maintain_grant
+    actor_id: backend-api
+  revoked_grant: &revoked_grant
+    <<: *maintain_grant
+    status: revoked
+    revoked_at: '2026-09-21T10:00:00+08:00'
+  authorization: &authorization
+    schema_version: 1
+    repository: *source_repository
+    leader_delegations: [*maintain_grant]
+  empty_authorization: &empty_authorization
+    <<: *authorization
+    leader_delegations: []
+  admin_authorization: &admin_authorization
+    <<: *authorization
+    leader_delegations: [*admin_grant]
+  other_account_authorization: &other_account_authorization
+    <<: *authorization
+    leader_delegations: [*other_account_grant]
+  other_actor_authorization: &other_actor_authorization
+    <<: *authorization
+    leader_delegations: [*other_actor_grant]
+  revoked_authorization: &revoked_authorization
+    <<: *authorization
+    leader_delegations: [*revoked_grant]
+  other_repository_authorization: &other_repository_authorization
+    <<: *authorization
+    repository: {hostname: github.com, repository_id: 502, owner: acme, name: payments, default_branch: main, default_branch_source_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+  other_host_authorization: &other_host_authorization
+    <<: *authorization
+    repository: {hostname: enterprise.example, repository_id: 501, owner: acme, name: payments, default_branch: main, default_branch_source_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+  other_branch_authorization: &other_branch_authorization
+    <<: *authorization
+    repository: {hostname: github.com, repository_id: 501, owner: acme, name: payments, default_branch: master, default_branch_source_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+cases:
+  - id: admin-without-delegation
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *empty_authorization
+    account: {login: alex, id: 1001, permission: admin}
+    actor: *actor
+    effective_role: member
+    effective_permission: write
+    reason: Admin account is not an Agent Leader grant.
+  - id: maintain-without-delegation
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *empty_authorization
+    account: {login: alex, id: 1001, permission: maintain}
+    actor: *actor
+    effective_role: member
+    effective_permission: write
+    reason: Maintain account does not promote Agents automatically.
+  - id: maintain-leader
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *authorization
+    account: {login: alex, id: 1001, permission: maintain}
+    actor: *actor
+    effective_role: leader
+    effective_permission: maintain
+    reason: Active validated grant matches repository, account, and actor.
+  - id: maintain-leader-account-upgraded-admin
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *authorization
+    account: {login: alex, id: 1001, permission: admin}
+    actor: *actor
+    effective_role: leader
+    effective_permission: maintain
+    reason: Account promotion does not raise the frozen Maintain ceiling.
+  - id: admin-leader-account-downgraded-maintain
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *admin_authorization
+    account: {login: alex, id: 1001, permission: maintain}
+    actor: *actor
+    effective_role: leader
+    effective_permission: maintain
+    reason: Current account downgrade immediately constrains an Admin grant.
+  - id: admin-leader-account-downgraded-write
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *admin_authorization
+    account: {login: alex, id: 1001, permission: write}
+    actor: *actor
+    effective_role: member
+    effective_permission: write
+    reason: An account below Maintain cannot retain effective Leader status.
+  - id: permission-query-failed
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *authorization
+    account: {login: alex, id: 1001, permission: unknown}
+    actor: *actor
+    effective_role: read-only
+    effective_permission: none
+    reason: Query failure cannot reuse cached permission.
+  - id: different-repository-id
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *other_repository_authorization
+    account: {login: alex, id: 1001, permission: admin}
+    actor: *actor
+    effective_role: read-only
+    effective_permission: none
+    reason: Authorization repository ID conflicts with the confirmed target.
+  - id: different-hostname
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *other_host_authorization
+    account: {login: alex, id: 1001, permission: admin}
+    actor: *actor
+    effective_role: read-only
+    effective_permission: none
+    reason: Authorization hostname conflicts with the confirmed target.
+  - id: different-default-branch
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *other_branch_authorization
+    account: {login: alex, id: 1001, permission: admin}
+    actor: *actor
+    effective_role: read-only
+    effective_permission: none
+    reason: Authorization default branch conflicts with the confirmed target.
+  - id: different-controlled-account
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *other_account_authorization
+    account: {login: alex, id: 1001, permission: admin}
+    actor: *actor
+    effective_role: member
+    effective_permission: write
+    reason: Another account's grant is not transferable.
+  - id: different-actor
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *authorization
+    account: {login: alex, id: 1001, permission: admin}
+    actor: {actor_id: backend-api, controlled_by: alex, controlled_by_id: 1001, session_id: pi-home}
+    effective_role: member
+    effective_permission: write
+    reason: Same account does not transfer a grant to another responsibility.
+  - id: untrusted-working-branch-delegation
+    repository: *repository
+    config: *config
+    authorization_source: {ref: feature-branch, path: .github/agent-collaboration/authorization.yml, read_at_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, approval_verified: false, repository: *source_repository}
+    authorization: *authorization
+    account: {login: alex, id: 1001, permission: admin}
+    actor: *actor
+    effective_role: read-only
+    effective_permission: none
+    reason: Working-branch proposal cannot authorize itself.
+  - id: revoked-delegation
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *revoked_authorization
+    account: {login: alex, id: 1001, permission: admin}
+    actor: *actor
+    effective_role: member
+    effective_permission: write
+    reason: Revoked history confers no Leader authority.
+  - id: same-actor-new-session
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *authorization
+    account: {login: alex, id: 1001, permission: maintain}
+    actor: {actor_id: release-coordination, controlled_by: alex, controlled_by_id: 1001, session_id: pi-home}
+    old_session_claim: {session_id: codex-office, status: active, handoff: absent}
+    effective_role: leader
+    effective_permission: maintain
+    claim_write: resume-required
+    reason: Session is not part of Leader identity; active claim still needs handoff/resume.
+  - id: protected-branch-forbids-direct-write
+    repository: *repository
+    config: *config
+    authorization_source: *source
+    authorization: *authorization
+    account: {login: alex, id: 1001, permission: admin}
+    actor: *actor
+    protection: {default_branch_direct_push: forbidden}
+    effective_role: leader
+    effective_permission: maintain
+    branch_write: blocked-by-protection
+    reason: Rulesets and branch protection remain binding.
+  - id: configured-nondefault-authorization-path
+    repository: *repository
+    config:
+      <<: *config
+      managed_paths: {protocol: .github/agent-collaboration/PROTOCOL.md, authorization: .github/agent-collaboration/leader-grants.yml, managed_resources: .github/agent-collaboration/managed-resources.yml, entry_files: [AGENTS.md, CLAUDE.md]}
+    authorization_source: {ref: default-branch, path: .github/agent-collaboration/leader-grants.yml, read_at_sha: cccccccccccccccccccccccccccccccccccccccc, approval_verified: true, repository: *source_repository}
+    authorization: *authorization
+    account: {login: alex, id: 1001, permission: maintain}
+    actor: *actor
+    effective_role: leader
+    effective_permission: maintain
+    reason: Schema-valid configured path is authoritative; the template filename is not fixed.

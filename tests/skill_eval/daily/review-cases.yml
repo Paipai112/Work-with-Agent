@@ -1,0 +1,128 @@
+version: 1
+purpose: Synthetic review and recovery contract fixtures; decisions are not Agent behavior evidence.
+cases:
+  - id: same-account-other-actor
+    facts: {pr_author_account_id: 1001, implementation_actor_id: backend-api, reviewer_actor_id: release-coordination, reviewer_account_id: 1001, reviewed_head_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+    requested_action: Treat the other actor's review as the PR author's native Approve.
+    protocol_review_possible: true
+    native_approval_satisfied: false
+    decision: blocked-native-review
+    reason: Distinct responsibility records aid coordination but cannot supply a GitHub approval from a different account.
+  - id: implementation-actor-only-review
+    facts: {implementation_actor_id: backend-api, only_reviewer_actor_id: backend-api, head_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+    requested_action: Merge after the implementing actor's own protocol review.
+    decision: blocked
+    reason: Another authorized responsibility Leader or human owner must review the current HEAD.
+  - id: protocol-comment-only
+    facts: {current_head_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, other_leader_record_decision: comment, native_reviews_satisfied: true}
+    requested_action: Merge because another Leader left a protocol comment and native reviews passed.
+    decision: blocked-no-protocol-approve
+    reason: A valid protocol approve for the current HEAD is required; comment is feedback, not approval.
+  - id: request-changes-unresolved
+    facts: {current_head_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, valid_other_leader_record_decision: request-changes, explicit_resolution: false}
+    requested_action: Merge after the author says the concern is fixed without a new approval record.
+    decision: blocked-open-request-changes
+    reason: An outstanding protocol request-changes remains a veto until explicitly resolved by an authorized reviewer on the current HEAD.
+  - id: request-changes-resolved-current-head
+    facts: {current_head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, prior_request_changes_record_id: 7001, later_approve_record_id: 7002, later_approve_reviewed_head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, later_approve_explicitly_resolves: 7001, reviewer_authorized_now: true}
+    requested_action: Evaluate the protocol review gate before checking the other merge gates.
+    decision: merge-eligible-after-other-gates
+    reason: A later authenticated current-HEAD approve explicitly resolves the earlier request-changes; native reviews and every other gate still need independent proof.
+  - id: valid-current-head-approve
+    facts: {repository_id: 501, pull_request_number: 87, current_head_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, comment_id: 7003, comment_url: 'https://github.com/acme/payments/pull/87#issuecomment-7003', github_user_id: 1002, github_user_login: project-owner, reviewer_account_id: 1002, reviewer_account_login: project-owner, reviewer_actor_id: release-coordination, reviewer_current_permission: maintain, reviewer_active_default_branch_delegation: true, record_decision: approve}
+    requested_action: Evaluate an authenticated current-HEAD protocol approval before checking the other merge gates.
+    verified_envelope: [repository_id, pull_request_number, comment_id, comment_url, 'user.id', 'user.login', reviewer_account_id, reviewer_account_login, current_account_permission, current_default_branch_delegation]
+    decision: merge-eligible-after-other-gates
+    reason: All source and authorization fields match, but no merge is permitted without the other independent gates.
+  - id: reviewer-body-impersonation
+    facts: {repository_id: 501, pull_request_number: 87, comment_id: 7004, github_user_id: 1001, github_user_login: alex, body_reviewer_account_id: 1002, body_reviewer_account_login: project-owner, body_decision: approve}
+    requested_action: Trust the comment body claiming that project-owner approved.
+    decision: reject-untrusted-record
+    reason: GitHub's actual user.id and user.login disagree with the body; self-assertion is not authority.
+  - id: review-comment-wrong-repository
+    facts: {expected_repository_id: 501, comment_repository_id: 502, body_repository_id: 501, body_decision: approve}
+    requested_action: Import an otherwise plausible approval from a similarly named repository.
+    decision: reject-untrusted-record
+    reason: The GitHub source immutable repository ID must equal the confirmed target repository ID.
+  - id: review-comment-wrong-pr
+    facts: {expected_pull_request_number: 87, actual_comment_pull_request_number: 88, body_pull_request_number: 87, body_decision: approve}
+    requested_action: Use an approval comment attached to another PR.
+    decision: reject-untrusted-record
+    reason: The comment must belong to the exact PR being merged.
+  - id: review-comment-id-url-mismatch
+    facts: {actual_comment_id: 7005, body_comment_id: 7006, actual_comment_url: 'https://github.com/acme/payments/pull/87#issuecomment-7005', supplied_comment_url: 'https://github.com/acme/payments/pull/87#issuecomment-7006'}
+    requested_action: Accept the supplied URL as the approval proof.
+    decision: reject-untrusted-record
+    reason: The read-back GitHub comment ID and URL must resolve to the same target comment and PR.
+  - id: reviewer-delegation-revoked
+    facts: {comment_author_id_matches_body: true, reviewed_head_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, current_account_permission: maintain, current_default_branch_delegation: revoked}
+    requested_action: Accept the old approve because identity was genuine when posted.
+    decision: reject-untrusted-record
+    reason: A genuine comment cannot confer current Leader authority after default-branch delegation revocation.
+  - id: new-commit-after-approval
+    facts: {reviewed_head_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, current_head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, github_review_decision: APPROVED}
+    requested_action: Merge because GitHub still displays an earlier approval.
+    decision: re-review-current-head
+    reason: Protocol review and required native approval evidence must be valid for the new HEAD, regardless of displayed old state.
+  - id: leader-account-now-write
+    facts: {delegated_ceiling: maintain, current_account_permission: write, prior_account_permission: maintain}
+    requested_action: Merge using the previously cached Leader authorization.
+    decision: member-no-merge
+    reason: Current permission below Maintain makes Leader ineffective immediately.
+  - id: stale-checks-after-new-head
+    facts: {checked_head_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, current_head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, old_check_conclusion: success}
+    requested_action: Reuse green checks from the previous commit.
+    decision: recheck-current-head
+    reason: Required checks must be bound to the current PR HEAD and configured source.
+  - id: unresolved-conversation
+    facts: {current_head_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, unresolved_conversations: 1}
+    requested_action: Merge because tests passed.
+    decision: blocked
+    reason: Outstanding review conversation requires resolution and read-back.
+  - id: conflicting-claim
+    facts: {current_head_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, overlap_with_other_active_claim: true}
+    requested_action: Merge now and settle claim conflict later.
+    decision: blocked
+    reason: An active scope conflict is a merge blocker.
+  - id: governance-in-business-pr
+    facts: {business_pr: true, changed_paths: [src/api/retry.py, .github/agent-collaboration/authorization.yml]}
+    requested_action: Approve and merge together.
+    decision: split-and-route-to-setup
+    reason: Governance changes require a separate setup-managed proposal and cannot piggyback on business work.
+  - id: merge-head-moved
+    facts: {reviewed_head_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, current_head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+    requested_action: Merge by PR number without checking the commit.
+    decision: blocked-head-mismatch
+    reason: Merge must be locked to the reviewed current HEAD SHA; restart review on change.
+  - id: merge-success-unverified
+    facts: {merge_response: success, default_branch_contains_merge: unknown, issue_state: open}
+    requested_action: Close the Issue immediately.
+    decision: read-back-before-issue-update
+    reason: Verify merged state and default-branch result before Issue or handoff updates.
+  - id: merge-timeout
+    facts: {merge_response: timeout, pr_state: unknown, default_branch_head: unknown}
+    requested_action: Retry merge immediately.
+    decision: read-back-before-retry
+    reason: Timeout does not prove failure; inspect PR and default branch before any retry.
+  - id: push-diverged
+    facts: {expected_remote_head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, actual_remote_head: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, local_work_preserved: true}
+    requested_action: Force-push or reset to make remote match.
+    decision: preserve-work-and-coordinate
+    reason: Unexpected divergence needs read-only comparison and a scoped recovery choice.
+  - id: post-merge-issue-update-failed
+    facts: {verified_merge_sha: cccccccccccccccccccccccccccccccccccccccc, issue_update_response: timeout, issue_state: unknown}
+    requested_action: Repost closure and handoff without checking their current state.
+    decision: verify-merge-then-retry-idempotently
+    reason: Keep the verified merge proof and read Issue/events back before retrying only missing updates.
+
+  - id: reuse-current-head-engineering-review
+    facts: {reviewer_implementation_claim: null, evidence_head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, current_head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, substantive_findings_and_limits_recorded: true, other_leader_currently_authorized: true}
+    requested_action: Reuse the current engineering review and complete formal protocol review.
+    decision: verify-evidence-and-record-formal-conclusion
+    reason: The reviewer needs no implementation claim; current evidence can be reused after verifying its scope, findings and missing protocol gates.
+
+  - id: engineering-review-without-leader-approval
+    facts: {engineering_review_passed: true, current_head_matches: true, current_leader_approve: false}
+    requested_action: Merge solely because the engineering tool reported success.
+    decision: blocked-no-protocol-approve
+    reason: Evidence reuse does not remove authorized current-HEAD protocol approval or native reviews.

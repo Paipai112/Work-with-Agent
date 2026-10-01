@@ -1,0 +1,125 @@
+version: 1
+purpose: Bootstrap and recovery authorization decision fixtures; a repository account permission is never an Agent role.
+cases:
+  - id: existing-repo-below-maintain
+    condition: Existing repository; account permission is write; no active Leader delegation.
+    decision: stop-before-grant
+    reason: Only an account verified as Maintain or Admin can control a Bootstrap Leader.
+  - id: existing-repo-maintain-no-human-grant
+    condition: Existing repository; account is Maintain; Agent is Member; user has not granted a scoped Bootstrap session.
+    decision: read-only
+    reason: Account permission and Skill invocation never grant the Agent a Leader role.
+  - id: new-repo-creation-approvals
+    condition: No Git repository or remote repository yet; proposed owner, name, and visibility are known.
+    decision: request-separate-approvals
+    bootstrap_intent_before_create: explicit-but-inactive-until-repository-and-source-sha-readback
+    approval_steps:
+      - local-git-init
+      - repository-owner-name-visibility
+      - repository-create
+      - minimal-commit
+      - initial-push
+    reason: Human may express a bounded Bootstrap intent before creation; it is inactive until real repository ID, default branch, source SHA, and account permission are read back and the grant is reconfirmed.
+  - id: created-repo-permission-below-maintain
+    condition: Repository creation succeeded; immediately queried account permission is write.
+    decision: stop-with-created-resource-report
+    delete_created_repository: false
+    reason: Report the new repository ID/URL and completed steps; do not configure governance or undo creation silently.
+  - id: empty-repo-minimal-commit
+    condition: Verified new repository has no default-branch commit; permission is at least Maintain.
+    decision: require-exact-manifest-and-separate-commit-push-approvals
+    allow_empty_commit: true
+    stage_all_untracked: false
+    forbidden_paths:
+      - .github/workflows/**
+      - .github/agent-collaboration/authorization.yml
+    reason: First direct default-branch commit establishes a branch only; it is not a governance installation.
+  - id: existing-history-or-protection
+    condition: Repository already has history or an existing rule blocks the proposed first or governance write.
+    decision: preserve-and-stop-if-blocked
+    reason: Do not replace history, force push, or weaken protections to complete setup.
+  - id: admin-account-member-agent
+    condition: Account is Admin; current actor_id has no active delegation or scoped human session grant.
+    decision: read-only
+    reason: Agent remains Member despite the controlling account's Admin permission.
+  - id: bootstrap-session-before-merge
+    condition: Repository and default branch are verified; human explicitly grants this actor a scoped setup session; governance proposal is not merged.
+    decision: session-only
+    bind_to:
+      - hostname
+      - repository_id
+      - default_branch
+      - default_branch_source_sha
+      - controlled_by
+      - controlled_by_id
+      - actor_id
+    reason: The scoped session can prepare a governance PR, but cannot be reused after interruption or identity/source drift.
+  - id: governance-pr-approved
+    condition: Human approval was given to governance content proposal HEAD P while the scoped session and old rules were valid.
+    decision: record-proposal-approval-at-P
+    approval_binding: approved_head_sha
+    reason: approved_head_sha records P; it cannot self-reference the later commit that inserts this evidence into the same file.
+  - id: evidence-only-commit-changes-head
+    condition: A follow-up commit E adds approved_head_sha=P to the proposed authorization record and changes the PR HEAD.
+    decision: require-external-final-head-review
+    allowed_diff:
+      - approval_evidence
+    reason: Compare E with P; if only evidence changed, obtain a separate auditable human review of E, respecting dismissal of earlier reviews.
+  - id: content-changed-after-evidence
+    condition: A commit after P or E changes the delegation content, scope, or ceiling rather than only the recorded approval evidence.
+    decision: restart-approval
+    reason: Reapprove the new content proposal HEAD, then produce its evidence-only commit and separately approve the final HEAD.
+  - id: governance-pr-merged-no-readback
+    condition: An approved governance PR reports merged, but active default-branch authorization at the merged SHA has not been read back.
+    decision: not-yet-persistent
+    reason: A merge response alone does not establish the active record or its identity and ceiling.
+  - id: governance-pr-merged-and-read-back
+    condition: Existing protections were satisfied; approved governance PR merged; active record was schema-validated from the verified default branch at its current merged SHA.
+    decision: persistent-leader
+    reason: Freeze the explicitly approved ceiling at the verified current account permission.
+  - id: account-upgraded-maintain-to-admin
+    condition: Active Leader ceiling was frozen at Maintain; account later becomes Admin.
+    decision: preserve-frozen-ceiling
+    effective_ceiling: maintain
+    reason: An account upgrade cannot silently expand the Agent delegation.
+  - id: account-downgraded-admin-to-write
+    condition: Active Leader ceiling is Admin; account's freshly queried permission becomes Write.
+    decision: immediately-constrain
+    effective_permission: write
+    reason: Effective permission is bounded by the current account, and setup writes requiring Leader must stop.
+  - id: lost-last-leader-no-human-recovery-grant
+    condition: authorization.yml exists; every Leader is revoked or unavailable; no scoped human Recovery grant.
+    decision: read-only
+    reason: Never delete authorization.yml to simulate first installation.
+  - id: lost-last-leader-human-recovery-grant
+    condition: Account is at least Maintain; human grants this actor a specific Recovery session after old governance rules and protections are read.
+    decision: scoped-recovery-session
+    preserve_authorization_history: true
+    reason: Recovery proposal follows existing PR/review/check rules and becomes persistent only after approved merge and read-back.
+  - id: maintain-leader-requests-admin-ceiling
+    condition: Existing executing Leader ceiling is Maintain; target account has become Admin; proposed delegation asks for Admin.
+    decision: require-admin-account-human-scoped-escalation
+    reason: Maintain Leader cannot grant Admin by editing a PR; a human must explicitly authorize an Admin-account session limited to this proposal.
+
+valid_persistent_authorization_example:
+  schema_version: 1
+  repository:
+    hostname: github.com
+    repository_id: 123456
+    owner: acme
+    name: service
+    default_branch: main
+    default_branch_source_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  leader_delegations:
+    - actor_id: release-coordination
+      controlled_by: alex
+      controlled_by_id: 7890
+      permission_ceiling: maintain
+      account_permission_at_grant: maintain
+      approval_evidence:
+        github_pr_url: https://github.com/acme/service/pull/42
+        approved_by: repository-owner
+        approved_at: '2026-09-26T10:00:00+08:00'
+        approved_head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      status: active
+      granted_at: '2026-09-26T10:05:00+08:00'
