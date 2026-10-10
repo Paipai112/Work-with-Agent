@@ -22,6 +22,15 @@
 - 行为变化（协议语义、检查器判定、技能规则）需同步更新测试与 [发行说明](docs/RELEASE_NOTES.md) 的对应段落。
 - 版本发行由维护者按固定标签发布；提交中不要自行创建标签或 Release。
 
+## 标识符纪律
+
+以下机器标识符按原名保持稳定（含 `github-agent-collaboration` 字样），改动会破坏已安装的消费项目，不要为与仓库名一致而修改：
+
+- 技能目录：`github-collaboration-setup`、`github-collaboration`
+- 受管区块标记：`github-agent-collaboration`（亦是 `managed_block.py` 等脚本的默认参数值）
+- schema `$id` 前缀：`https://schemas.github-agent-collaboration.dev/v1/`（标识符，不是可访问站点）
+- 治理文件路径：`.github/agent-collaboration/`
+
 ## 报告问题
 
 功能问题与提案使用 GitHub Issues；安全问题请按 [SECURITY.md](SECURITY.md) 的渠道提交。

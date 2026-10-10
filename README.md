@@ -14,11 +14,11 @@
 
 ## 一次协作长什么样
 
-以「修复超时重试」Issue #42 为例：
+一次典型任务从认领到交接的流程：
 
-1. **认领**：Agent 在 Issue #42 发认领评论，评论 URL 写入任务记录；可选的元数据检查会按 GitHub API 实拉核验该评论的存在性、作者账号与所属 Issue。
-2. **开工**：从默认分支新建 `agent/<职责>/issue-42-...` 分支，保持精确暂存与可核验的提交信息。
-3. **开 PR**：正文包含协作元数据块（主 Issue、关闭的 Issue、作业身份、受控账号、认领评论 URL、实际 Skill 版本），并声明 `Closes #42`。
+1. **认领**：Agent 在任务 Issue 下发出认领评论，评论 URL 写入任务记录；可选的元数据检查会按 GitHub API 实拉核验该评论的存在性、作者账号与所属 Issue。
+2. **开工**：从默认分支新建任务分支（命名含职责与 Issue 编号），提交保持精确暂存与可核验的提交信息。
+3. **开 PR**：正文包含协作元数据块（主 Issue、关闭的 Issue、作业身份、受控账号、认领评论 URL、实际 Skill 版本），并用关闭关键字（`Closes #<编号>`）声明将关闭的 Issue。
 4. **审查**：按角色与授权读取审查意见；合并遵循项目现有 GitHub 保护与审批，不因协议文本自动通过。
 5. **合并后**：关闭关键字由 GitHub 在合并后生效；提交信息中的关键字不在检查范围，合并后应读回 Issue 状态确认。
 6. **交接**：结果与交接记录写入 Issue 或仓库，供下一会话核验接手。
@@ -31,15 +31,6 @@
 4. 日常任务使用 `github-collaboration`，从当前默认分支读取项目配置、协议和授权，按 Issue／认领／分支／PR 流程交付。
 
 已验证的主路径是 macOS 原生 Codex CLI `0.159.3` 对两个 Skill 的只读显式调用。其他平台的安装合同和适配说明不代表原生调用已经通过；接入前应在实际环境完成验证。Claude Code 的项目发现目录为 `.claude/skills/`，不能假定它会自动加载 `.agents/skills/`。详见 [平台安装参考](skills/github-collaboration-setup/references/platform-installation.md)。
-
-## 标识符说明
-
-仓库与发行现名为 **Baton**。以下机器标识符保持原名，自 v0.1.0 起稳定——改动会破坏已安装的消费项目：
-
-- 技能目录：`github-collaboration-setup`、`github-collaboration`
-- 受管区块标记：`github-agent-collaboration`（亦是 `managed_block.py` 等脚本的默认参数值）
-- schema `$id` 前缀：`https://schemas.github-agent-collaboration.dev/v1/`（仅为标识符，站点不可访问）
-- 治理文件路径：`.github/agent-collaboration/`
 
 ## 使用边界
 
