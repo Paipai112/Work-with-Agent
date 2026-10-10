@@ -1,4 +1,4 @@
-# GitHub Agent Collaboration
+# Baton
 
 一套基于 GitHub 的多 Agent 协作模板，以及两个相互独立的 Skill：
 
@@ -8,7 +8,7 @@
 | `github-collaboration` | 日常 Issue、任务认领、分支、提交、PR、审查、合并与交接 |
 | 项目模板 | 保存协议、角色、授权记录、项目事实入口和 Issue／PR 格式 |
 
-本次固定发行版本为 `v0.1.0`，源仓为 [Paipai112/github-agent-collaboration](https://github.com/Paipai112/github-agent-collaboration)。这是私有发行，使用者需要源仓访问权限。安装时必须核验实际版本标签并解析完整提交 SHA，再从该 SHA 复制两个完整包；具体步骤见 [安装与项目接入](docs/INSTALL.md)，验证范围见 [发行说明](docs/RELEASE_NOTES.md)。
+本次固定发行版本为 `v0.1.0`，源仓为 [Paipai112/baton](https://github.com/Paipai112/baton)。安装时必须核验实际版本标签并解析完整提交 SHA，再从该 SHA 复制两个完整包；具体步骤见 [安装与项目接入](docs/INSTALL.md)，验证范围见 [发行说明](docs/RELEASE_NOTES.md)。
 
 包校验需要 Python 3.11+，两个 Skill 的日常使用不要求安装测试项目。可选离线回归的隔离环境与依赖安装见 [安装页](docs/INSTALL.md#可选离线回归)，测试选择及证据边界见 [验证说明](docs/VALIDATION.md)。
 
@@ -29,4 +29,4 @@
 
 项目模板默认关闭 Actions、Required Checks 和 Rulesets。启用任何一项均是独立治理改动；可能触发工作流的操作需先确认工作流、权限、runner 和费用影响，并获得对应批准。私有仓库的实际额度与费用应以当前账号和组织设置为准。
 
-尚未选择开源许可证，当前仅有权访问者用于获授权项目，不宣称开源发行。
+本项目以 [MIT 许可证](LICENSE) 开源发布。
