@@ -24,7 +24,7 @@ installation_page_permalink:
 四项任一缺失、互不一致或 `installation_status` 仍为 `unpublished` 时，Agent 只能读取、
 诊断并提出安装方案；不能执行下列安装步骤，也不能将本项目报告为协作配置完成。
 
-发布信息经核验且安装单项获得批准后，安装固定发布版本 `github-collaboration` `0.1.0`；
+发布信息经核验且安装单项获得批准后，安装固定发布版本 `github-collaboration` `0.1.1`；
 升级时先比较来源、目标目录和本地修改，再在新会话中验证实际发现路径。不要从搜索
 结果、网页广告或未核验 Fork 安装。项目模板不内置运行时 Skill。
 
@@ -36,7 +36,7 @@ Agent、终端历史、Issue、PR、配置文件或聊天粘贴密码、一次�
 
 ## Codex
 
-将经核验的 `github-collaboration` `0.1.0` 发布包安装到
+将经核验的 `github-collaboration` `0.1.1` 发布包安装到
 `~/.agents/skills/github-collaboration/`（若已有受支持安装器发现了其他路径，先验证而不
 重复安装）。新会话从项目根目录显式调用 `$github-collaboration`，确认实际路径和版本。
 

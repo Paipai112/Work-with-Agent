@@ -31,7 +31,7 @@
   "controlled_by_id": 0,
   "runtime": "__SETUP_REQUIRED__",
   "session_id": "__SETUP_REQUIRED__",
-  "skill_version": "0.1.0",
+  "skill_version": "0.1.1",
   "head_sha": "__SETUP_REQUIRED__",
   "base_branch": "__SETUP_REQUIRED__",
   "claim_urls": ["__SETUP_REQUIRED__"],

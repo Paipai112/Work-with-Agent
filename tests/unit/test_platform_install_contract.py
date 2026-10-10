@@ -49,7 +49,7 @@ def test_both_packages_declare_a_version_for_installation_readback(repo_root: Pa
     for name in ("github-collaboration-setup", "github-collaboration"):
         text = (repo_root / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
         frontmatter = yaml.safe_load(text.split("---", 2)[1])
-        assert frontmatter.get("metadata", {}).get("version") == "0.1.0"
+        assert frontmatter.get("metadata", {}).get("version") == "0.1.1"
 
 
 def test_paths_and_commands_point_to_discoverable_skill_folders(load_yaml):

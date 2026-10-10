@@ -2,6 +2,12 @@
 
 用于 `github-collaboration-setup` 的安装，以及向项目参与者说明如何安装日常 `github-collaboration`。客户端包安装先只读检查本地客户端、目标目录和固定来源；已有包的处理见 [升级与诊断](upgrade-and-diagnosis.md)。包安装需目标目录拥有者批准精确提案，不要求先有 Leader 或初始化 GitHub 项目。涉及项目治理文件或其 Git 操作时，另按 [预检与身份](preflight-and-identity.md) 完成项目预检与授权流程。安装 Skill 本身不授予 Leader 权限，也不修改 Agent 全局规则。
 
+## 安装作用范围与会话安全
+
+用户级安装对本机所有项目生效（以该用户和客户端运行时），客户端可能隐式发现这些 Skill。治理 Skill `github-collaboration-setup` 默认不隐式触发，必须显式调用。安装提案必须向目标目录拥有者明示用户级安装的作用范围、隐式发现风险及治理 Skill 的显式调用要求。
+
+不要在包含未信任分支或未合并内容的工作树中启动或继续会加载 Skill 的协作会话。仅检出内容就可能触发自动发现，发现过程也会跟随符号链接；会话应从已核验的可信工作树启动，不能以“尚未执行其中脚本”作为可信依据。
+
 ## 先确定来源和目标
 
 1. 记录客户端名称、确切版本、macOS/Linux/Windows native、当前工作目录和仓库根目录（若存在）。Windows 下若 Agent 实际运行在 WSL，按独立的 **Linux/WSL** 环境记录、安装、测试；不能算 Windows native 通过。

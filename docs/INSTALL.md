@@ -1,12 +1,12 @@
 # 安装与项目接入
 
-本页面向计划在获授权项目使用 `v0.1.0` 的参与者。默认接入路径是已验证的 macOS／Codex 组合：把两个完整 Skill 包放入目标项目的 `.agents/skills/`。安装和治理配置分别验收；包安装成功不授予 Leader，也不代表项目已配置完成。
+本页面向计划在获授权项目使用 `v0.1.1` 的参与者。默认接入路径是已验证的 macOS／Codex 组合：把两个完整 Skill 包放入目标项目的 `.agents/skills/`。安装和治理配置分别验收；包安装成功不授予 Leader，也不代表项目已配置完成。
 
 ## 1. 检查目标与来源
 
 先确认目标项目根目录、客户端名称和版本、操作系统及 native／WSL 环境。查看工作区状态、现有 `.agents/skills/`、其他发现位置中的同名 Skill，以及现有 `AGENTS.md`、`CLAUDE.md` 和 `.github/` 文件。记录实际生效路径、版本、本地改动、符号链接和重复项。
 
-源仓为 [Paipai112/baton](https://github.com/Paipai112/baton)，固定标签为 `v0.1.0`。通过已有安全认证访问源仓；不要把密码、令牌或私钥写入命令、文档或聊天。来源不可达、标签不存在、来源身份不一致时，报告具体缺口并保持只读。
+源仓为 [Paipai112/baton](https://github.com/Paipai112/baton)，固定标签为 `v0.1.1`。通过已有安全认证访问源仓；不要把密码、令牌或私钥写入命令、文档或聊天。来源不可达、标签不存在、来源身份不一致时，报告具体缺口并保持只读。
 
 核验维护者实际发布的 Release／标签记录，将标签解析为完整 40 位提交 SHA。后续源树、包摘要和安装页都使用该 SHA。标签是定位入口，固定提交才是安装依据；浮动分支不能代替它。
 
@@ -15,7 +15,7 @@
 ```sh
 set -eu
 source_url='https://github.com/Paipai112/baton'
-release_tag='v0.1.0'
+release_tag='v0.1.1'
 source_checkout="$(mktemp -d)"
 git clone --filter=blob:none --no-checkout "$source_url" "$source_checkout/source"
 git -C "$source_checkout/source" fetch origin "refs/tags/$release_tag:refs/tags/$release_tag"
@@ -25,6 +25,8 @@ git -C "$source_checkout/source" checkout --detach "$resolved_sha"
 python3 "$source_checkout/source/scripts/verify_skill_packages.py" --repo-root "$source_checkout/source"
 printf '固定提交：%s\n源目录：%s\n' "$resolved_sha" "$source_checkout/source"
 ```
+
+注意：该流程中的包校验脚本取自来源树，运行校验即执行来源代码。应先按固定提交只读取回，再在隔离环境中执行；校验只证明清单与摘要一致，不能证明来源可信。
 
 本仓的包校验脚本使用 Python 3.11+ 标准库。若当前环境不能运行，应先解决校验条件或使用能检查相同清单、相对资源和摘要的等价方式。安装不需要 `npx`、第三方安装器或新增产品 CLI。
 
@@ -71,6 +73,8 @@ $github-collaboration
 
 首次安装且无既有授权时，由控制已核验 Maintain／Admin 账号的人类明确授予当前职责身份、仓库和提案范围的 Bootstrap 会话权限。若丢失最后一位 Leader，则走 Recovery 并保留原授权历史。持久 Leader 需完成对应治理 PR 的真实审批、合并和默认分支读回，不能由候选文件提前生效。
 
+授权记录与协作事件等含 `format` 字段的校验需要 `jsonschema[format]`；依赖缺失或校验不完整时按未核验处理并停止写入。
+
 ## 5. 增量配置消费项目
 
 setup 扫描已有文件后，逐项展示项目协议、配置、授权记录、受管资源账本、Issue／PR 模板和入口受管块的差异。项目事实只索引现有需求、规格、决策、进度及验证来源；尚未确认的来源保留“未知”。已有内容、未提交改动、重复规则或受管范围冲突需按明确选择处理。文件修改、Commit、Push、PR、授权审批、合并和远端设置按各自的授权边界推进；已有有效授权无需重复获取。
@@ -80,7 +84,7 @@ setup 扫描已有文件后，逐项展示项目协议、配置、授权记录�
 | 字段 | 消费项目中的值 |
 | --- | --- |
 | `source_repository_url` | `https://github.com/Paipai112/baton` |
-| `release_tag` | `v0.1.0` |
+| `release_tag` | `v0.1.1` |
 | `resolved_commit_sha` | 本次标签解析并核验的完整 40 位 SHA |
 | `installation_page_permalink` | `https://github.com/Paipai112/baton/blob/<同一完整SHA>/docs/INSTALL.md` |
 
@@ -119,10 +123,10 @@ PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 "$test_venv/bin/pytho
 将目标项目及职责身份填入以下任务；任务默认从只读安装检查开始，接入写入按已有授权和实际缺口继续：
 
 ```text
-请在目标项目 <项目目录> 接入 Baton v0.1.0，职责身份为 <actor_id>。
+请在目标项目 <项目目录> 接入 Baton v0.1.1，职责身份为 <actor_id>。
 先只读核验目标项目、现有同名 Skill、工作区、GitHub 身份及保护规则。
 源仓固定为 https://github.com/Paipai112/baton；
-核验实际 v0.1.0 Release/tag 并解析完整 40 位 SHA，从该提交取得两个完整包、
+核验实际 v0.1.1 Release/tag 并解析完整 40 位 SHA，从该提交取得两个完整包、
 校验文件清单和资源摘要，展示项目级 .agents/skills 的安装差异。
 目录已存在时报告现有来源及本地差异，保留原内容并按审阅后的方案处理。
 在安装授权内复制到不存在且安全的精确目标，回读比较，并用新会话分别只读显式调用两个 Skill。

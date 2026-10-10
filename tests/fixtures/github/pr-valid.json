@@ -34,6 +34,13 @@
     }
   ],
   "reviews": [],
+  "claim_comments": {
+    "https://github.com/sample/repo/issues/7#issuecomment-1": {
+      "user_id": 1001,
+      "login": "developer",
+      "issue_number": 7
+    }
+  },
   "config": {
     "schema_version": 1,
     "minimum_runtime_skill_version": "0.1.0",

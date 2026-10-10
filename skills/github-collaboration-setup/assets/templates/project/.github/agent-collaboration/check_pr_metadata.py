@@ -1,4 +1,7 @@
-"""Data-only PR metadata check. No network, PR code execution, or generic YAML parsing."""
+"""Data-only PR metadata check. No network, PR code execution, or generic YAML parsing.
+
+Closing keywords in commit messages are outside this check; re-read Issue state after merge.
+"""
 
 import json
 import re
@@ -15,8 +18,8 @@ METADATA_FIELDS = {
     "controlled_by_id", "runtime", "session_id", "skill_version", "head_sha",
     "base_branch", "claim_urls", "workflow",
 }
-ISSUE = re.compile(r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#([1-9][0-9]*)\b", re.I)
-CLAIM_URL = re.compile(r"https://github\.com/([^/#?]+/[^/#?]+)/issues/([1-9][0-9]*)#issuecomment-[1-9][0-9]*", re.I)
+ISSUE = re.compile(r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?[ \t]+#([1-9][0-9]*)\b", re.I)
+CLAIM_URL = re.compile(r"https://github\.com/([^/#?]+/[^/#?]+)/issues/([1-9][0-9]*)#issuecomment-([1-9][0-9]*)", re.I)
 GOVERNANCE_PREFIXES = (
     ".github/agent-collaboration/",
     ".github/workflows/",
@@ -25,11 +28,17 @@ GOVERNANCE_PREFIXES = (
     "PULL_REQUEST_TEMPLATE/",
     "docs/PULL_REQUEST_TEMPLATE/",
     ".claude/rules/",
+    ".agents/skills/",
+    ".claude/skills/",
+    ".pi/agent/skills/",
+    ".pi/skills/",
+    ".github/actions/",
 )
 GOVERNANCE_EXACT = {
     "CODEOWNERS", ".github/CODEOWNERS", "docs/CODEOWNERS",
     "pull_request_template.md", ".github/pull_request_template.md", "docs/pull_request_template.md",
     ".codex/config.toml", ".pi/settings.json", ".claude/settings.json", ".claude/settings.local.json",
+    ".github/copilot-instructions.md",
 }
 
 
@@ -132,6 +141,8 @@ def restricted_yaml(source):
 
 
 def report(errors):
+    print("::notice::metadata check does not verify human approval, effective account permissions, or real Skill loading")
+    print("::notice::closing keywords in commit messages are not checked; read back Issue state after merge")
     for error in sorted(set(errors)):
         safe = error.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
         print(f"::error::{safe}")
@@ -211,6 +222,12 @@ def linked_issue_numbers(body):
     return sorted({metadata["primary_issue"], *metadata["closes_issues"], *claim_issues})
 
 
+def claim_comment_ids(body):
+    """Return the sorted comment ids referenced by the metadata claim URLs."""
+    metadata = metadata_from_body(body)
+    return sorted({int(CLAIM_URL.fullmatch(url).group(3)) for url in metadata["claim_urls"]})
+
+
 def managed_paths(config):
     """Use the same bounded config paths as setup and the daily Skill."""
     paths = config.get("managed_paths")
@@ -253,23 +270,9 @@ def governance_files(files, config):
         if any(p in exact or is_governance_path(p) for p in candidates):
             governed.append(path)
         elif any(p in entries for p in candidates):
-            if file.get("status") in {"added", "removed", "renamed"}:
-                governed.append(path)
-                continue
-            patch = file.get("patch")
-            if not isinstance(patch, str):
-                errors.append(f"governance reachability unverified: {path}")
-                continue
-            changed = "\n".join(
-                line[1:] for line in patch.splitlines()
-                if line.startswith(("+", "-")) and not line.startswith(("+++", "---"))
-            )
-            if (any(term in changed for term in (
-                    "github-agent-collaboration", "github-collaboration",
-                    ".github/agent-collaboration/", "<!--", "-->", chr(96) * 3, "~~~"))
-                    or re.search(r"(?m)^\s*\[[^]]+\]:", changed)):
-                governed.append(path)
-    # Arbitrary natural-language overrides require review; this is not a semantic proof.
+            # Entry files steer agents: any edit requires the separate governance review.
+            governed.append(path)
+    # Path lists and entry-file handling are conservative heuristics, not a semantic proof.
     return governed, errors
 
 
@@ -342,7 +345,7 @@ def _check(data):
     visible = re.sub(r"<!--.*?-->", "", outside_code_fences(body), flags=re.S)
     if {int(n) for n in ISSUE.findall(visible)} != set(metadata["closes_issues"]):
         errors.append("closing statements differ from closes_issues")
-    if re.search(r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+(?:https?://|[\w.-]+/)", visible, re.I):
+    if re.search(r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?[ \t]+(?:https?://|[\w.-]+/)", visible, re.I):
         errors.append("cross-repository or URL closing syntax is unsupported; use local #numbers")
     primary = metadata["primary_issue"]
     try:
@@ -363,6 +366,19 @@ def _check(data):
             errors.append("claim URL does not reference this repository")
         if not any(int(match.group(2)) == primary for match in claims):
             errors.append("claim URLs must include the primary Issue")
+        comments = data.get("claim_comments")
+        if not isinstance(comments, dict):
+            errors.append("claim comments unverified")
+        else:
+            for url in metadata["claim_urls"]:
+                comment = comments.get(url)
+                if not isinstance(comment, dict):
+                    errors.append("claim comment does not exist or is unverifiable")
+                    continue
+                if comment.get("user_id") != metadata["controlled_by_id"]:
+                    errors.append("claim comment author differs from controlling account")
+                if comment.get("issue_number") != int(CLAIM_URL.fullmatch(url).group(2)):
+                    errors.append("claim comment issue mismatch")
     except (IndexError, StopIteration, KeyError, ValueError, TypeError):
         errors.append("linked Issue metadata unverified")
     paths = [f.get("filename") for f in files if isinstance(f, dict)]

@@ -32,7 +32,7 @@ Closes #123
   "controlled_by_id": 1234,
   "runtime": "codex",
   "session_id": "example-office-session",
-  "skill_version": "0.1.0",
+  "skill_version": "0.1.1",
   "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "base_branch": "main",
   "claim_urls": ["https://github.com/example-org/example-repo/issues/123#issuecomment-1001"],

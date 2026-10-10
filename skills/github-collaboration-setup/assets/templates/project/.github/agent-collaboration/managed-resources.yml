@@ -4,7 +4,7 @@ installation_id: __SETUP_REQUIRED__
 resources:
   - kind: markdown-block
     stable_id: AGENTS.md
-    template_version: 0.1.0
+    template_version: 0.1.1
     managed_fields_baseline_digest: __SETUP_REQUIRED__
     applied_digest: __SETUP_REQUIRED__
     baseline_reference: __SETUP_REQUIRED__

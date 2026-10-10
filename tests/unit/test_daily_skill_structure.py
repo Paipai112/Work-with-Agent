@@ -27,7 +27,7 @@ def test_daily_entrypoint_is_discoverable_and_routes_writes(skill_text, repo_roo
 
     assert metadata["name"] == SKILL_NAME
     assert metadata["description"].startswith("Use when ")
-    assert metadata["metadata"]["version"] == "0.1.0"
+    assert metadata["metadata"]["version"] == "0.1.1"
     assert len(text.splitlines()) < 500
     assert all(operation in text.lower() for operation in WRITE_OPERATIONS)
     assert re.search(r"\]\(references/preflight\.md\)", text)

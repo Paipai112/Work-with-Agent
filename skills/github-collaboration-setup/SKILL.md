@@ -2,7 +2,7 @@
 name: github-collaboration-setup
 description: Use when initializing, upgrading, diagnosing, repairing, or governing GitHub Agent collaboration configuration in a repository.
 metadata:
-  version: "0.1.0"
+  version: "0.1.1"
 ---
 
 # GitHub Collaboration Setup

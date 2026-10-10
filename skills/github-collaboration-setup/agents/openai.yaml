@@ -2,4 +2,4 @@ interface:
   display_name: "GitHub Collaboration Setup"
   short_description: "Configure and maintain repository Agent collaboration"
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false

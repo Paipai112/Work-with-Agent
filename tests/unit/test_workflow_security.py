@@ -101,6 +101,11 @@ def test_workflow_reads_configured_authorization_and_all_issues_at_pinned_sha(
                         "content": base64.b64encode(sources[path]).decode()}
         elif suffix in {"/issues/7", "/issues/8", "/issues/9"}:
             response = {"number": int(suffix.rsplit("/", 1)[1]), "state": "open"}
+        elif suffix.startswith("/issues/comments/"):
+            comment_id = int(suffix.rsplit("/", 1)[1])
+            issue_number = {1: 7, 3: 9}[comment_id]
+            response = {"user": {"id": 1001, "login": "developer"},
+                        "issue_url": f"https://api.github.com/repos/sample/repo/issues/{issue_number}"}
         else:
             raise AssertionError(f"unexpected endpoint: {endpoint}")
         return subprocess.CompletedProcess(command, 0, json.dumps(response), "")
@@ -115,3 +120,4 @@ def test_workflow_reads_configured_authorization_and_all_issues_at_pinned_sha(
     if not integration_target:
         assert f"repos/sample/repo/contents/{custom_auth}?ref={'a' * 40}" in endpoints
         assert {"repos/sample/repo/issues/7", "repos/sample/repo/issues/8", "repos/sample/repo/issues/9"} <= set(endpoints)
+        assert {"repos/sample/repo/issues/comments/1", "repos/sample/repo/issues/comments/3"} <= set(endpoints)

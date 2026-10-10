@@ -26,22 +26,22 @@
       "source_sha256": "c271b563aaecc7d0c62ee6f948d78f295decbcefce4d9cf7d46b3642940c7946"
     },
     {
-      "copied_sha256": "9e990da957494b996aba3cfc82a14d672e7e96d3772082575e8b53de48477541",
+      "copied_sha256": "361e278df32bfd6517053799c59e6c21faeec5fc13c5a972f0cd66457a7f16fc",
       "destination": "assets/templates/managed-blocks/AGENTS.md.block",
       "source": "templates/managed-blocks/AGENTS.md.block",
-      "source_sha256": "9e990da957494b996aba3cfc82a14d672e7e96d3772082575e8b53de48477541"
+      "source_sha256": "361e278df32bfd6517053799c59e6c21faeec5fc13c5a972f0cd66457a7f16fc"
     },
     {
-      "copied_sha256": "9e990da957494b996aba3cfc82a14d672e7e96d3772082575e8b53de48477541",
+      "copied_sha256": "361e278df32bfd6517053799c59e6c21faeec5fc13c5a972f0cd66457a7f16fc",
       "destination": "assets/templates/managed-blocks/CLAUDE.md.block",
       "source": "templates/managed-blocks/CLAUDE.md.block",
-      "source_sha256": "9e990da957494b996aba3cfc82a14d672e7e96d3772082575e8b53de48477541"
+      "source_sha256": "361e278df32bfd6517053799c59e6c21faeec5fc13c5a972f0cd66457a7f16fc"
     },
     {
-      "copied_sha256": "6ea4f2e1aff240f08f2cbd1d5781032c511e713a3620372fcac704309a51f2a7",
+      "copied_sha256": "e74ea2b0c1ff4175da32fe143139b75f2c8d790a651647ecb750bfb64af42f61",
       "destination": "assets/templates/managed-blocks/CONTRIBUTING.md.block",
       "source": "templates/managed-blocks/CONTRIBUTING.md.block",
-      "source_sha256": "6ea4f2e1aff240f08f2cbd1d5781032c511e713a3620372fcac704309a51f2a7"
+      "source_sha256": "e74ea2b0c1ff4175da32fe143139b75f2c8d790a651647ecb750bfb64af42f61"
     },
     {
       "copied_sha256": "11dad4c04a40004d94c25272d883708a7e8c5a444e862f8428c7ca0bca55fbcd",
@@ -50,28 +50,28 @@
       "source_sha256": "11dad4c04a40004d94c25272d883708a7e8c5a444e862f8428c7ca0bca55fbcd"
     },
     {
-      "copied_sha256": "94abc7353e2f8e3e5b63b1cd0c656bf84a26ca82f8510fbaf46b1a4d9e8e45fd",
+      "copied_sha256": "0446c2dc1cb3dfe6539b427684f9e1c970b732cb178c569f72c9e5bcf21648b6",
       "destination": "assets/templates/project/.github/PULL_REQUEST_TEMPLATE/agent-change.md",
       "source": "templates/project/.github/PULL_REQUEST_TEMPLATE/agent-change.md",
-      "source_sha256": "94abc7353e2f8e3e5b63b1cd0c656bf84a26ca82f8510fbaf46b1a4d9e8e45fd"
+      "source_sha256": "0446c2dc1cb3dfe6539b427684f9e1c970b732cb178c569f72c9e5bcf21648b6"
     },
     {
-      "copied_sha256": "d36bf2773eceaa6118512ec459dd3fb744ee167a0ba9d7d7d1c93c741cb5eaf1",
+      "copied_sha256": "43794a791a46c43bb2f99efdbffe6bc96113a5053a8c7aec746aad72c84b01c5",
       "destination": "assets/templates/project/.github/agent-collaboration/INSTALL_SKILL.md",
       "source": "templates/project/.github/agent-collaboration/INSTALL_SKILL.md",
-      "source_sha256": "d36bf2773eceaa6118512ec459dd3fb744ee167a0ba9d7d7d1c93c741cb5eaf1"
+      "source_sha256": "43794a791a46c43bb2f99efdbffe6bc96113a5053a8c7aec746aad72c84b01c5"
     },
     {
-      "copied_sha256": "18680accf0e2646632bb22824240dcc9580620d3dce17289849abe09db568b48",
+      "copied_sha256": "378f3afae4b8d3f163070cae866148b1a3fccd651fa0ffe2c1bc5a8b50efae5b",
       "destination": "assets/templates/project/.github/agent-collaboration/PROTOCOL.md",
       "source": "templates/project/.github/agent-collaboration/PROTOCOL.md",
-      "source_sha256": "18680accf0e2646632bb22824240dcc9580620d3dce17289849abe09db568b48"
+      "source_sha256": "378f3afae4b8d3f163070cae866148b1a3fccd651fa0ffe2c1bc5a8b50efae5b"
     },
     {
-      "copied_sha256": "67686217e35855b3b7a2ad76e7f4da374c6aa29dc427564baa660bb90a78d29e",
+      "copied_sha256": "6f4ceda57ee7af3f561488d6651d8e46f25318125a006d5c9e42168b7da1d601",
       "destination": "assets/templates/project/.github/agent-collaboration/README.md",
       "source": "templates/project/.github/agent-collaboration/README.md",
-      "source_sha256": "67686217e35855b3b7a2ad76e7f4da374c6aa29dc427564baa660bb90a78d29e"
+      "source_sha256": "6f4ceda57ee7af3f561488d6651d8e46f25318125a006d5c9e42168b7da1d601"
     },
     {
       "copied_sha256": "2a288a73aab06439360ca192933aa834ac52bcf757248ef89f7c13ae57a25436",
@@ -86,28 +86,28 @@
       "source_sha256": "704b06ec354be9ce4e5e50049dd5ae21c827740ccaf7fcc6c567bbbd289ff9db"
     },
     {
-      "copied_sha256": "8cf42faab5012b6a06686afbe6b83caa60bcfcf1cbf6675723094b2a896724f6",
+      "copied_sha256": "bfd20d50583407018b4c172d313a45086200dad059dee5772767df25c2a7e48c",
       "destination": "assets/templates/project/.github/agent-collaboration/check_pr_metadata.py",
       "source": "templates/project/.github/agent-collaboration/check_pr_metadata.py",
-      "source_sha256": "8cf42faab5012b6a06686afbe6b83caa60bcfcf1cbf6675723094b2a896724f6"
+      "source_sha256": "bfd20d50583407018b4c172d313a45086200dad059dee5772767df25c2a7e48c"
     },
     {
-      "copied_sha256": "785541c15b1d98f7cc6b25885e0423498a55f46224770238e38ec9950713c70d",
+      "copied_sha256": "04ff1658e68365cadc6390aa226306450d14206043ad133f2d561c344d00ebab",
       "destination": "assets/templates/project/.github/agent-collaboration/config.yml",
       "source": "templates/project/.github/agent-collaboration/config.yml",
-      "source_sha256": "785541c15b1d98f7cc6b25885e0423498a55f46224770238e38ec9950713c70d"
+      "source_sha256": "04ff1658e68365cadc6390aa226306450d14206043ad133f2d561c344d00ebab"
     },
     {
-      "copied_sha256": "9f3ef7037e7e4df0dad98eae3789b0630f6c53f9ade0734f3bcba62ea46da558",
+      "copied_sha256": "9114bc5f827a52f1a8afea1090ce5f06f0f98d79361d22edabb3770df7423686",
       "destination": "assets/templates/project/.github/agent-collaboration/managed-resources.yml",
       "source": "templates/project/.github/agent-collaboration/managed-resources.yml",
-      "source_sha256": "9f3ef7037e7e4df0dad98eae3789b0630f6c53f9ade0734f3bcba62ea46da558"
+      "source_sha256": "9114bc5f827a52f1a8afea1090ce5f06f0f98d79361d22edabb3770df7423686"
     },
     {
-      "copied_sha256": "d4c0e0f2e5abfe010adfddb3bc26ddced3c87da537041e5ee433af5bbed63e38",
+      "copied_sha256": "1f790356412990ec0e24570c39f3597ec5002ee7684f2b03e1ab9b288e074358",
       "destination": "assets/templates/project/.github/workflows/agent-collaboration-check.yml",
       "source": "templates/project/.github/workflows/agent-collaboration-check.yml",
-      "source_sha256": "d4c0e0f2e5abfe010adfddb3bc26ddced3c87da537041e5ee433af5bbed63e38"
+      "source_sha256": "1f790356412990ec0e24570c39f3597ec5002ee7684f2b03e1ab9b288e074358"
     },
     {
       "copied_sha256": "addc9a88d7185b50c441d390218c816ed9cd937fe5b4b1e74109fbf74e75e6df",

@@ -3,8 +3,11 @@
 # default public-repository pull_request_target block effective 2026-11-02.
 # Probe the actual event policy and obtain a successful trusted run before
 # separately proposing a Required Check. Never auto-relax the event policy.
-# This checks metadata declarations, not human approval, effective account
-# permissions, real Skill loading, or independently authenticated Agent actors.
+# This checks metadata declarations; it verifies claim comment existence and
+# author against the controlling account, but not human approval, effective
+# account permissions, real Skill loading, or independently authenticated
+# Agent actors. Closing keywords in commit messages are not covered; re-read
+# Issue state after merge.
 # The checker accepts only setup-generated restricted YAML (no aliases, merge
 # keys, tags, multiple documents, duplicate keys or unsupported scalar forms).
 # Review changes after this run do not automatically rerun this event; native
@@ -126,18 +129,52 @@ jobs:
               try:
                   config = checker.restricted_yaml(config_bytes.decode("utf-8"))
                   authorization_path = checker.managed_paths(config)["authorization"]
-                  issue_numbers = checker.linked_issue_numbers(pull.get("body") or "")
+                  body = pull.get("body") or ""
+                  issue_numbers = checker.linked_issue_numbers(body)
+                  metadata = checker.metadata_from_body(body)
               except (ValueError, TypeError, KeyError):
                   fail("invalid trusted config or PR collaboration metadata")
               auth_bytes = content(repo_name, authorization_path, sha)
               if len(auth_bytes) > 262144:
                   fail("trusted file too large")
               issues = [api(f"repos/{repo_name}/issues/{n}") for n in issue_numbers]
+
+              def claim_comment(endpoint):
+                  result = subprocess.run(["gh", "api", "--method", "GET", endpoint],
+                                          capture_output=True, text=True, check=False)
+                  if result.returncode == 0:
+                      try:
+                          return json.loads(result.stdout)
+                      except json.JSONDecodeError:
+                          fail("claim comment invalid; fail closed")
+                  message = (result.stdout or "") + (result.stderr or "")
+                  if "HTTP 404" in message or "HTTP 410" in message:
+                      return None
+                  fail("claim comment unavailable; fail closed")
+
+              claim_comments = {}
+              for url in metadata["claim_urls"]:
+                  match = checker.CLAIM_URL.fullmatch(url)
+                  fetched = claim_comment(f"repos/{repo_name}/issues/comments/{match.group(3)}")
+                  if fetched is None:
+                      claim_comments[url] = None
+                      continue
+                  try:
+                      issue_number = int(str(fetched["issue_url"]).rstrip("/").rsplit("/", 1)[-1])
+                      claim_comments[url] = {
+                          "user_id": fetched["user"]["id"],
+                          "login": fetched["user"]["login"],
+                          "issue_number": issue_number,
+                      }
+                  except (KeyError, TypeError, ValueError):
+                      fail("claim comment invalid; fail closed")
+
               payload = {
                   "trusted_ref_verified": True, "trusted_sha": sha,
                   "repository": {"id": repo["id"], "full_name": repo["full_name"], "default_branch": default},
                   "pull": pull, "files": files, "reviews": reviews, "issues": issues,
                   "config": config, "authorization": auth_bytes.decode("utf-8"),
+                  "claim_comments": claim_comments,
               }
               metadata = root / "metadata.json"
               metadata.write_text(json.dumps(payload), encoding="utf-8")

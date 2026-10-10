@@ -1,7 +1,7 @@
 schema_version: 1
-protocol_version: 0.1.0
-minimum_runtime_skill_version: 0.1.0
-setup_skill_version: 0.1.0
+protocol_version: 0.1.1
+minimum_runtime_skill_version: 0.1.1
+setup_skill_version: 0.1.1
 managed_paths:
   protocol: .github/agent-collaboration/PROTOCOL.md
   authorization: .github/agent-collaboration/authorization.yml

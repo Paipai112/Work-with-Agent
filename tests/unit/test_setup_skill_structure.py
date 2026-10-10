@@ -29,11 +29,12 @@ def test_setup_entrypoint_is_discoverable_and_routes_to_existing_preflight(skill
     assert (repo_root / "skills" / SKILL_NAME / "references/preflight-and-identity.md").is_file()
 
 
-def test_setup_openai_metadata_keeps_implicit_discovery(repo_root: Path):
+def test_setup_openai_metadata_requires_explicit_invocation(repo_root: Path):
     path = repo_root / "skills" / SKILL_NAME / "agents/openai.yaml"
     metadata = yaml.safe_load(path.read_text(encoding="utf-8"))
 
-    assert metadata.get("policy", {}).get("allow_implicit_invocation", True) is True
+    # Governance actions require explicit invocation.
+    assert metadata.get("policy", {}).get("allow_implicit_invocation", True) is False
     assert metadata["interface"]["display_name"]
     assert metadata["interface"]["short_description"]
     if "default_prompt" in metadata["interface"]:

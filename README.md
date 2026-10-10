@@ -8,9 +8,20 @@
 | `github-collaboration` | 日常 Issue、任务认领、分支、提交、PR、审查、合并与交接 |
 | 项目模板 | 保存协议、角色、授权记录、项目事实入口和 Issue／PR 格式 |
 
-本次固定发行版本为 `v0.1.0`，源仓为 [Paipai112/baton](https://github.com/Paipai112/baton)。安装时必须核验实际版本标签并解析完整提交 SHA，再从该 SHA 复制两个完整包；具体步骤见 [安装与项目接入](docs/INSTALL.md)，验证范围见 [发行说明](docs/RELEASE_NOTES.md)。
+本次固定发行版本为 `v0.1.1`，源仓为 [Paipai112/baton](https://github.com/Paipai112/baton)。安装时必须核验实际版本标签并解析完整提交 SHA，再从该 SHA 复制两个完整包；具体步骤见 [安装与项目接入](docs/INSTALL.md)，验证范围见 [发行说明](docs/RELEASE_NOTES.md)。（`v0.1.0` 为历史版本，标签与发行附件保持发布时状态。）
 
 包校验需要 Python 3.11+，两个 Skill 的日常使用不要求安装测试项目。可选离线回归的隔离环境与依赖安装见 [安装页](docs/INSTALL.md#可选离线回归)，测试选择及证据边界见 [验证说明](docs/VALIDATION.md)。
+
+## 一次协作长什么样
+
+以「修复超时重试」Issue #42 为例：
+
+1. **认领**：Agent 在 Issue #42 发认领评论，评论 URL 写入任务记录；可选的元数据检查会按 GitHub API 实拉核验该评论的存在性、作者账号与所属 Issue。
+2. **开工**：从默认分支新建 `agent/<职责>/issue-42-...` 分支，保持精确暂存与可核验的提交信息。
+3. **开 PR**：正文包含协作元数据块（主 Issue、关闭的 Issue、作业身份、受控账号、认领评论 URL、实际 Skill 版本），并声明 `Closes #42`。
+4. **审查**：按角色与授权读取审查意见；合并遵循项目现有 GitHub 保护与审批，不因协议文本自动通过。
+5. **合并后**：关闭关键字由 GitHub 在合并后生效；提交信息中的关键字不在检查范围，合并后应读回 Issue 状态确认。
+6. **交接**：结果与交接记录写入 Issue 或仓库，供下一会话核验接手。
 
 ## 开始使用
 
@@ -20,6 +31,15 @@
 4. 日常任务使用 `github-collaboration`，从当前默认分支读取项目配置、协议和授权，按 Issue／认领／分支／PR 流程交付。
 
 已验证的主路径是 macOS 原生 Codex CLI `0.159.3` 对两个 Skill 的只读显式调用。其他平台的安装合同和适配说明不代表原生调用已经通过；接入前应在实际环境完成验证。Claude Code 的项目发现目录为 `.claude/skills/`，不能假定它会自动加载 `.agents/skills/`。详见 [平台安装参考](skills/github-collaboration-setup/references/platform-installation.md)。
+
+## 标识符说明
+
+仓库与发行现名为 **Baton**。以下机器标识符保持原名，自 v0.1.0 起稳定——改动会破坏已安装的消费项目：
+
+- 技能目录：`github-collaboration-setup`、`github-collaboration`
+- 受管区块标记：`github-agent-collaboration`（亦是 `managed_block.py` 等脚本的默认参数值）
+- schema `$id` 前缀：`https://schemas.github-agent-collaboration.dev/v1/`（仅为标识符，站点不可访问）
+- 治理文件路径：`.github/agent-collaboration/`
 
 ## 使用边界
 

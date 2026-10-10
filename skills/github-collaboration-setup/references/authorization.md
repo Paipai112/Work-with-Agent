@@ -2,6 +2,22 @@
 
 Use after [preflight](preflight-and-identity.md) for `initialize`, `authorization`, `repair`, `upgrade`, or `remote-governance`. A read-only `diagnose` may report missing evidence; it cannot repair it under a Member role. For an initial installation or a lost last Leader, also use [bootstrap and recovery](bootstrap-and-recovery.md).
 
+## Verify format-validation support
+
+Validating authorization records, collaboration events, and other security inputs with `format` fields requires `jsonschema[format]`. Install the validation dependency with:
+
+```sh
+python3 -m pip install 'jsonschema[format]>=4.23,<5'
+```
+
+Before validation, run this check in the same Python environment that will validate the input. `FormatChecker().checkers` must contain both `uri` and `date-time`:
+
+```sh
+python3 -c 'from jsonschema import FormatChecker; missing = {"uri", "date-time"} - FormatChecker().checkers.keys(); raise SystemExit("Missing required format checkers: " + ", ".join(sorted(missing)) if missing else 0)'
+```
+
+If the import fails or either checker is absent, treat the input as unverified and stop all writes (fail closed). Do not rely on silently skipped format checks. Continue only after this environment check succeeds and validation passes with `FormatChecker()`.
+
 ## Decide the current role
 
 | Verified state | Setup decision |
