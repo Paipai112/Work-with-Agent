@@ -53,7 +53,19 @@
     "approval_url": {"type": "string", "format": "uri"},
     "reason": {"type": "string", "minLength": 1},
     "old_process_status": {"enum": ["stopped", "unknown"]},
-    "stop_evidence": {"type": ["string", "null"], "minLength": 1}
+    "stop_evidence": {"type": ["string", "null"], "minLength": 1},
+    "revision": {
+      "type": "object",
+      "required": ["kind", "original_event_id", "github_comment_id", "github_comment_url", "old_body_sha256", "reason"],
+      "properties": {
+        "kind": {"const": "correction"},
+        "original_event_id": {"type": "string", "minLength": 1},
+        "github_comment_id": {"type": "integer", "minimum": 1},
+        "github_comment_url": {"type": "string", "format": "uri"},
+        "old_body_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    }
   },
   "allOf": [
     {
