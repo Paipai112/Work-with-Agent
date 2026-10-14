@@ -25,10 +25,10 @@ Create the governance Issue and first scoped claim, capture/read back its URL, t
 
 Approve file diffs, Commit, possible Actions, Push and PR as separate actions. Use the chosen project template with one current-HEAD `workflow: setup` metadata block. Keep actual reviews/checks/CODEOWNERS/protection; absent reviewers leave a pending PR.
 
-Follow authorization's **P → evidence-only E → external final-E approval → old-rule review/SHA-locked merge → same-SHA config/authorization read-back**. Resolve registry ownership first. Candidate `active` is future state; complete validation and final external approval are required. Only successful read-back activates persistent Leader; failure retains Member/session status with the discrepancy. Session authority ends on interruption or changed identity/source/proposal and needs fresh confirmation.
+Follow authorization's complete **P → evidence-only E → external final-E approval → old-rule/SHA-locked merge → same-SHA read-back** chain, registry conflict resolved first. Candidate `active` grants nothing; only verified read-back activates persistent Leader, failure retains Member/session. Interruption/identity/source/proposal drift needs fresh session confirmation.
 
 ## Recovery or Admin escalation
 
 Read the configured authorization and old protocol at verified default SHA; distinguish revoked/superseded/missing/unreadable records. Preserve files/history: deleting/renaming authorization cannot manufacture Bootstrap. A human controlling verified Maintain/Admin explicitly binds Recovery to account/actor, ceiling, exact proposal/actions and this-session expiry.
 
-Submit independent governance under old rules, retain prior records and mark status changes. Satisfy authorization's full P/E approval chain, current reviews/checks/protections, SHA lock and read-back; Recovery cannot waive a missing reviewer. A human Admin-account escalation session may be limited to the named Admin-ceiling PR; the existing Maintain Leader cannot approve its own expansion.
+Independent governance retains old records/status history and all existing gates/activation chain; Recovery waives no missing reviewer. Human Admin escalation is confined to the named ceiling PR; Maintain Leader cannot approve its own expansion.
