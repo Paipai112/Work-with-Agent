@@ -28,7 +28,7 @@ def relative(value: str) -> str:
 
 
 def git(source: Path, *args: str) -> bytes:
-    result = subprocess.run(["git", "--no-replace-objects", "-C", str(source), *args],
+    result = subprocess.run(["git", "--no-replace-objects", "--no-lazy-fetch", "-C", str(source), *args],
                             capture_output=True, check=False, timeout=30)
     if result.returncode:
         raise ValueError("pinned Git objects unavailable; fetch the verified fixed source separately")

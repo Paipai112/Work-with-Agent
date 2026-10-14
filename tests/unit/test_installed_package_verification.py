@@ -1,5 +1,6 @@
 """Compare installed bytes with pinned Git objects, not archive directory names."""
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -108,3 +109,23 @@ def test_identical_but_broken_source_manifest_is_not_a_verified_package(repo_roo
     result = verify(repo_root, source, git(source, "rev-parse", "HEAD"), install)
     assert result.returncode == 2
     assert json.loads(result.stdout)["status"] == "unknown"
+
+
+def test_missing_promisor_object_is_not_automatically_downloaded(repo_root, source_and_install, tmp_path, monkeypatch):
+    source, sha, install = source_and_install
+    # Model the Git process boundary, not the verifier: only an explicitly
+    # no-lazy-fetch read may fail locally without triggering a download.
+    commands = tmp_path / "bin"
+    commands.mkdir()
+    sentinel = tmp_path / "automatic-download-attempt"
+    fake = commands / "git"
+    fake.write_text(
+        f"#!{sys.executable}\nimport pathlib, sys\n"
+        f"if '--no-lazy-fetch' not in sys.argv: pathlib.Path({str(sentinel)!r}).write_text('fetch')\n"
+        "sys.exit(1)\n"
+    )
+    fake.chmod(0o755)
+    monkeypatch.setenv("PATH", str(commands) + os.pathsep + os.environ.get("PATH", ""))
+    result = verify(repo_root, source, sha, install)
+    assert result.returncode == 2
+    assert not sentinel.exists(), "the readonly verifier allowed Git to download a missing object"
