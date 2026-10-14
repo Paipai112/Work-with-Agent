@@ -9,6 +9,7 @@ import sys
 from pathlib import Path, PurePosixPath
 
 
+COLLECTOR_INPUT_VERSION = 2
 SHA = re.compile(r"^[0-9a-f]{40}$")
 ACTOR = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 BRANCH = re.compile(r"^agent/([a-z][a-z0-9-]*)/issue-([1-9][0-9]*)-[a-z0-9][a-z0-9-]*$")
