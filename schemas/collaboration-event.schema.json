@@ -56,8 +56,9 @@
     "stop_evidence": {"type": ["string", "null"], "minLength": 1},
     "revision": {
       "type": "object",
-      "required": ["kind", "original_event_id", "github_comment_id", "github_comment_url", "old_body_sha256", "reason"],
+      "required": ["schema_version", "kind", "original_event_id", "github_comment_id", "github_comment_url", "old_body_sha256", "reason"],
       "properties": {
+        "schema_version": {"type": "integer", "const": 1},
         "kind": {"const": "correction"},
         "original_event_id": {"type": "string", "minLength": 1},
         "github_comment_id": {"type": "integer", "minimum": 1},

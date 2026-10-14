@@ -314,7 +314,7 @@ def test_correction_requires_linked_revision_and_preserves_original_comment(repo
     plan["body"] = yaml.safe_dump(event, sort_keys=False)
     missing = run_helper(repo_root, "collaboration_event.py", "apply", "--plan", write_json(tmp_path / "missing.json", approve(plan)))
     assert missing.returncode == 1
-    event["revision"] = {"kind": "correction", "original_event_id": "claim-real-123", "github_comment_id": 456,
+    event["revision"] = {"schema_version": 1, "kind": "correction", "original_event_id": "claim-real-123", "github_comment_id": 456,
                          "github_comment_url": plan["comment_url"], "old_body_sha256": plan["old_body_sha256"], "reason": "Correct omitted documentation path."}
     plan["body"] = yaml.safe_dump(event, sort_keys=False)
     state = json.loads(state_file.read_text())
@@ -464,3 +464,19 @@ def test_deployed_helper_uses_only_colocated_versioned_event_schema(repo_root, t
     missing = validate()
     assert missing.returncode == 1
     assert json.loads(missing.stdout)["status"] == "fail"
+
+
+@pytest.mark.parametrize("version, valid", [(None, False), (2, False), (1, True)])
+def test_correction_revision_cli_requires_supported_explicit_local_version(repo_root, tmp_path, version, valid):
+    event = yaml.safe_load(publication_plan(repo_root)["body"])
+    event["event_id"] = "versioned-correction"
+    event["revision"] = {"kind": "correction", "original_event_id": "original-claim", "github_comment_id": 456,
+                         "github_comment_url": "https://github.com/acme/repo/issues/123#issuecomment-456",
+                         "old_body_sha256": "a" * 64, "reason": "Correct event details."}
+    if version is not None:
+        event["revision"]["schema_version"] = version
+    body = tmp_path / "revision.yml"
+    body.write_text(yaml.safe_dump(event, sort_keys=False))
+    result = run_helper(repo_root, "collaboration_event.py", "validate", "--body", body)
+    assert result.returncode == (0 if valid else 1), result.stdout + result.stderr
+    assert json.loads(result.stdout)["status"] == ("pass" if valid else "fail")
