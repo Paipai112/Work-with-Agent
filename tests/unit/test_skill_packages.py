@@ -9,12 +9,16 @@ import pytest
 
 
 def run_sync(repo_root: Path, destination: Path) -> Path:
+    profile = destination.name if destination.name in {
+        "github-collaboration", "github-collaboration-setup", "github-collaboration-check"
+    } else "github-collaboration-setup"
     result = subprocess.run(
         [
             sys.executable,
             str(repo_root / "scripts" / "sync_skill_resources.py"),
             "--repo-root",
             str(repo_root),
+            "--profile", profile,
             "--destination",
             str(destination),
         ],
@@ -70,7 +74,7 @@ def test_generated_python_cache_is_not_a_distributed_resource(repo_root: Path, t
     package = tmp_path / "package"
     result = subprocess.run([
         sys.executable, str(repo_root / "scripts/sync_skill_resources.py"),
-        "--repo-root", str(isolated), "--destination", str(package),
+        "--repo-root", str(isolated), "--profile", "github-collaboration-setup", "--destination", str(package),
     ], capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
     manifest = json.loads((package / "RESOURCE_MANIFEST.json").read_text())
@@ -120,6 +124,7 @@ def test_sync_refuses_to_overwrite_local_drift(repo_root: Path, tmp_path: Path):
             str(repo_root / "scripts" / "sync_skill_resources.py"),
             "--repo-root",
             str(repo_root),
+            "--profile", "github-collaboration-setup",
             "--destination",
             str(skill),
         ],
@@ -144,6 +149,7 @@ def test_sync_accepts_an_explicitly_reviewed_diff(repo_root: Path, tmp_path: Pat
             str(repo_root / "scripts" / "sync_skill_resources.py"),
             "--repo-root",
             str(repo_root),
+            "--profile", "github-collaboration-setup",
             "--destination",
             str(skill),
             "--accept-reviewed-diff",
@@ -169,6 +175,7 @@ def test_sync_refuses_a_symbolic_link_destination(repo_root: Path, tmp_path: Pat
             str(repo_root / "scripts" / "sync_skill_resources.py"),
             "--repo-root",
             str(repo_root),
+            "--profile", "github-collaboration-setup",
             "--destination",
             str(destination),
         ],
@@ -195,6 +202,7 @@ def test_sync_refuses_a_nested_link_that_escapes_destination(repo_root: Path, tm
             str(repo_root / "scripts" / "sync_skill_resources.py"),
             "--repo-root",
             str(repo_root),
+            "--profile", "github-collaboration-setup",
             "--destination",
             str(destination),
         ],
@@ -234,7 +242,7 @@ def test_sync_rejects_canonical_symlinks_before_any_output(
 
     result = subprocess.run(
         [sys.executable, str(repo_root / "scripts/sync_skill_resources.py"),
-         "--repo-root", str(isolated_repo), "--destination", str(destination)],
+         "--repo-root", str(isolated_repo), "--profile", "github-collaboration-setup", "--destination", str(destination)],
         text=True, capture_output=True, check=False,
     )
 
