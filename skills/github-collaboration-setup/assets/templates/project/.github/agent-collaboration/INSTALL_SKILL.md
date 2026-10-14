@@ -6,49 +6,22 @@ resolved_commit_sha:
 installation_page_permalink:
 ---
 
-# 安装日常协作 Skill
+# 安装来源
 
-> 当前状态：未发布。此文件是待配置的项目模板，**不可执行安装，也不可宣称配置完成**。
-> 项目负责人需先提供并核验下列真实发布信息，再按项目文件增量配置流程展示此文件与入口
-> 文件的差异，由有权 Leader 和用户分别批准相应改动。不要覆盖已有文件或删除原有说明。
+候选版本 `0.2.0` 尚未发布：**不可执行安装，也不可宣称配置完成**。四项真实发布字段需相互核验：可访问的发行仓库 URL、固定标签、标签解析的完整 40 位 Commit SHA、同 Commit 安装页永久链接。缺失/不一致或 unpublished 仅允许只读诊断/方案；私有访问不代表开源许可。
 
-发布前必须填入并相互核对：
+## 参与者安装
 
-- `source_repository_url`：维护者指定、当前用户可访问的真实发行仓库 URL（公开或私有）；
-- `release_tag`：实际发布的固定版本标签；
-- `resolved_commit_sha`：该标签解析后的完整 40 位 Commit SHA；
-- `installation_page_permalink`：同一 Commit 上安装页的永久链接。
+取得目标目录拥有者对精确固定来源/完整包摘要/目标路径的批准后，复制所需的完整独立包；同名、本地修改、符号链接或未知来源先解决。包安装不授予 Leader，不涵盖项目治理文件或 Git 操作。已有可信验证记录未漂移时复用，不为每次本地动作重新下载。
 
-私有仓库的访问权限不等于开源许可；参与者需有权访问该来源，并在项目获授权的范围内使用。
+| 客户端 | 默认用户目录 | 新会话显式调用 |
+| --- | --- | --- |
+| Codex | `~/.agents/skills/<skill>/` | `$<skill>` |
+| Claude Code | `~/.claude/skills/<skill>/` | `/<skill>` |
+| Pi Agent | `~/.pi/agent/skills/<skill>/` | `/skill:<skill>` |
 
-四项任一缺失、互不一致或 `installation_status` 仍为 `unpublished` 时，Agent 只能读取、
-诊断并提出安装方案；不能执行下列安装步骤，也不能将本项目报告为协作配置完成。
-
-发布信息经核验且安装单项获得批准后，安装固定发布版本 `github-collaboration` `0.1.1`；
-升级时先比较来源、目标目录和本地修改，再在新会话中验证实际发现路径。不要从搜索
-结果、网页广告或未核验 Fork 安装。项目模板不内置运行时 Skill。
+`<skill>` 为任务需要的包名。确认实际 Skill 路径/版本和全部相对资源；已有支持安装器路径先核验，避免重复。Claude 使用 CLAUDE.md，不能假设 AGENTS.md 替代；Pi 的共享已验证路径可复用。Windows native 使用 Windows 用户目录/PowerShell；WSL 单独验证。完整安装/升级/发现边界由 setup 包的对应参考按需读取。
 
 ## 安全登录
 
-需要网页登录时，只在浏览器地址栏中手动打开经核验的官方站点并完成交互式登录。不要向
-Agent、终端历史、Issue、PR、配置文件或聊天粘贴密码、一次性验证码、Cookie、会话令牌、
-访问令牌或 SSH 私钥。遇到重定向、权限请求或来源不匹配时停止并由用户确认。
-
-## Codex
-
-将经核验的 `github-collaboration` `0.1.1` 发布包安装到
-`~/.agents/skills/github-collaboration/`（若已有受支持安装器发现了其他路径，先验证而不
-重复安装）。新会话从项目根目录显式调用 `$github-collaboration`，确认实际路径和版本。
-
-## Claude Code
-
-将同一固定版本安装到 `~/.claude/skills/github-collaboration/`。新会话从项目根目录调用
-`/github-collaboration`，确认实际路径和版本；不要假定 `AGENTS.md` 会自动替代
-`CLAUDE.md`。
-
-## Pi Agent
-
-将同一固定版本安装到 `~/.pi/agent/skills/github-collaboration/`。若已验证 Pi 使用共享
-`~/.agents/skills/`，复用该目录并避免重复安装。新会话调用
-`/skill:github-collaboration`，确认实际路径、版本和上下文启用状态。Windows 原生环境请
-使用 PowerShell 的用户目录路径；WSL 是独立环境，须单独验证。
+仅由用户在经核验的官方站点交互登录；密码、验证码、Cookie、会话/访问令牌和 SSH 私钥不进入聊天、Issue/PR、配置或终端历史。来源/重定向/权限请求不匹配先停下确认。

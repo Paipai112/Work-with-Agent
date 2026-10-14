@@ -1,0 +1,54 @@
+{
+  "manifest_version": 1,
+  "profile": "github-collaboration-check",
+  "resources": [
+    {
+      "copied_sha256": "1e787cbbc3a5122d171765c89adb44851783e04e3727b4aab9ae61858ca31bcb",
+      "destination": "references/schemas/authorization.schema.json",
+      "source": "schemas/authorization.schema.json",
+      "source_sha256": "1e787cbbc3a5122d171765c89adb44851783e04e3727b4aab9ae61858ca31bcb"
+    },
+    {
+      "copied_sha256": "9283b7e3e00cbdb063a750f40e256e608988a43c0af936e91b5d68c90befd09d",
+      "destination": "references/schemas/collaboration-event.schema.json",
+      "source": "schemas/collaboration-event.schema.json",
+      "source_sha256": "9283b7e3e00cbdb063a750f40e256e608988a43c0af936e91b5d68c90befd09d"
+    },
+    {
+      "copied_sha256": "d8c2f51b475163bcfaf7e4ccd48941bc10a8a814bbcf34685996b8e28661730e",
+      "destination": "references/schemas/config.schema.json",
+      "source": "schemas/config.schema.json",
+      "source_sha256": "d8c2f51b475163bcfaf7e4ccd48941bc10a8a814bbcf34685996b8e28661730e"
+    },
+    {
+      "copied_sha256": "c271b563aaecc7d0c62ee6f948d78f295decbcefce4d9cf7d46b3642940c7946",
+      "destination": "references/schemas/managed-resources.schema.json",
+      "source": "schemas/managed-resources.schema.json",
+      "source_sha256": "c271b563aaecc7d0c62ee6f948d78f295decbcefce4d9cf7d46b3642940c7946"
+    },
+    {
+      "copied_sha256": "9b0b1abdf84918284d2bd4dc879ceef9a5e69eec1e567425ddd6685b973ea192",
+      "destination": "scripts/run_pr_metadata_check.py",
+      "source": "templates/project/.github/agent-collaboration/run_pr_metadata_check.py",
+      "source_sha256": "9b0b1abdf84918284d2bd4dc879ceef9a5e69eec1e567425ddd6685b973ea192"
+    },
+    {
+      "copied_sha256": "25e94f52dbfe62626d8df54bb473c418d7b4737890533646b7ae768f208ca1b1",
+      "destination": "scripts/verify_installed_skill.py",
+      "source": "shared/scripts/verify_installed_skill.py",
+      "source_sha256": "25e94f52dbfe62626d8df54bb473c418d7b4737890533646b7ae768f208ca1b1"
+    },
+    {
+      "copied_sha256": "a8fba07a82fd57ccc6fbdc68ace45ab3a5e11eff49fa9cd0fd74bc5f3f6efcfd",
+      "destination": "references/session-core.md",
+      "source": "shared/references/session-core.md",
+      "source_sha256": "a8fba07a82fd57ccc6fbdc68ace45ab3a5e11eff49fa9cd0fd74bc5f3f6efcfd"
+    },
+    {
+      "copied_sha256": "fa98d249d76bb61a92ee53826dec7573b45f62df9a97c63632cc8d2d17c33eac",
+      "destination": "references/package-verification.md",
+      "source": "shared/references/package-verification.md",
+      "source_sha256": "fa98d249d76bb61a92ee53826dec7573b45f62df9a97c63632cc8d2d17c33eac"
+    }
+  ]
+}

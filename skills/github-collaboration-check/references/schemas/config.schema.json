@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.github-agent-collaboration.dev/v1/config.schema.json",
+  "title": "GitHub Agent Collaboration project configuration",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "protocol_version",
+    "minimum_runtime_skill_version",
+    "setup_skill_version",
+    "managed_paths",
+    "label_namespace",
+    "enforcement"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "protocol_version": {"$ref": "#/$defs/version"},
+    "minimum_runtime_skill_version": {"$ref": "#/$defs/version"},
+    "setup_skill_version": {"$ref": "#/$defs/version"},
+    "managed_paths": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["protocol", "authorization", "managed_resources"],
+      "properties": {
+        "protocol": {"$ref": "#/$defs/governancePath"},
+        "authorization": {"$ref": "#/$defs/governancePath"},
+        "managed_resources": {"$ref": "#/$defs/governancePath"},
+        "entry_files": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/projectPath"}
+        },
+        "pull_request_template": {"$ref": "#/$defs/projectPath"}
+      }
+    },
+    "label_namespace": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*(?:/)?$",
+      "minLength": 2
+    },
+    "branch_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["integration_branches"],
+      "properties": {
+        "integration_branches": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^agent/[a-z][a-z0-9]*(?:-[a-z0-9]+)*/issue-[1-9][0-9]*-[a-z0-9][a-z0-9-]*$"
+          }
+        }
+      }
+    },
+    "enforcement": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["actions_enabled", "required_checks_enabled", "rulesets_enabled"],
+      "properties": {
+        "actions_enabled": {"type": "boolean"},
+        "required_checks_enabled": {"type": "boolean"},
+        "rulesets_enabled": {"type": "boolean"}
+      }
+    }
+  },
+  "$defs": {
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$"
+    },
+    "projectPath": {
+      "type": "string",
+      "description": "A repository-relative POSIX path. Absolute paths, Windows drive or UNC paths, backslashes, and parent segments are forbidden.",
+      "minLength": 1,
+      "not": {"pattern": "^/|^[A-Za-z]:|\\\\|(?:^|/)\\.\\.(?:/|$)"}
+    },
+    "governancePath": {
+      "allOf": [{"$ref": "#/$defs/projectPath"}],
+      "description": "A normalized file path inside .github/agent-collaboration/. v0.1 supports custom filenames here, not relocation of the governance root.",
+      "pattern": "^\\.github/agent-collaboration/[^/]+(?:/[^/]+)*$",
+      "not": {"pattern": "(?:^|/)\\.\\.?(?:/|$)"}
+    }
+  }
+}

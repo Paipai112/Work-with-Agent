@@ -1,5 +1,6 @@
 {
   "manifest_version": 1,
+  "profile": "github-collaboration-setup",
   "resources": [
     {
       "copied_sha256": "1e787cbbc3a5122d171765c89adb44851783e04e3727b4aab9ae61858ca31bcb",
@@ -8,10 +9,10 @@
       "source_sha256": "1e787cbbc3a5122d171765c89adb44851783e04e3727b4aab9ae61858ca31bcb"
     },
     {
-      "copied_sha256": "37872897a6d657d87188f3c8cb45272cef7a79ea1fbad7c1b5fb12ab277265b4",
+      "copied_sha256": "9283b7e3e00cbdb063a750f40e256e608988a43c0af936e91b5d68c90befd09d",
       "destination": "assets/schemas/collaboration-event.schema.json",
       "source": "schemas/collaboration-event.schema.json",
-      "source_sha256": "37872897a6d657d87188f3c8cb45272cef7a79ea1fbad7c1b5fb12ab277265b4"
+      "source_sha256": "9283b7e3e00cbdb063a750f40e256e608988a43c0af936e91b5d68c90befd09d"
     },
     {
       "copied_sha256": "d8c2f51b475163bcfaf7e4ccd48941bc10a8a814bbcf34685996b8e28661730e",
@@ -26,22 +27,22 @@
       "source_sha256": "c271b563aaecc7d0c62ee6f948d78f295decbcefce4d9cf7d46b3642940c7946"
     },
     {
-      "copied_sha256": "361e278df32bfd6517053799c59e6c21faeec5fc13c5a972f0cd66457a7f16fc",
+      "copied_sha256": "3274f8758679e80f98bcac3a3e94010fc85b149a42595c52a151c24a948d03d5",
       "destination": "assets/templates/managed-blocks/AGENTS.md.block",
       "source": "templates/managed-blocks/AGENTS.md.block",
-      "source_sha256": "361e278df32bfd6517053799c59e6c21faeec5fc13c5a972f0cd66457a7f16fc"
+      "source_sha256": "3274f8758679e80f98bcac3a3e94010fc85b149a42595c52a151c24a948d03d5"
     },
     {
-      "copied_sha256": "361e278df32bfd6517053799c59e6c21faeec5fc13c5a972f0cd66457a7f16fc",
+      "copied_sha256": "3274f8758679e80f98bcac3a3e94010fc85b149a42595c52a151c24a948d03d5",
       "destination": "assets/templates/managed-blocks/CLAUDE.md.block",
       "source": "templates/managed-blocks/CLAUDE.md.block",
-      "source_sha256": "361e278df32bfd6517053799c59e6c21faeec5fc13c5a972f0cd66457a7f16fc"
+      "source_sha256": "3274f8758679e80f98bcac3a3e94010fc85b149a42595c52a151c24a948d03d5"
     },
     {
-      "copied_sha256": "e74ea2b0c1ff4175da32fe143139b75f2c8d790a651647ecb750bfb64af42f61",
+      "copied_sha256": "12196f7fd8c46d29320aa9cd5830e69d3cf8ee0e601c5ed103d2ee2ed1d77cb0",
       "destination": "assets/templates/managed-blocks/CONTRIBUTING.md.block",
       "source": "templates/managed-blocks/CONTRIBUTING.md.block",
-      "source_sha256": "e74ea2b0c1ff4175da32fe143139b75f2c8d790a651647ecb750bfb64af42f61"
+      "source_sha256": "12196f7fd8c46d29320aa9cd5830e69d3cf8ee0e601c5ed103d2ee2ed1d77cb0"
     },
     {
       "copied_sha256": "11dad4c04a40004d94c25272d883708a7e8c5a444e862f8428c7ca0bca55fbcd",
@@ -56,28 +57,34 @@
       "source_sha256": "0446c2dc1cb3dfe6539b427684f9e1c970b732cb178c569f72c9e5bcf21648b6"
     },
     {
-      "copied_sha256": "43794a791a46c43bb2f99efdbffe6bc96113a5053a8c7aec746aad72c84b01c5",
+      "copied_sha256": "fe10557674165b220056b17288fa8e66828b5c4bb3670af619736945686d07ed",
       "destination": "assets/templates/project/.github/agent-collaboration/INSTALL_SKILL.md",
       "source": "templates/project/.github/agent-collaboration/INSTALL_SKILL.md",
-      "source_sha256": "43794a791a46c43bb2f99efdbffe6bc96113a5053a8c7aec746aad72c84b01c5"
+      "source_sha256": "fe10557674165b220056b17288fa8e66828b5c4bb3670af619736945686d07ed"
     },
     {
-      "copied_sha256": "378f3afae4b8d3f163070cae866148b1a3fccd651fa0ffe2c1bc5a8b50efae5b",
+      "copied_sha256": "01bb4da849982c76730618ad4e62e73ca884822acc926f93e63ab32ccabb40a4",
+      "destination": "assets/templates/project/.github/agent-collaboration/METADATA_INPUT.md",
+      "source": "templates/project/.github/agent-collaboration/METADATA_INPUT.md",
+      "source_sha256": "01bb4da849982c76730618ad4e62e73ca884822acc926f93e63ab32ccabb40a4"
+    },
+    {
+      "copied_sha256": "210baeec063fdae8d70d5a35443ec3e9894d0ffdf6df8c2df5d7e3f5873c8da8",
       "destination": "assets/templates/project/.github/agent-collaboration/PROTOCOL.md",
       "source": "templates/project/.github/agent-collaboration/PROTOCOL.md",
-      "source_sha256": "378f3afae4b8d3f163070cae866148b1a3fccd651fa0ffe2c1bc5a8b50efae5b"
+      "source_sha256": "210baeec063fdae8d70d5a35443ec3e9894d0ffdf6df8c2df5d7e3f5873c8da8"
     },
     {
-      "copied_sha256": "6f4ceda57ee7af3f561488d6651d8e46f25318125a006d5c9e42168b7da1d601",
+      "copied_sha256": "032d8839437f1d6d514ba65b45512b5a2ed32e2747ef154b1e36c310e6c17ac5",
       "destination": "assets/templates/project/.github/agent-collaboration/README.md",
       "source": "templates/project/.github/agent-collaboration/README.md",
-      "source_sha256": "6f4ceda57ee7af3f561488d6651d8e46f25318125a006d5c9e42168b7da1d601"
+      "source_sha256": "032d8839437f1d6d514ba65b45512b5a2ed32e2747ef154b1e36c310e6c17ac5"
     },
     {
-      "copied_sha256": "2a288a73aab06439360ca192933aa834ac52bcf757248ef89f7c13ae57a25436",
+      "copied_sha256": "4c70cbfe865bde6bbd3dcbbc5d0c68be8882188f947402ed605f9505fd56fe04",
       "destination": "assets/templates/project/.github/agent-collaboration/ROLES.md",
       "source": "templates/project/.github/agent-collaboration/ROLES.md",
-      "source_sha256": "2a288a73aab06439360ca192933aa834ac52bcf757248ef89f7c13ae57a25436"
+      "source_sha256": "4c70cbfe865bde6bbd3dcbbc5d0c68be8882188f947402ed605f9505fd56fe04"
     },
     {
       "copied_sha256": "704b06ec354be9ce4e5e50049dd5ae21c827740ccaf7fcc6c567bbbd289ff9db",
@@ -86,16 +93,22 @@
       "source_sha256": "704b06ec354be9ce4e5e50049dd5ae21c827740ccaf7fcc6c567bbbd289ff9db"
     },
     {
-      "copied_sha256": "bfd20d50583407018b4c172d313a45086200dad059dee5772767df25c2a7e48c",
+      "copied_sha256": "54d7e0d4a4c2a4c1b0018779cabbc4e605d778c4128be713355bfb4150100da9",
       "destination": "assets/templates/project/.github/agent-collaboration/check_pr_metadata.py",
       "source": "templates/project/.github/agent-collaboration/check_pr_metadata.py",
-      "source_sha256": "bfd20d50583407018b4c172d313a45086200dad059dee5772767df25c2a7e48c"
+      "source_sha256": "54d7e0d4a4c2a4c1b0018779cabbc4e605d778c4128be713355bfb4150100da9"
     },
     {
-      "copied_sha256": "04ff1658e68365cadc6390aa226306450d14206043ad133f2d561c344d00ebab",
+      "copied_sha256": "ef2f90edbaae764d3c0e16b49b199746421f2255d1c1ba180262328bac173727",
+      "destination": "assets/templates/project/.github/agent-collaboration/collect_pr_metadata.py",
+      "source": "templates/project/.github/agent-collaboration/collect_pr_metadata.py",
+      "source_sha256": "ef2f90edbaae764d3c0e16b49b199746421f2255d1c1ba180262328bac173727"
+    },
+    {
+      "copied_sha256": "f05c252e138206b4649d4edc39d6081ae994e6e670a6505f5d395a61e4a8887b",
       "destination": "assets/templates/project/.github/agent-collaboration/config.yml",
       "source": "templates/project/.github/agent-collaboration/config.yml",
-      "source_sha256": "04ff1658e68365cadc6390aa226306450d14206043ad133f2d561c344d00ebab"
+      "source_sha256": "f05c252e138206b4649d4edc39d6081ae994e6e670a6505f5d395a61e4a8887b"
     },
     {
       "copied_sha256": "9114bc5f827a52f1a8afea1090ce5f06f0f98d79361d22edabb3770df7423686",
@@ -104,10 +117,118 @@
       "source_sha256": "9114bc5f827a52f1a8afea1090ce5f06f0f98d79361d22edabb3770df7423686"
     },
     {
-      "copied_sha256": "1f790356412990ec0e24570c39f3597ec5002ee7684f2b03e1ab9b288e074358",
+      "copied_sha256": "9b0b1abdf84918284d2bd4dc879ceef9a5e69eec1e567425ddd6685b973ea192",
+      "destination": "assets/templates/project/.github/agent-collaboration/run_pr_metadata_check.py",
+      "source": "templates/project/.github/agent-collaboration/run_pr_metadata_check.py",
+      "source_sha256": "9b0b1abdf84918284d2bd4dc879ceef9a5e69eec1e567425ddd6685b973ea192"
+    },
+    {
+      "copied_sha256": "4773602bdde646edad6222026c2f30229ddf6dd66e2e541ffb16b75ae1bd4506",
       "destination": "assets/templates/project/.github/workflows/agent-collaboration-check.yml",
       "source": "templates/project/.github/workflows/agent-collaboration-check.yml",
-      "source_sha256": "1f790356412990ec0e24570c39f3597ec5002ee7684f2b03e1ab9b288e074358"
+      "source_sha256": "4773602bdde646edad6222026c2f30229ddf6dd66e2e541ffb16b75ae1bd4506"
+    },
+    {
+      "copied_sha256": "9b0b1abdf84918284d2bd4dc879ceef9a5e69eec1e567425ddd6685b973ea192",
+      "destination": "scripts/run_pr_metadata_check.py",
+      "source": "templates/project/.github/agent-collaboration/run_pr_metadata_check.py",
+      "source_sha256": "9b0b1abdf84918284d2bd4dc879ceef9a5e69eec1e567425ddd6685b973ea192"
+    },
+    {
+      "copied_sha256": "25e94f52dbfe62626d8df54bb473c418d7b4737890533646b7ae768f208ca1b1",
+      "destination": "scripts/verify_installed_skill.py",
+      "source": "shared/scripts/verify_installed_skill.py",
+      "source_sha256": "25e94f52dbfe62626d8df54bb473c418d7b4737890533646b7ae768f208ca1b1"
+    },
+    {
+      "copied_sha256": "a8fba07a82fd57ccc6fbdc68ace45ab3a5e11eff49fa9cd0fd74bc5f3f6efcfd",
+      "destination": "references/session-core.md",
+      "source": "shared/references/session-core.md",
+      "source_sha256": "a8fba07a82fd57ccc6fbdc68ace45ab3a5e11eff49fa9cd0fd74bc5f3f6efcfd"
+    },
+    {
+      "copied_sha256": "fa98d249d76bb61a92ee53826dec7573b45f62df9a97c63632cc8d2d17c33eac",
+      "destination": "references/package-verification.md",
+      "source": "shared/references/package-verification.md",
+      "source_sha256": "fa98d249d76bb61a92ee53826dec7573b45f62df9a97c63632cc8d2d17c33eac"
+    },
+    {
+      "copied_sha256": "6ab41d07736a94b1a7194f03d421e0c74730e64b099e50f3ce95bae08804c725",
+      "destination": "scripts/collaboration_event.py",
+      "source": "shared/scripts/collaboration_event.py",
+      "source_sha256": "6ab41d07736a94b1a7194f03d421e0c74730e64b099e50f3ce95bae08804c725"
+    },
+    {
+      "copied_sha256": "ad9f75299a52bb7f21572b528e6c9906f7ad02dfd64af68266ef2fc627a63c59",
+      "destination": "scripts/collaboration_scope.py",
+      "source": "shared/scripts/collaboration_scope.py",
+      "source_sha256": "ad9f75299a52bb7f21572b528e6c9906f7ad02dfd64af68266ef2fc627a63c59"
+    },
+    {
+      "copied_sha256": "75c021092d5a3d06b596b01fa9bae1cbf934f4da46c9895d912108ec319c3c76",
+      "destination": "scripts/requirements-helpers.txt",
+      "source": "shared/requirements-helpers.txt",
+      "source_sha256": "75c021092d5a3d06b596b01fa9bae1cbf934f4da46c9895d912108ec319c3c76"
+    },
+    {
+      "copied_sha256": "569c7f5608309d7968d86982bfa5f159f7c4c127ad4df10054a0a250135029b0",
+      "destination": "templates/events/claim.yml",
+      "source": "skills/github-collaboration/templates/events/claim.yml",
+      "source_sha256": "569c7f5608309d7968d86982bfa5f159f7c4c127ad4df10054a0a250135029b0"
+    },
+    {
+      "copied_sha256": "3c74f6cc604a2dcff7e6d894d8f41e18ab93448534f0773af5a36585002ab267",
+      "destination": "templates/events/research-claim.yml",
+      "source": "skills/github-collaboration/templates/events/research-claim.yml",
+      "source_sha256": "3c74f6cc604a2dcff7e6d894d8f41e18ab93448534f0773af5a36585002ab267"
+    },
+    {
+      "copied_sha256": "ebb367d08206cd7e50fba881a009087a6cd90a7f6ef987696bff0c41802c5ade",
+      "destination": "templates/events/handoff.yml",
+      "source": "skills/github-collaboration/templates/events/handoff.yml",
+      "source_sha256": "ebb367d08206cd7e50fba881a009087a6cd90a7f6ef987696bff0c41802c5ade"
+    },
+    {
+      "copied_sha256": "7046d7366d17ac964a0c0c1190442b3bbe3bae8c2acf9f7c7f89ef3aef3f0696",
+      "destination": "templates/events/reassign.yml",
+      "source": "skills/github-collaboration/templates/events/reassign.yml",
+      "source_sha256": "7046d7366d17ac964a0c0c1190442b3bbe3bae8c2acf9f7c7f89ef3aef3f0696"
+    },
+    {
+      "copied_sha256": "48256ca4c269547537200e35ff1df0396924cb91e3cc4f356005b2bdf5bd070d",
+      "destination": "templates/events/release.yml",
+      "source": "skills/github-collaboration/templates/events/release.yml",
+      "source_sha256": "48256ca4c269547537200e35ff1df0396924cb91e3cc4f356005b2bdf5bd070d"
+    },
+    {
+      "copied_sha256": "f0f78ed9b5d496c56af6b35529198554ddc71068e6a08696b5d1c24221a15da4",
+      "destination": "templates/events/resume.yml",
+      "source": "skills/github-collaboration/templates/events/resume.yml",
+      "source_sha256": "f0f78ed9b5d496c56af6b35529198554ddc71068e6a08696b5d1c24221a15da4"
+    },
+    {
+      "copied_sha256": "6ab41d07736a94b1a7194f03d421e0c74730e64b099e50f3ce95bae08804c725",
+      "destination": "assets/templates/project/.github/agent-collaboration/collaboration_event.py",
+      "source": "shared/scripts/collaboration_event.py",
+      "source_sha256": "6ab41d07736a94b1a7194f03d421e0c74730e64b099e50f3ce95bae08804c725"
+    },
+    {
+      "copied_sha256": "ad9f75299a52bb7f21572b528e6c9906f7ad02dfd64af68266ef2fc627a63c59",
+      "destination": "assets/templates/project/.github/agent-collaboration/collaboration_scope.py",
+      "source": "shared/scripts/collaboration_scope.py",
+      "source_sha256": "ad9f75299a52bb7f21572b528e6c9906f7ad02dfd64af68266ef2fc627a63c59"
+    },
+    {
+      "copied_sha256": "9283b7e3e00cbdb063a750f40e256e608988a43c0af936e91b5d68c90befd09d",
+      "destination": "assets/templates/project/.github/agent-collaboration/collaboration-event.schema.json",
+      "source": "schemas/collaboration-event.schema.json",
+      "source_sha256": "9283b7e3e00cbdb063a750f40e256e608988a43c0af936e91b5d68c90befd09d"
+    },
+    {
+      "copied_sha256": "75c021092d5a3d06b596b01fa9bae1cbf934f4da46c9895d912108ec319c3c76",
+      "destination": "assets/templates/project/.github/agent-collaboration/requirements-helpers.txt",
+      "source": "shared/requirements-helpers.txt",
+      "source_sha256": "75c021092d5a3d06b596b01fa9bae1cbf934f4da46c9895d912108ec319c3c76"
     },
     {
       "copied_sha256": "addc9a88d7185b50c441d390218c816ed9cd937fe5b4b1e74109fbf74e75e6df",

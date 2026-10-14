@@ -4,7 +4,8 @@
 
 ## 一、提交改动
 
-- 保持 `schemas/`、`templates/`、`shared/` 和 daily 包中的六类事件模板为规范源。三个包的复制关系由 `scripts/skill_resource_profiles.py` 显式列出；不手工修改复制件。先检查本地差异，再同步已审阅的资源：
+- 保持 `schemas/`、`templates/`、`shared/` 和 daily 包中的六类事件模板（claim、research-claim、handoff、reassign、release、resume）为规范源。三个包的复制关系由 `scripts/skill_resource_profiles.py` 显式列出，不手工修改复制件。
+- 先运行不带 `--accept-reviewed-diff` 的同步命令，让已有差异停止并报路径；检查各规范源、对应复制件和 manifest 的差异，确认不包含用户定制后，再同步已审阅的资源：
 
   ```sh
   python3 scripts/sync_skill_resources.py --skill github-collaboration-setup --accept-reviewed-diff

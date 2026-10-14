@@ -3,6 +3,8 @@
 READONLY_RESOURCES = (
     ("templates/project/.github/agent-collaboration/run_pr_metadata_check.py", "scripts/run_pr_metadata_check.py"),
     ("shared/scripts/verify_installed_skill.py", "scripts/verify_installed_skill.py"),
+    ("shared/references/session-core.md", "references/session-core.md"),
+    ("shared/references/package-verification.md", "references/package-verification.md"),
 )
 EVENT_RESOURCES = (
     ("shared/scripts/collaboration_event.py", "scripts/collaboration_event.py"),
