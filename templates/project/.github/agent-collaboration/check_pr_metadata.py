@@ -44,20 +44,23 @@ GOVERNANCE_EXACT = {
 
 def restricted_yaml(source):
     """Parse only setup-generated plain mapping/list YAML; reject advanced syntax."""
+    def error(message, line):
+        return ValueError(f"{message} at line {line}")
+
     if len(source) > 262144:
-        raise ValueError("YAML too large")
+        raise error("YAML too large", 1)
     lines = []
-    for raw in source.splitlines():
+    for number, raw in enumerate(source.splitlines(), 1):
         if not raw.strip() or raw.lstrip().startswith("#"):
             continue
         if "\t" in raw or raw.rstrip() != raw or raw.lstrip().startswith(("---", "...")):
-            raise ValueError("unsupported YAML syntax")
+            raise error("unsupported YAML syntax", number)
         indent = len(raw) - len(raw.lstrip(" "))
         if indent % 2:
-            raise ValueError("unsupported YAML indentation")
-        lines.append((indent, raw.strip()))
+            raise error("unsupported YAML indentation", number)
+        lines.append((indent, raw.strip(), number))
 
-    def scalar(value):
+    def scalar(value, number):
         if value == "[]":
             return []
         if value in ("true", "false"):
@@ -66,60 +69,71 @@ def restricted_yaml(source):
             return int(value)
         if value.startswith(('"', "'")):
             if len(value) < 2 or value[-1] != value[0]:
-                raise ValueError("invalid quoted YAML value")
+                raise error("invalid quoted YAML value", number)
             if value[0] == '"':
-                return json.loads(value)
+                try:
+                    return json.loads(value)
+                except ValueError:
+                    raise error("invalid quoted YAML value", number) from None
             if "''" in value:
-                raise ValueError("unsupported YAML escaping")
+                raise error("unsupported YAML escaping", number)
             return value[1:-1]
         if not re.fullmatch(r"[A-Za-z0-9_./:@+-]+", value):
-            raise ValueError("unsupported or ambiguous YAML scalar")
+            raise error("unsupported or ambiguous YAML scalar", number)
         if value.lower() in {"null", "yes", "no", "on", "off", "true", "false"}:
-            raise ValueError("ambiguous YAML scalar")
+            raise error("ambiguous YAML scalar", number)
         return value
 
-    def key_value(content):
+    def key_value(content, number):
         match = re.fullmatch(r"([A-Za-z][A-Za-z0-9_]*):(?: (.*))?", content)
         if not match or match.group(1) == "<<":
-            raise ValueError("unsupported YAML key")
+            raise error("unsupported YAML key", number)
         return match.group(1), match.group(2)
 
-    def block(index, indent):
+    def block(index, indent, indentless=False):
         if index >= len(lines) or lines[index][0] != indent:
-            raise ValueError("invalid YAML block")
+            raise error("invalid YAML block", lines[min(index, len(lines) - 1)][2])
         if lines[index][1].startswith("- "):
             result = []
             while index < len(lines) and lines[index][0] == indent:
                 content = lines[index][1]
                 if not content.startswith("- "):
-                    raise ValueError("mixed YAML list and map")
+                    if indentless:
+                        break
+                    raise error("mixed YAML list and map", lines[index][2])
                 item = content[2:]
                 if re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*:.*", item):
-                    child = [(indent + 2, item)]
+                    child = [(indent + 2, item, lines[index][2])]
                     index += 1
                     while index < len(lines) and lines[index][0] > indent:
                         child.append(lines[index])
                         index += 1
                     value, consumed = parse(child, 0, indent + 2)
                     if consumed != len(child):
-                        raise ValueError("invalid YAML list item")
+                        raise error("invalid YAML list item", child[consumed][2])
                     result.append(value)
                 else:
-                    result.append(scalar(item))
+                    result.append(scalar(item, lines[index][2]))
                     index += 1
             return result, index
         result = {}
         while index < len(lines) and lines[index][0] == indent:
-            key, raw_value = key_value(lines[index][1])
+            number = lines[index][2]
+            key, raw_value = key_value(lines[index][1], number)
             if key in result:
-                raise ValueError("duplicate YAML key")
+                raise error("duplicate YAML key", number)
             index += 1
             if raw_value is None:
-                if index >= len(lines) or lines[index][0] != indent + 2:
-                    raise ValueError("missing YAML value")
-                value, index = block(index, indent + 2)
+                if index >= len(lines):
+                    raise error("missing YAML value", number)
+                if lines[index][0] == indent + 2:
+                    value, index = block(index, indent + 2)
+                elif lines[index][0] == indent and lines[index][1].startswith("- "):
+                    value, index = block(index, indent, indentless=True)
+                else:
+                    raise error("missing YAML value", number)
             else:
-                value = scalar(raw_value)
+                value = scalar(raw_value, number)
             result[key] = value
         return result, index
 
@@ -133,10 +147,10 @@ def restricted_yaml(source):
             lines = original
 
     if not lines:
-        raise ValueError("empty YAML")
+        raise error("empty YAML", 1)
     data, end = block(0, 0)
     if end != len(lines) or not isinstance(data, dict):
-        raise ValueError("invalid YAML document")
+        raise error("invalid YAML document", lines[end][2] if end < len(lines) else lines[0][2])
     return data
 
 
@@ -283,8 +297,13 @@ def _check(data):
     try:
         config = data["config"]
         auth = data["authorization"]
-        config = restricted_yaml(config) if isinstance(config, str) else config
-        auth = restricted_yaml(auth) if isinstance(auth, str) else auth
+        parsed = {}
+        for field, value in (("config", config), ("authorization", auth)):
+            try:
+                parsed[field] = restricted_yaml(value) if isinstance(value, str) else value
+            except ValueError as exc:
+                return errors + [f"metadata or trusted config unverified: {field} YAML: {exc}"]
+        config, auth = parsed["config"], parsed["authorization"]
         repo, pull = data["repository"], data["pull"]
         files, issues, reviews = data["files"], data["issues"], data["reviews"]
         assert isinstance(config, dict) and isinstance(auth, dict)
