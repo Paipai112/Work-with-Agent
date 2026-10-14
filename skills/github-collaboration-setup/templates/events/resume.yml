@@ -1,0 +1,19 @@
+# Link the published predecessor comment. Capture THIS resume comment's ID only after posting.
+# For research set task_kind: research, omit branch/base_head/head_sha, add artifact_urls.
+event: resume
+event_id: example-resume-issue-123
+previous_event_id: example-release-issue-123
+controlled_by: alex
+controlled_by_id: 1234
+actor_id: backend-api
+session_id: example-home-session
+runtime: pi-agent
+scope:
+  - src/api/**
+  - tests/api/**
+branch: agent/backend-api/issue-123-timeout
+base_head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+handoff_event_id: example-release-issue-123
+github_comment_id: 1003
+github_comment_url: https://github.com/example-org/example-repo/issues/123#issuecomment-1003
+head_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb

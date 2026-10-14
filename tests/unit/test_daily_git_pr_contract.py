@@ -51,4 +51,7 @@ def test_git_pr_reference_and_template_exist(repo_root: Path, skill_text):
     assert (repo_root / "skills/github-collaboration/references/git-and-pull-requests.md").is_file()
     assert (repo_root / "skills/github-collaboration/templates/pull-request-body.md").is_file()
     assert "references/git-and-pull-requests.md" in skill_text("github-collaboration/SKILL.md")
-    assert "仅当已确认项目协议显式允许" in skill_text("github-collaboration/SKILL.md")
+    # Static risk coverage, not a substitute for actual Agent behavior evidence.
+    text = skill_text("github-collaboration/SKILL.md")
+    assert "Scoped `git add -A -- <paths>` needs explicit project permission" in text
+    assert "the template forbids every form" in text

@@ -1,0 +1,3 @@
+# Event helper runtime only. Review and install explicitly; helpers never run pip.
+PyYAML>=6,<7
+jsonschema[format]>=4.23,<5

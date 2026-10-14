@@ -9,6 +9,8 @@ from pathlib import Path
 import re
 import sys
 
+from skill_resource_profiles import PROFILES, resolve_profile
+
 
 MANIFEST_NAME = "RESOURCE_MANIFEST.json"
 MARKDOWN_LINK = re.compile(r"!?\[[^]]*\]\(([^)]+)\)")
@@ -126,17 +128,15 @@ def _check_script_syntax(skill: Path, errors: list[str]) -> None:
 def _check_package_symlinks(skill: Path, errors: list[str]) -> None:
     root = skill.resolve()
     for path in sorted(skill.rglob("*")):
-        if path.is_symlink() and not _inside(path.resolve(), root):
-            errors.append(f"{path}: symlink escapes skill directory")
+        if path.is_symlink():
+            reason = "symlink escapes skill directory" if not _inside(path.resolve(), root) else "symlink is not a package resource"
+            errors.append(f"{path}: {reason}")
 
 
-def _expected_resources(skill: Path, repo_root: Path) -> set[tuple[str, str]]:
+def _expected_resources(skill: Path, repo_root: Path, profile: str) -> set[tuple[str, str]]:
     expected: set[tuple[str, str]] = set()
-    schema_destination = (
-        Path("references/schemas")
-        if skill.name == "github-collaboration"
-        else Path("assets/schemas")
-    )
+    selected = PROFILES[profile]
+    schema_destination = Path(selected["schema_root"])
     schemas = repo_root / "schemas"
     if schemas.is_dir():
         for source in sorted(path for path in schemas.rglob("*") if path.is_file()
@@ -148,11 +148,8 @@ def _expected_resources(skill: Path, repo_root: Path) -> set[tuple[str, str]]:
                     (schema_destination / relative).as_posix(),
                 )
             )
-    if skill.name == "github-collaboration":
-        return expected
-
     templates = repo_root / "templates"
-    if templates.is_dir():
+    if selected["templates"] and templates.is_dir():
         for source in sorted(path for path in templates.rglob("*") if path.is_file()
                              and "__pycache__" not in path.parts and path.suffix not in {".pyc", ".pyo"}):
             relative = source.relative_to(templates)
@@ -162,14 +159,7 @@ def _expected_resources(skill: Path, repo_root: Path) -> set[tuple[str, str]]:
                     (Path("assets/templates") / relative).as_posix(),
                 )
             )
-    helper = repo_root / "shared/scripts/managed_block.py"
-    if helper.is_file():
-        expected.add(
-            (
-                helper.relative_to(repo_root).as_posix(),
-                "scripts/managed_block.py",
-            )
-        )
+    expected.update(selected["helpers"])
     return expected
 
 
@@ -185,6 +175,11 @@ def _check_manifest(skill: Path, repo_root: Path, errors: list[str]) -> None:
         return
     if not isinstance(payload, dict):
         errors.append(f"{manifest}: manifest must be a JSON object")
+        return
+    try:
+        profile = resolve_profile(skill.name, payload.get("profile"))
+    except (ValueError, TypeError):
+        errors.append(f"{manifest}: unknown or conflicting resource profile")
         return
     resources = payload.get("resources")
     if payload.get("manifest_version") != 1 or not isinstance(resources, list):
@@ -231,7 +226,7 @@ def _check_manifest(skill: Path, repo_root: Path, errors: list[str]) -> None:
         elif _sha256(source) != source_hash:
             errors.append(f"{manifest}: canonical resource hash drift: {source_name}")
 
-    if declared_resources != _expected_resources(skill, repo_root):
+    if declared_resources != _expected_resources(skill, repo_root, profile):
         errors.append(f"{manifest}: manifest resource set does not match canonical resources")
 
 

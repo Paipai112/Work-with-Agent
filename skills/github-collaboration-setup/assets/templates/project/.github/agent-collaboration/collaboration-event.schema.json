@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.github-agent-collaboration.dev/v1/collaboration-event.schema.json",
+  "$comment": "Format-bearing values are security validation inputs. Consumers must validate with Draft202012Validator and jsonschema.FormatChecker.",
+  "title": "GitHub Agent Collaboration event",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "event",
+    "event_id",
+    "previous_event_id",
+    "controlled_by",
+    "controlled_by_id",
+    "actor_id",
+    "session_id",
+    "runtime",
+    "scope"
+  ],
+  "properties": {
+    "event": {"enum": ["claim", "handoff", "release", "resume", "reassign"]},
+    "task_kind": {"enum": ["code", "research"], "default": "code"},
+    "event_id": {"type": "string", "minLength": 1},
+    "previous_event_id": {"type": ["string", "null"], "minLength": 1},
+    "controlled_by": {"type": "string", "minLength": 1},
+    "controlled_by_id": {"type": "integer", "minimum": 1},
+    "actor_id": {"$ref": "#/$defs/actorId"},
+    "session_id": {"type": "string", "minLength": 1},
+    "runtime": {"type": "string", "minLength": 1},
+    "scope": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "branch": {"type": "string", "minLength": 1},
+    "base_head": {"$ref": "#/$defs/sha"},
+    "expected_handoff": {"enum": ["pull-request", "handoff", "release", "accepted-result"]},
+    "handoff_event_id": {"type": "string", "minLength": 1},
+    "github_comment_id": {"type": "integer", "minimum": 1},
+    "github_comment_url": {"type": "string", "format": "uri"},
+    "head_sha": {"$ref": "#/$defs/sha"},
+    "artifact_urls": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "format": "uri"}},
+    "release_mode": {"const": "self"},
+    "target": {
+      "allOf": [{"$ref": "#/$defs/identity"}],
+      "required": ["claim_event_id", "claim_comment_id", "claim_comment_url"],
+      "properties": {
+        "claim_event_id": {"type": "string", "minLength": 1},
+        "claim_comment_id": {"type": "integer", "minimum": 1},
+        "claim_comment_url": {"type": "string", "format": "uri"}
+      }
+    },
+    "successor": {"$ref": "#/$defs/identity"},
+    "approval_url": {"type": "string", "format": "uri"},
+    "reason": {"type": "string", "minLength": 1},
+    "old_process_status": {"enum": ["stopped", "unknown"]},
+    "stop_evidence": {"type": ["string", "null"], "minLength": 1},
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "kind", "original_event_id", "github_comment_id", "github_comment_url", "old_body_sha256", "reason"],
+      "properties": {
+        "schema_version": {"type": "integer", "const": 1},
+        "kind": {"enum": ["correction", "baseline"]},
+        "original_event_id": {"type": "string", "minLength": 1},
+        "github_comment_id": {"type": "integer", "minimum": 1},
+        "github_comment_url": {"type": "string", "format": "uri"},
+        "old_body_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "reason": {"type": "string", "minLength": 1},
+        "from_base_head": {"$ref": "#/$defs/sha"},
+        "to_base_head": {"$ref": "#/$defs/sha"}
+      },
+      "allOf": [{
+        "if": {"properties": {"kind": {"const": "baseline"}}, "required": ["kind"]},
+        "then": {"required": ["from_base_head", "to_base_head"]},
+        "else": {"properties": {"from_base_head": false, "to_base_head": false}}
+      }]
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"task_kind": {"const": "research"}}, "required": ["task_kind"]},
+      "then": {
+        "properties": {"branch": false, "base_head": false, "head_sha": false},
+        "if": {"properties": {"event": {"enum": ["handoff", "release", "resume"]}}, "required": ["event"]},
+        "then": {"required": ["artifact_urls"]}
+      },
+      "else": {
+        "required": ["branch", "base_head"],
+        "properties": {"expected_handoff": {"enum": ["pull-request", "handoff", "release"]}},
+        "if": {"properties": {"event": {"enum": ["handoff", "resume"]}}, "required": ["event"]},
+        "then": {"required": ["head_sha"]}
+      }
+    },
+    {
+      "if": {"properties": {"previous_event_id": {"type": "string"}}, "required": ["previous_event_id"]},
+      "then": {"required": ["github_comment_id", "github_comment_url"]}
+    },
+    {
+      "if": {"properties": {"event": {"enum": ["handoff", "release", "resume"]}}, "required": ["event"]},
+      "then": {"properties": {"previous_event_id": {"type": "string", "minLength": 1}}}
+    },
+    {
+      "if": {"properties": {"event": {"const": "claim"}}, "required": ["event"]},
+      "then": {"required": ["expected_handoff"]}
+    },
+    {
+      "if": {"properties": {"event": {"const": "handoff"}}, "required": ["event"]},
+      "then": {"required": ["github_comment_id", "github_comment_url"]}
+    },
+    {
+      "if": {"properties": {"event": {"const": "resume"}}, "required": ["event"]},
+      "then": {"required": ["handoff_event_id", "github_comment_id", "github_comment_url"]}
+    },
+    {
+      "if": {"properties": {"event": {"const": "release"}}, "required": ["event"]},
+      "then": {"required": ["release_mode"]}
+    },
+    {
+      "if": {"properties": {"event": {"const": "reassign"}}, "required": ["event"]},
+      "then": {
+        "required": ["target", "successor", "approval_url", "reason", "old_process_status", "stop_evidence", "github_comment_id", "github_comment_url"],
+        "properties": {"previous_event_id": {"type": "string", "minLength": 1}},
+        "if": {"properties": {"old_process_status": {"const": "stopped"}}},
+        "then": {"properties": {"stop_evidence": {"type": "string", "minLength": 1}}},
+        "else": {"properties": {"stop_evidence": {"type": "null"}}}
+      }
+    }
+  ],
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "required": ["controlled_by", "controlled_by_id", "actor_id", "session_id"],
+      "properties": {
+        "controlled_by": {"type": "string", "minLength": 1},
+        "controlled_by_id": {"type": "integer", "minimum": 1},
+        "actor_id": {"$ref": "#/$defs/actorId"},
+        "session_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40,64}$"
+    },
+    "actorId": {
+      "type": "string",
+      "description": "Responsibility names use lowercase words separated by hyphens. Platform names, role names, and names with a numeric hyphen suffix such as member-01 or backend-api-01 are forbidden.",
+      "allOf": [
+        {"pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"},
+        {"not": {"enum": ["codex", "claude", "claude-code", "pi", "pi-agent", "leader", "member"]}},
+        {"not": {"pattern": "^.*-[0-9]+$"}}
+      ]
+    }
+  }
+}

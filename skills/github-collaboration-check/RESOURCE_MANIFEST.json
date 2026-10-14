@@ -1,0 +1,60 @@
+{
+  "manifest_version": 1,
+  "profile": "github-collaboration-check",
+  "resources": [
+    {
+      "copied_sha256": "1e787cbbc3a5122d171765c89adb44851783e04e3727b4aab9ae61858ca31bcb",
+      "destination": "references/schemas/authorization.schema.json",
+      "source": "schemas/authorization.schema.json",
+      "source_sha256": "1e787cbbc3a5122d171765c89adb44851783e04e3727b4aab9ae61858ca31bcb"
+    },
+    {
+      "copied_sha256": "fcd26792fa2bfb8e9ac1bfcdc24f48c0e9d3d67f6878b3ded90450de8535e347",
+      "destination": "references/schemas/collaboration-event.schema.json",
+      "source": "schemas/collaboration-event.schema.json",
+      "source_sha256": "fcd26792fa2bfb8e9ac1bfcdc24f48c0e9d3d67f6878b3ded90450de8535e347"
+    },
+    {
+      "copied_sha256": "d8c2f51b475163bcfaf7e4ccd48941bc10a8a814bbcf34685996b8e28661730e",
+      "destination": "references/schemas/config.schema.json",
+      "source": "schemas/config.schema.json",
+      "source_sha256": "d8c2f51b475163bcfaf7e4ccd48941bc10a8a814bbcf34685996b8e28661730e"
+    },
+    {
+      "copied_sha256": "c271b563aaecc7d0c62ee6f948d78f295decbcefce4d9cf7d46b3642940c7946",
+      "destination": "references/schemas/managed-resources.schema.json",
+      "source": "schemas/managed-resources.schema.json",
+      "source_sha256": "c271b563aaecc7d0c62ee6f948d78f295decbcefce4d9cf7d46b3642940c7946"
+    },
+    {
+      "copied_sha256": "8bfbb99767012a848b048f45471cdab46144e6b14900d633db3746db4f5ee4d3",
+      "destination": "scripts/run_pr_metadata_check.py",
+      "source": "templates/project/.github/agent-collaboration/run_pr_metadata_check.py",
+      "source_sha256": "8bfbb99767012a848b048f45471cdab46144e6b14900d633db3746db4f5ee4d3"
+    },
+    {
+      "copied_sha256": "25e94f52dbfe62626d8df54bb473c418d7b4737890533646b7ae768f208ca1b1",
+      "destination": "scripts/verify_installed_skill.py",
+      "source": "shared/scripts/verify_installed_skill.py",
+      "source_sha256": "25e94f52dbfe62626d8df54bb473c418d7b4737890533646b7ae768f208ca1b1"
+    },
+    {
+      "copied_sha256": "47d557692237e34b9755290ff2f752e74b616632c7243917ef2377856f0a7dc9",
+      "destination": "references/session-core.md",
+      "source": "shared/references/session-core.md",
+      "source_sha256": "47d557692237e34b9755290ff2f752e74b616632c7243917ef2377856f0a7dc9"
+    },
+    {
+      "copied_sha256": "d5cdef79325166d59466edb9df99dd079127f2483288ecc1c34a3d927cef94ec",
+      "destination": "references/package-verification.md",
+      "source": "shared/references/package-verification.md",
+      "source_sha256": "d5cdef79325166d59466edb9df99dd079127f2483288ecc1c34a3d927cef94ec"
+    },
+    {
+      "copied_sha256": "1062a7f7559ac5c687704f0f138f6892093a719822e313e3b942b555a2b6bb7f",
+      "destination": "references/elevated-authority.md",
+      "source": "shared/references/elevated-authority.md",
+      "source_sha256": "1062a7f7559ac5c687704f0f138f6892093a719822e313e3b942b555a2b6bb7f"
+    }
+  ]
+}

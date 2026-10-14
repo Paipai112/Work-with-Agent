@@ -1,10 +1,11 @@
 import ast
-import base64
 import json
-import subprocess
+import sys
+from pathlib import Path
+import yaml
 
 import pytest
-import yaml
+from test_metadata_collector import github_cli, SHA
 
 
 def test_trusted_workflow_never_executes_pr_content(load_yaml, repo_root):
@@ -17,6 +18,9 @@ def test_trusted_workflow_never_executes_pr_content(load_yaml, repo_root):
     assert "secrets." not in text
     assert "${{ github.event.pull_request.body" not in text
     assert "ref: $GITHUB_SHA" not in text
+    assert '"-m", "venv"' in text
+    assert '"-m", "pip", "install"' in text
+    assert "requirements-helpers.txt" in text
 
 
 def test_workflow_is_stable_and_only_runs_for_default_target(load_yaml):
@@ -33,21 +37,29 @@ def test_workflow_fetcher_is_valid_python_and_pins_default_branch(repo_root):
     script = text.split("python3 - <<'PY'\n", 1)[1].split("\n          PY", 1)[0]
     source = "\n".join(line[10:] for line in script.splitlines())
     ast.parse(source)
-    assert 'ref.get("object", {}).get("sha") != sha' in source
-    assert 'content(repo_name, ".github/agent-collaboration/check_pr_metadata.py", sha)' in source
-    assert all(line.rstrip().endswith(", sha)") for line in source.splitlines() if "= content(repo_name," in line)
-    assert 'pull.get("head", {}).get("sha") != event["pull_request"].get("head", {}).get("sha")' in source
 
 
 @pytest.mark.parametrize("integration_target", [False, True])
-def test_workflow_reads_configured_authorization_and_all_issues_at_pinned_sha(
-    repo_root, fixture_path, tmp_path, monkeypatch, integration_target
+def test_workflow_and_local_launcher_use_same_deployed_chain(
+    repo_root, tmp_path, github_cli, integration_target
 ):
-    data = json.loads(fixture_path("github/pr-valid.json").read_text())
+    run, responses, log, data, sources = github_cli
     prefix, raw = data["pull"]["body"].split("<!-- agent-collaboration:metadata\n")
     metadata = json.loads(raw.split("\n-->", 1)[0])
     metadata["closes_issues"] = [7, 8]
-    metadata["claim_urls"].append("https://github.com/sample/repo/issues/9#issuecomment-3")
+    related_claim = "https://github.com/sample/repo/issues/9#issuecomment-1003"
+    metadata["claim_urls"].append(related_claim)
+    for number in (8, 9):
+        responses[f"repos/sample/repo/issues/{number}"] = {"number": number, "state": "open"}
+    claim_event = yaml.safe_load(responses["repos/sample/repo/issues/comments/1"]["body"])
+    claim_event["event_id"] = "claim-9"
+    related_comment = {"id": 1003, "html_url": related_claim,
+                       "issue_url": "https://api.github.com/repos/sample/repo/issues/9",
+                       "body": yaml.safe_dump(claim_event, sort_keys=False), "updated_at": "2026-10-14T00:00:00Z",
+                       "user": {"id": 1001, "login": "developer"}}
+    responses["repos/sample/repo/issues/8/comments?per_page=100&page=1"] = []
+    responses["repos/sample/repo/issues/9/comments?per_page=100&page=1"] = [related_comment]
+    responses["repos/sample/repo/issues/comments/1003"] = related_comment
     if integration_target:
         data["pull"]["base"]["ref"] = "agent/release-coordination/issue-5-integration"
         metadata["base_branch"] = data["pull"]["base"]["ref"]
@@ -56,68 +68,51 @@ def test_workflow_reads_configured_authorization_and_all_issues_at_pinned_sha(
         + json.dumps(metadata) + "\n-->"
     )
     data["pull"]["base"]["repo"] = {"id": 123}
-    custom_auth = ".github/agent-collaboration/grants.yml"
-    data["config"]["managed_paths"]["authorization"] = custom_auth
     event = {"repository": {"id": 123, "full_name": "sample/repo"}, "pull_request": data["pull"]}
     event_path = tmp_path / "event.json"
     event_path.write_text(json.dumps(event))
-    monkeypatch.setenv("GITHUB_REPOSITORY", "sample/repo")
-    monkeypatch.setenv("GITHUB_SHA", "a" * 40)
-    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
-    source_root = repo_root / "templates/project/.github/agent-collaboration"
-    class IndentedListDumper(yaml.SafeDumper):
-        def increase_indent(self, flow=False, indentless=False):
-            return super().increase_indent(flow, False)
-
-    sources = {
-        ".github/agent-collaboration/config.yml": yaml.dump(data["config"], Dumper=IndentedListDumper).encode(),
-        custom_auth: yaml.dump(data["authorization"], Dumper=IndentedListDumper).encode(),
-        ".github/agent-collaboration/check_pr_metadata.py": (source_root / "check_pr_metadata.py").read_bytes(),
-    }
-    endpoints, real_run = [], subprocess.run
-
-    def fake_run(command, **kwargs):
-        if command[0] != "gh":
-            return real_run(command, **kwargs)
-        assert command[:4] == ["gh", "api", "--method", "GET"]
-        endpoint = command[4]
-        endpoints.append(endpoint)
-        assert endpoint.startswith("repos/sample/repo")
-        suffix = endpoint.removeprefix("repos/sample/repo")
-        if suffix == "":
-            response = data["repository"]
-        elif suffix == "/git/ref/heads/main":
-            response = {"object": {"sha": "a" * 40}}
-        elif suffix == "/pulls/12":
-            response = data["pull"]
-        elif suffix == "/pulls/12/files?per_page=100&page=1":
-            response = data["files"]
-        elif suffix == "/pulls/12/reviews?per_page=100&page=1":
-            response = []
-        elif suffix.startswith("/contents/"):
-            path, ref = suffix.removeprefix("/contents/").split("?ref=")
-            assert ref == "a" * 40
-            response = {"type": "file", "encoding": "base64",
-                        "content": base64.b64encode(sources[path]).decode()}
-        elif suffix in {"/issues/7", "/issues/8", "/issues/9"}:
-            response = {"number": int(suffix.rsplit("/", 1)[1]), "state": "open"}
-        elif suffix.startswith("/issues/comments/"):
-            comment_id = int(suffix.rsplit("/", 1)[1])
-            issue_number = {1: 7, 3: 9}[comment_id]
-            response = {"user": {"id": 1001, "login": "developer"},
-                        "issue_url": f"https://api.github.com/repos/sample/repo/issues/{issue_number}"}
-        else:
-            raise AssertionError(f"unexpected endpoint: {endpoint}")
-        return subprocess.CompletedProcess(command, 0, json.dumps(response), "")
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
     workflow = (repo_root / "templates/project/.github/workflows/agent-collaboration-check.yml").read_text()
     script = workflow.split("python3 - <<'PY'\n", 1)[1].split("\n          PY", 1)[0]
     source = "\n".join(line[10:] for line in script.splitlines())
-    with pytest.raises(SystemExit) as result:
-        exec(compile(source, "<workflow>", "exec"), {"__name__": "__main__"})
-    assert result.value.code == (1 if integration_target else 0)
+    script_path = tmp_path / "workflow.py"
+    script_path.write_text(source)
+    site = tmp_path / "explicit-dependencies"
+    site.mkdir()
+    dependency_log = tmp_path / "dependency-commands.jsonl"
+    (site / "sitecustomize.py").write_text('''
+import json, os, subprocess, sys
+from pathlib import Path
+original_run = subprocess.run
+def run(command, *args, **kwargs):
+    if len(command) > 3 and command[1:3] == ["-m", "venv"]:
+        directory = Path(command[3]) / "bin"
+        directory.mkdir(parents=True)
+        (directory / "python").symlink_to(sys.executable)
+    elif len(command) > 4 and command[1:4] == ["-m", "pip", "install"]:
+        assert "--requirement" in command
+        manifest = Path(command[command.index("--requirement") + 1])
+        assert manifest.is_file() and "PyYAML" in manifest.read_text() and "jsonschema" in manifest.read_text()
+    else:
+        return original_run(command, *args, **kwargs)
+    with Path(os.environ["DEPENDENCY_LOG"]).open("a") as stream:
+        stream.write(json.dumps(command) + "\\n")
+    return subprocess.CompletedProcess(command, 0)
+subprocess.run = run
+''')
+    result = run(executable_path=script_path, extra_environment={
+        "GITHUB_REPOSITORY": "sample/repo", "GITHUB_SHA": SHA, "GITHUB_EVENT_PATH": str(event_path),
+        "PYTHONPATH": str(site), "DEPENDENCY_LOG": str(dependency_log),
+    })
+    assert result.returncode == (2 if integration_target else 0), result.stdout + result.stderr
     if not integration_target:
-        assert f"repos/sample/repo/contents/{custom_auth}?ref={'a' * 40}" in endpoints
-        assert {"repos/sample/repo/issues/7", "repos/sample/repo/issues/8", "repos/sample/repo/issues/9"} <= set(endpoints)
-        assert {"repos/sample/repo/issues/comments/1", "repos/sample/repo/issues/comments/3"} <= set(endpoints)
+        assert json.loads(result.stdout)["result"] == "pass"
+        endpoints = [json.loads(line)[-1] for line in log.read_text().splitlines()]
+        assert all(f"repos/sample/repo/contents/{path}?ref={SHA}" in endpoints for path in sources)
+        assert "repos/sample/repo/issues/7/comments?per_page=100&page=2" in endpoints
+        assert {f"repos/sample/repo/issues/{number}" for number in (7, 8, 9)} <= set(endpoints)
+        assert {"repos/sample/repo/issues/comments/1", "repos/sample/repo/issues/comments/1003"} <= set(endpoints)
+        dependency_commands = [json.loads(line) for line in dependency_log.read_text().splitlines()]
+        assert dependency_commands[0][1:3] == ["-m", "venv"]
+        assert dependency_commands[1][1:4] == ["-m", "pip", "install"]
+        local = run(launcher=True)
+        assert json.loads(local.stdout)["result"] == "pass"

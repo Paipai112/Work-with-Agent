@@ -1,5 +1,6 @@
 {
   "manifest_version": 1,
+  "profile": "github-collaboration",
   "resources": [
     {
       "copied_sha256": "1e787cbbc3a5122d171765c89adb44851783e04e3727b4aab9ae61858ca31bcb",
@@ -8,10 +9,10 @@
       "source_sha256": "1e787cbbc3a5122d171765c89adb44851783e04e3727b4aab9ae61858ca31bcb"
     },
     {
-      "copied_sha256": "37872897a6d657d87188f3c8cb45272cef7a79ea1fbad7c1b5fb12ab277265b4",
+      "copied_sha256": "fcd26792fa2bfb8e9ac1bfcdc24f48c0e9d3d67f6878b3ded90450de8535e347",
       "destination": "references/schemas/collaboration-event.schema.json",
       "source": "schemas/collaboration-event.schema.json",
-      "source_sha256": "37872897a6d657d87188f3c8cb45272cef7a79ea1fbad7c1b5fb12ab277265b4"
+      "source_sha256": "fcd26792fa2bfb8e9ac1bfcdc24f48c0e9d3d67f6878b3ded90450de8535e347"
     },
     {
       "copied_sha256": "d8c2f51b475163bcfaf7e4ccd48941bc10a8a814bbcf34685996b8e28661730e",
@@ -24,6 +25,96 @@
       "destination": "references/schemas/managed-resources.schema.json",
       "source": "schemas/managed-resources.schema.json",
       "source_sha256": "c271b563aaecc7d0c62ee6f948d78f295decbcefce4d9cf7d46b3642940c7946"
+    },
+    {
+      "copied_sha256": "8bfbb99767012a848b048f45471cdab46144e6b14900d633db3746db4f5ee4d3",
+      "destination": "scripts/run_pr_metadata_check.py",
+      "source": "templates/project/.github/agent-collaboration/run_pr_metadata_check.py",
+      "source_sha256": "8bfbb99767012a848b048f45471cdab46144e6b14900d633db3746db4f5ee4d3"
+    },
+    {
+      "copied_sha256": "25e94f52dbfe62626d8df54bb473c418d7b4737890533646b7ae768f208ca1b1",
+      "destination": "scripts/verify_installed_skill.py",
+      "source": "shared/scripts/verify_installed_skill.py",
+      "source_sha256": "25e94f52dbfe62626d8df54bb473c418d7b4737890533646b7ae768f208ca1b1"
+    },
+    {
+      "copied_sha256": "47d557692237e34b9755290ff2f752e74b616632c7243917ef2377856f0a7dc9",
+      "destination": "references/session-core.md",
+      "source": "shared/references/session-core.md",
+      "source_sha256": "47d557692237e34b9755290ff2f752e74b616632c7243917ef2377856f0a7dc9"
+    },
+    {
+      "copied_sha256": "d5cdef79325166d59466edb9df99dd079127f2483288ecc1c34a3d927cef94ec",
+      "destination": "references/package-verification.md",
+      "source": "shared/references/package-verification.md",
+      "source_sha256": "d5cdef79325166d59466edb9df99dd079127f2483288ecc1c34a3d927cef94ec"
+    },
+    {
+      "copied_sha256": "1062a7f7559ac5c687704f0f138f6892093a719822e313e3b942b555a2b6bb7f",
+      "destination": "references/elevated-authority.md",
+      "source": "shared/references/elevated-authority.md",
+      "source_sha256": "1062a7f7559ac5c687704f0f138f6892093a719822e313e3b942b555a2b6bb7f"
+    },
+    {
+      "copied_sha256": "42146e26323fb7496c5b4a2f8524d43698a77a054c2cebd1b1293f6de960d76a",
+      "destination": "scripts/collaboration_event.py",
+      "source": "shared/scripts/collaboration_event.py",
+      "source_sha256": "42146e26323fb7496c5b4a2f8524d43698a77a054c2cebd1b1293f6de960d76a"
+    },
+    {
+      "copied_sha256": "f5be87b58d4047c8548fceef5d493f48dbe05b92325002fa1a0d71b933f83b6f",
+      "destination": "scripts/collaboration_scope.py",
+      "source": "shared/scripts/collaboration_scope.py",
+      "source_sha256": "f5be87b58d4047c8548fceef5d493f48dbe05b92325002fa1a0d71b933f83b6f"
+    },
+    {
+      "copied_sha256": "75c021092d5a3d06b596b01fa9bae1cbf934f4da46c9895d912108ec319c3c76",
+      "destination": "scripts/requirements-helpers.txt",
+      "source": "shared/requirements-helpers.txt",
+      "source_sha256": "75c021092d5a3d06b596b01fa9bae1cbf934f4da46c9895d912108ec319c3c76"
+    },
+    {
+      "copied_sha256": "569c7f5608309d7968d86982bfa5f159f7c4c127ad4df10054a0a250135029b0",
+      "destination": "templates/events/claim.yml",
+      "source": "skills/github-collaboration/templates/events/claim.yml",
+      "source_sha256": "569c7f5608309d7968d86982bfa5f159f7c4c127ad4df10054a0a250135029b0"
+    },
+    {
+      "copied_sha256": "3c74f6cc604a2dcff7e6d894d8f41e18ab93448534f0773af5a36585002ab267",
+      "destination": "templates/events/research-claim.yml",
+      "source": "skills/github-collaboration/templates/events/research-claim.yml",
+      "source_sha256": "3c74f6cc604a2dcff7e6d894d8f41e18ab93448534f0773af5a36585002ab267"
+    },
+    {
+      "copied_sha256": "ebb367d08206cd7e50fba881a009087a6cd90a7f6ef987696bff0c41802c5ade",
+      "destination": "templates/events/handoff.yml",
+      "source": "skills/github-collaboration/templates/events/handoff.yml",
+      "source_sha256": "ebb367d08206cd7e50fba881a009087a6cd90a7f6ef987696bff0c41802c5ade"
+    },
+    {
+      "copied_sha256": "7046d7366d17ac964a0c0c1190442b3bbe3bae8c2acf9f7c7f89ef3aef3f0696",
+      "destination": "templates/events/reassign.yml",
+      "source": "skills/github-collaboration/templates/events/reassign.yml",
+      "source_sha256": "7046d7366d17ac964a0c0c1190442b3bbe3bae8c2acf9f7c7f89ef3aef3f0696"
+    },
+    {
+      "copied_sha256": "48256ca4c269547537200e35ff1df0396924cb91e3cc4f356005b2bdf5bd070d",
+      "destination": "templates/events/release.yml",
+      "source": "skills/github-collaboration/templates/events/release.yml",
+      "source_sha256": "48256ca4c269547537200e35ff1df0396924cb91e3cc4f356005b2bdf5bd070d"
+    },
+    {
+      "copied_sha256": "f0f78ed9b5d496c56af6b35529198554ddc71068e6a08696b5d1c24221a15da4",
+      "destination": "templates/events/resume.yml",
+      "source": "skills/github-collaboration/templates/events/resume.yml",
+      "source_sha256": "f0f78ed9b5d496c56af6b35529198554ddc71068e6a08696b5d1c24221a15da4"
+    },
+    {
+      "copied_sha256": "0b9931f5869ed4c413c5d3d6bab49bd25901c6a8a591d1d13e5069c4172fe12b",
+      "destination": "templates/pull-request-body.md",
+      "source": "templates/project/.github/PULL_REQUEST_TEMPLATE/agent-change.md",
+      "source_sha256": "0b9931f5869ed4c413c5d3d6bab49bd25901c6a8a591d1d13e5069c4172fe12b"
     }
   ]
 }

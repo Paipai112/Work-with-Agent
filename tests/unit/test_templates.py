@@ -38,8 +38,8 @@ def test_project_templates_parse_and_reference_only_repository_facts(repo_root):
     project = repo_root / "templates/project/.github/agent-collaboration"
     config = yaml.safe_load((project / "config.yml").read_text(encoding="utf-8"))
 
-    assert config["protocol_version"] == "0.1.1"
-    assert config["minimum_runtime_skill_version"] == "0.1.1"
+    assert config["protocol_version"] == "0.2.0"
+    assert config["minimum_runtime_skill_version"] == "0.2.0"
     assert config["managed_paths"]["pull_request_template"] == (
         ".github/PULL_REQUEST_TEMPLATE/agent-change.md"
     )
@@ -130,7 +130,7 @@ def test_managed_block_templates_are_body_only_and_point_to_installation(repo_ro
         assert ".github/agent-collaboration/README.md" in text
         assert "[安装说明](.github/agent-collaboration/INSTALL_SKILL.md)" in text
         assert "github-collaboration" in text
-        assert "0.1.1" in text
+        assert "0.2.0" in text
 
 
 def test_github_templates_offer_structured_agent_workflows(repo_root):
@@ -162,6 +162,9 @@ def test_pr_template_can_be_completed_for_partial_or_multi_issue_delivery(
         return result
 
     metadata = json.loads(blocks[0].group(1), object_pairs_hook=unique_keys)
+    assert metadata["schema_version"] == 2
+    assert metadata["skill_version"] == "0.2.0"
+    assert set(metadata["delivery"]) == {"development_base_sha", "net_diff_base_sha", "predecessors", "merge_order"}
     data = json.loads(fixture_path("github/pr-valid.json").read_text(encoding="utf-8"))
     data["pull"]["body"] = template
     candidate = tmp_path / "template-candidate.json"
@@ -180,6 +183,8 @@ def test_pr_template_can_be_completed_for_partial_or_multi_issue_delivery(
         head_sha=data["pull"]["head"]["sha"],
         base_branch=data["pull"]["base"]["ref"],
         claim_urls=["https://github.com/sample/repo/issues/7#issuecomment-1"],
+        delivery={"development_base_sha": "a" * 40, "net_diff_base_sha": "a" * 40,
+                  "predecessors": [], "merge_order": [data["pull"]["number"]]},
     )
     block = blocks[0]
     data["pull"]["body"] = (

@@ -1,0 +1,33 @@
+# The Leader authors this event as themselves. IDs/URLs identify published evidence.
+# This changes allocation; unknown process status requires an independent successor branch.
+event: reassign
+event_id: example-reassign-issue-123
+previous_event_id: example-claim-issue-123
+controlled_by: project-owner
+controlled_by_id: 9999
+actor_id: release-coordination
+session_id: example-leader-session
+runtime: codex
+task_kind: code
+scope: [src/api/**, tests/api/**]
+branch: agent/backend-api/issue-123-timeout
+base_head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+github_comment_id: 1001
+github_comment_url: https://github.com/example-org/example-repo/issues/123#issuecomment-1001
+target:
+  claim_event_id: example-claim-issue-123
+  claim_comment_id: 1001
+  claim_comment_url: https://github.com/example-org/example-repo/issues/123#issuecomment-1001
+  controlled_by: alex
+  controlled_by_id: 1234
+  actor_id: backend-api
+  session_id: example-office-session
+successor:
+  controlled_by: sam
+  controlled_by_id: 5678
+  actor_id: backend-api
+  session_id: example-recovery-session
+approval_url: https://github.com/example-org/example-repo/issues/123#issuecomment-1004
+reason: Approved reassignment of the unavailable session's API work.
+old_process_status: unknown
+stop_evidence: null

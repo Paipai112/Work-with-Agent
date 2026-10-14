@@ -16,6 +16,12 @@ def platform_probe(repo_root):
     return module
 
 
+def test_discovery_contract_includes_the_optional_check_skill(platform_probe):
+    assert set(platform_probe.SKILL_NAMES) == {
+        "github-collaboration-setup", "github-collaboration", "github-collaboration-check",
+    }
+
+
 @pytest.mark.parametrize("traversal", [
     ("a.txt", "nested/a.txt", "Z.bin", "nested/B.bin"),
     ("nested/B.bin", "Z.bin", "nested/a.txt", "a.txt"),
@@ -92,9 +98,9 @@ def test_installed_pi_loader_discovers_and_expands_real_packages(
     assert result["resource_reads"]["successful"] == len(resources)
     found = {skill["name"] for skill in result["skills"]}
     assert found == (set(platform_probe.SKILL_NAMES) if expected else set())
-    assert result["prompt_metadata_contains_both"] is expected
+    assert result["prompt_metadata_contains_all"] is expected
     if expected:
-        assert len(result["expansions"]) == 2
+        assert len(result["expansions"]) == len(platform_probe.SKILL_NAMES)
         assert all(expansion["contains_full_body"] and expansion["contains_base_dir"]
                    and expansion["arguments_preserved"] for expansion in result["expansions"])
         for skill in result["skills"]:

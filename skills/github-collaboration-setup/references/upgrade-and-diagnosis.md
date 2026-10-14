@@ -1,35 +1,29 @@
-# 升级与发现诊断
+# Package upgrade and discovery diagnosis
 
-先用 [平台安装合同](platform-installation.md)确定客户端、系统与目标路径。诊断保持只读。客户端 Skill 包安装或升级限于用户级、或获批准的项目级包目录，需取得目标目录拥有者对**具体安装或升级提案**的批准；不要求先有 Leader 或初始化 Git／GitHub 项目。用户级包目录按平台合同核验，不套用 [本地配置](local-configuration.md)对项目治理文件的项目根路径限制；固定来源、父路径安全、同名冲突、本地修改与完整包摘要核验仍全部适用。
+Use [platform installation](platform-installation.md) and conditional [package verification](package-verification.md). Diagnosis is read-only. Package approval covers no project/Git edit; those need project procedures. Package-only installation reports project status not applicable.
 
-修改 `AGENTS.md`、`CLAUDE.md`、`INSTALL_SKILL.md`、项目 config／authorization 或其他治理文件，以及这些文件的 Git 提交，另走项目只读 preflight、[授权](authorization.md) 和 [本地配置](local-configuration.md)，需有效 Leader 或限定 Bootstrap／Recovery 及对应精确批准。包安装批准不包含这些改动，也不授予 Leader。客户端配置、禁用和覆盖问题先报告实际状态，不能因安装批准而静默编辑全局设置。
+## Inventory → approved replacement
 
-## 只读清单与升级提案
+1. Record client/OS/version, native/WSL, CWD/target and project minimum versus discovered/proposed package.
+2. Inventory supported/added roots, same-name paths/versions/full source inventory/digests, trust/disable/overrides and symlinks. Missing baseline/local edits mean unknown/conflict, not standard release. Manifest excludes no unlisted instructions.
+3. Verify candidate source/full bytes. Show baseline/current/candidate digests, exact added/replaced/preserved files, effects/precedence; choose retain, independent supported path, reviewed merge or named replacement, never auto-merge same names.
+4. Exact source/target/current/candidate approval; re-read (drift invalidates). Validate in separate staging, back up whole old package outside discovery, process one target; failure stops subsequent packages. Unpublished source allows proposals only.
+5. Package verification's new-session test must prove actual path/version/resources/directory coverage. Unmet project minimum stops daily writes.
 
-1. 读取客户端名称和确切版本、OS/架构、Windows native/WSL、当前工作目录和安装目标；项目根若存在则记录。仅安装客户端包时，项目或治理文件缺席不阻断安装。若为已配置项目安装，读取其已确认默认分支上 `config.yml`、`INSTALL_SKILL.md`、入口文件所要求的 Skill 名称与最低版本；区分这些要求、机器上**实际被发现**的包、以及用户指定的新版本。任何治理文件改动都先完成独立的项目预检与授权。
-2. 查所有受当前客户端支持的位置与配置添加路径，列出同名包、每个包的 `SKILL.md` 真实路径、版本、来源、文件清单、SHA-256 摘要，以及配置的禁用/覆盖和信任状态。检查目录及各父组件是否为符号链接、包资源是否完整。缺少登记的旧摘要、来源不明或本地内容修改时标注“未知/冲突”，不能把它归为旧版的标准文件。
-3. 核验拟升级的最终 GitHub 仓库 URL、Release、完整 Commit SHA、发布包摘要及资源清单。`RESOURCE_MANIFEST.json` 仅覆盖其中列出的规范资源；完整包还需按相对路径和文件内容逐个计算摘要，才能识别用户对 `SKILL.md`/引用文档的改动。核验源树与复制候选中的资源都可从包目录内相对解析。
-4. 给出逐项差异：每个现有路径当前摘要、旧发布基线摘要（若有）、候选摘要、将新增/替换/保留的文件、会影响哪些项目/客户端、同名优先级与是否可能改掉正在生效的包。提出具体选择：保持当前安装、将新包放在经验证的独立受支持位置供显式选择、或在审阅旧改动并备份后替换**已点名**的目标目录。相同 Skill 名的多份副本不能自动合并，也不能靠“先复制看看”决定实际生效者。未知基线或冲突时请用户选择保留、逐文件合并、或明确替换；任何选择都应生成新的可审核候选。
-5. 记录审批时的来源 URL/标签/Commit、目标路径和当前/候选完整包摘要。写前重新读取这些值与权限/配置；漂移使本次批准失效。复制到新的暂存目录并校验，在用户确认的目标上一次处理一个包。替换前把旧目录复制到**明确命名且不会被客户端自动发现**的备份位置，记录其完整摘要、原路径、来源和恢复条件；不要用会自动加载的同名备份目录。若复制或校验失败，报告当前状态，不继续下一个包。
+## Fault diagnosis
 
-不要把 GitHub Release 标签本身当成固定 Commit；更不能根据网页片段或 Fork URL 推断来源。发布信息在此仓库尚未真实确定时，升级仅可完成清单与方案，不能执行安装。若新版本需要更新仓库内安装入口，先按项目托管资源规则出 `INSTALL_SKILL.md` 和入口文件的**精确本地差异**；提交、推送和 PR 分别获批准，且发布 URL 应为真实 Commit 的永久链接。
-
-## 发现故障判定
-
-| 现象 | 只读检查与安全下一步 |
+| Observation | Read-only evidence and next proposal |
 | --- | --- |
-| 显式调用不存在 | 查 `SKILL.md` 是否在当前客户端支持的目录、前言是否有效、当前会话是否新建；从根和嵌套目录各查一次。核对版本与实际包路径后再提安装/移动方案。 |
-| Pi 在仓库根可用，进入子目录后消失 | 核对包是否只在根目录 `.pi/skills/`；该位置不能假定被子目录向上发现。先验证从根启动，或提出改用仓库根 `.agents/skills/` 的精确迁移方案；已有同名包与本地修改先报告、获准后再处理，不自动移动或复制。 |
-| 调到了另一份同名包 | 列全同名来源与优先级。Codex 同名项不合并；Claude Code 的企业/用户/项目同名顺序和项目嵌套规则可能改变短命令目标；Pi 警告并保留先发现的包。请用户选明确来源，不覆盖另一份。 |
-| 包可见但没有触发 | 检查 description、显式命令、禁用配置、Claude 的 `skillOverrides`/权限、Pi `--no-skills`/`enableSkillCommands`、Codex `skills.config`；先显式调用，报告覆盖规则，不擅自改设置。 |
-| 项目入口没有出现 | 核对仓库根与嵌套目录启动位置、入口文件是否存在或被覆盖。Codex/Pi 的 `AGENTS.md` 与 Claude Code 的 `CLAUDE.md` 分开查；不得假定一个平台读取另一个平台的入口。报告冲突并按托管区块流程出差异。 |
-| 资源缺失或只复制了 `SKILL.md` | 对照固定 Commit 的完整包清单、发布摘要和相对引用，提出补全目录的差异；发现本地改动时先询问。 |
-| Windows native 测试失败而 WSL 成功 | 分别报告两个环境的客户端、用户目录、shell 与项目路径。Windows 目标用 `$env:USERPROFILE` 和 PowerShell `-LiteralPath`；WSL 的 `~` 属于 Linux，不能当作原生 Windows 成功证据。 |
+| No invocation | Supported path/frontmatter/new session; actual package and version from root/nested |
+| Pi works root, not nested | Root .pi/skills may not scan upward; verify root or propose exact .agents/skills migration after collisions/local-change review |
+| Wrong same-name package | Enumerate precedence/source; Codex no merge, Claude enterprise/user/project overrides, Pi first-discovered warning; user chooses |
+| Visible, not selected | Description/explicit call, Codex skills.config, Claude skillOverrides/permissions, Pi --no-skills/enableSkillCommands; report before global setting proposal |
+| Missing project entry | CWD/root/nested and existing overrides; Codex/Pi AGENTS.md versus Claude CLAUDE.md. Managed-block diff, not silent substitution |
+| Missing resources | Full fixed-source inventory/relative refs; local edits need choice before completion |
+| Native Windows fails, WSL passes | Separate client/user-directory/shell/project records; Windows USERPROFILE/literal paths are not Linux ~ |
 
-诊断输出必须写明 `PASS`、`FAIL` 或 `UNVERIFIED`，每项附客户端版本、会话、真实 Skill 路径、来源 Commit/摘要、项目位置及证据；没有项目时，项目位置记为“不适用”。缺少真实机器时填 `UNVERIFIED`；九组合合同不等于九组合已经完成实测。Pi 所指上游原 URL `https://github.com/badlogic/pi-mono` 于 2026-09-26 直接重定向至 `https://github.com/earendil-works/pi`，版本与发现规则仍以[当前官方 Skill 文档](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md)及[Windows 文档](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/windows.md)为准。另参考 [Codex 官方 Skill 文档](https://learn.chatgpt.com/docs/build-skills)和[Claude Code 官方 Skill 文档](https://code.claude.com/docs/en/skills)。
+Report PASS/FAIL/UNVERIFIED with client/session/path/source/digest/directory/evidence; no machine test means UNVERIFIED, not static-contract compatibility. Platform installation links current sources.
 
-## 验收与回滚
+## Rollback
 
-复制后从计划使用目录的**新会话**显式调用两个 Skill，读回实际命中的 `SKILL.md`、版本和全部相对资源。用于已配置项目时，分别在仓库根、嵌套目录、含空格路径验证，并读取项目安装入口；仅用户级包安装不要求先创建项目入口。记录成功或失败，不把复制完成当作触发成功。若已有项目的最低版本尚未满足，普通开发写操作仍停下。
-
-回滚必须使用升级前记录的**旧包完整摘要**和备份文件清单，先确认备份与记录逐项相符，并重新读取当前目标摘要和发现状态。向用户展示“当前目标 → 旧包”的精确差异、会影响的客户端/项目及恢复后的目标路径；获明确批准后只恢复该目标目录，再核对目标摘要等于旧摘要，并在新会话验证显式调用及实际路径。若备份不存在、摘要不匹配、当前目标又有本地修改或同名优先级不明，就暂停并让用户决定恢复方式；不要自动删除新版本、重写用户改动或声称已回滚。项目入口版本若需降级，应另走项目治理审批，不随用户级包恢复自动改动。
+Follow package verification's exact approved whole-digest restoration, then new-session validate. Missing/mismatched backup, fresh edits or unknown discovery/precedence needs a choice, never automatic discard. Project entry/minimum-version downgrade is separate governance.
