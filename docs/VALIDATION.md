@@ -44,8 +44,8 @@ PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
 
 ## 四、验证边界
 
-- 完整九组合原生矩阵；Windows、Linux 和其他客户端本轮不验。
-- 所有日常写操作、持久 Leader 激活以及项目治理 PR 的真人审批链。
-- 可选 Actions / Required Checks / Rulesets 的真实服务端拦截。模板存在不代表已启用；发行本身不启用这些设施。
+- 完整九组合原生矩阵（Codex／Claude Code／Pi × macOS／Linux／Windows native）不在本轮验收范围；本轮只验 macOS／Codex，WSL 另计。
+- 当前候选的日常远端写操作、持久 Leader 激活及治理 PR 真人审批链，须获实仓授权后另验；未完成前不列为通过。
+- 可选 Actions／Required Checks／Rulesets 的真实服务端拦截，须单独启用与验收；当前候选不声称通过。模板存在不代表已启用，发行也不启用这些设施。
 
 安装可用、项目配置完成和 GitHub 强制执行是三个不同结论。具体项目须按实际账号权限、现有保护、精确授权和合并后同 SHA 回读决定是否完成配置；不能由本页替代。

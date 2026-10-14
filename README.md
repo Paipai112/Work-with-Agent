@@ -9,6 +9,8 @@
 | `github-collaboration-check` | 可选、显式调用的只读检查；收集证据、解释失败或缺口，不修复或批准 |
 | 项目模板 | 保存协议、角色、授权记录、项目事实入口和 Issue／PR 格式 |
 
+下文把三个包简称为 setup（配置）、daily（日常）和 check（只读检查）。这里给出接入顺序；Agent 执行某项操作时，仍需读取所选 Skill 中该操作的完整规则。
+
 本目录为 **v0.2.0 候选**，不能据此认定版本已经发布。远端源仓当前仍为 [Paipai112/baton](https://github.com/Paipai112/baton)，拟改名为 `Paipai112/Work-with-Agent`；改名与 Release 分别由维护者批准。安装依据是实际发布的标签解析出的完整提交 SHA，不是目录名或浮动分支。旧标签、摘要和历史证据保持原样。
 
 包校验需要 Python 3.11+。事件校验和 v0.2 正式 PR 检查另外需要显式准备 PyYAML 与 jsonschema；工具不会自动安装依赖。安装、成套升级与固定提交核验见 [安装页](docs/INSTALL.md)，实际验收证据见 [验证说明](docs/VALIDATION.md)。

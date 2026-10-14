@@ -12,6 +12,8 @@
 
 核验维护者实际发布的 Release／标签记录，将标签解析为完整 40 位提交 SHA。后续源树、包摘要和安装页都使用该 SHA。标签是定位入口，固定提交才是安装依据；浮动分支不能代替它。
 
+用已登录的 `gh api repos/OWNER/REPO` 只读取得仓库 `id`、`full_name`、`default_branch`，与项目已有来源记录或维护者确认的信息对照；URL 重定向本身不能证明仓库身份。Release 页面、标签和解析 SHA 须互相一致；没有可信维护者绑定时停止，不把同名 Fork 当发行源。
+
 下面是 macOS／Linux shell 的来源读取示例，只将源仓检出到新建临时目录，不修改目标项目。应先确认本次读取和认证环境，再运行：
 
 ```sh
@@ -95,6 +97,8 @@ $github-collaboration-check
 
 首次安装且无既有授权时，由控制已核验 Maintain／Admin 账号的人类明确授予当前职责身份、仓库和提案范围的 Bootstrap 会话权限。若丢失最后一位 Leader，则走 Recovery 并保留原授权历史。持久 Leader 需完成对应治理 PR 的真实审批、合并和默认分支读回，不能由候选文件提前生效。
 
+Bootstrap／Recovery 确认记录至少绑定仓库 ID、默认分支基线、控制账号稳定 ID、职责身份、当前会话、权限上限和精确提案范围；记录人类真实确认，不代写批准。Recovery 仍由当前满足权限条件的人类批准，Agent 不能自行恢复。setup 负责展示具体提案与后续审批材料，负责人逐项审阅后再推进。
+
 事件校验和 v0.2 正式 PR 检查需要 `PyYAML>=6,<7` 与 `jsonschema[format]>=4.23,<5`。审阅固定包的 `scripts/requirements-helpers.txt`（setup／daily），或同一可信部署 SHA 的 `requirements-helpers.txt`，经环境准备批准后装入隔离环境。缺依赖返回 unknown；工具不自动安装，也不把不完整校验说成通过。
 
 ## 五、增量配置
@@ -111,6 +115,8 @@ setup 扫描已有文件后，逐项展示项目协议、配置、授权记录�
 | `installation_page_permalink` | `https://github.com/Paipai112/baton/blob/<同一完整SHA>/docs/INSTALL.md` |
 
 仓库完成改名后，上表 URL 使用经过稳定 ID 核验的新名称。将占位符替换为实际 SHA，核验永久链接能读取同 SHA 的安装页，并确认参与者可访问源仓。在经审阅的项目候选中把 `installation_status` 改为 `published`，记录安装路径和调用方式。通用模板保持四个空字段及 `unpublished`；候选不能自己补一条“已批准／已发布”就生效。
+
+`installation_status: published` 只表示安装来源已发布且可核验，不表示本项目配置已获批准、Leader 已生效或操作已获授权。
 
 项目配置完成的依据是已批准差异、实际适用的审批与保护门槛、合并后同一默认分支 SHA 的配置／授权读回，以及可用的固定安装入口。安装包校验通过不代替这些条件。
 
