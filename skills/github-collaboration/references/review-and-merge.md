@@ -11,7 +11,7 @@ Reuse substantive engineering evidence only for its exact HEAD/scope, reviewer, 
 
 ## Merge and completion
 
-Immediately GET same-current-HEAD evidence: effective Leader/current account and approval scope; uncontested claim/Issue lineage; full governance routing; valid protocol approval with no unresolved changes; required native/CODEOWNER reviews; check SHA/conclusion/source; conversations; actual base/default branch, mergeability and protection. Failed/pending/missing/stale/unknown/untrusted evidence blocks merge. Disclose verified enforcement gaps; unknown applicable rules stop the write. Preserve protections, including in governance PRs, and disclose possible Actions before trigger.
+Immediately GET same-current-HEAD evidence: effective Leader/account/approval scope; claim/Issue lineage; fixed-delivery predecessors **all merged**, fresh actual target/net-diff/scope; governance routing; valid protocol approval/no unresolved changes; native/CODEOWNER reviews; check SHA/conclusion/source; conversations/base/mergeability/protection. Failed/pending/missing/stale/unknown/untrusted blocks merge. Disclose verified enforcement gaps and Actions before trigger; preserve protections, including governance PRs.
 
 Use a 40-character **expected HEAD SHA / SHA lock** with the allowed merge method. Changed HEAD restarts review. Record PR URL, expected SHA and returned merge SHA; a timeout uses [failure recovery](failure-recovery.md) before retry.
 

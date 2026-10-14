@@ -116,6 +116,33 @@ def test_elevation_is_conditionally_routed_without_blocking_read_only_diagnosis(
     assert "](elevated-authority.md)" in skill_text(f"{SKILL_NAME}/references/identity-and-permissions.md")
 
 
+def test_delivery_instructions_preserve_fixed_bases_scope_and_formal_check_boundary(skill_text):
+    # Static risk coverage only; actual CLI acceptance belongs to T04 tests and
+    # independent Agent adherence belongs to the fixed T08 evaluation.
+    git = skill_text(f"{SKILL_NAME}/references/git-and-pull-requests.md")
+    event = skill_text(f"{SKILL_NAME}/references/event-helpers.md")
+    review = skill_text(f"{SKILL_NAME}/references/review-and-merge.md")
+    for field in (
+        "schema_version: 2", "development_base_sha", "net_diff_base_sha",
+        "predecessors", "pull_number", "head_sha", "merge_order",
+    ):
+        assert field in git, field
+    for gate in (
+        "Draft only", "Closed-unmerged", "fixed-HEAD drift", "all predecessors must be merged",
+        "actual target SHA", "complete net diff", "recheck claim scope", "current-HEAD review",
+        "Squash/rebase", "no automatic rebase/force", "--legacy-diagnostic", "never formal pass",
+    ):
+        assert gate in git, gate
+    for field in (
+        "schema_version: 1", "kind: baseline", "original_event_id", "github_comment_id",
+        "github_comment_url", "old_body_sha256", "reason", "from_base_head", "to_base_head",
+    ):
+        assert field in event, field
+    assert "Scope must stay unchanged" in event
+    assert "separate new claim/preflight" in event
+    assert "all merged" in review and "fresh actual target/net-diff/scope" in review
+
+
 def test_entrypoint_forbids_only_unscoped_stage_all(skill_text):
     text = skill_text(f"{SKILL_NAME}/SKILL.md")
 
