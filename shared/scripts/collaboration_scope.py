@@ -84,9 +84,10 @@ def compare(payload):
 
 
 def git_output(repo, *arguments):
-    result = subprocess.run(["git", "-C", str(repo), *arguments], capture_output=True, check=False)
+    result = subprocess.run(["git", "--no-replace-objects", "--no-lazy-fetch", "-C", str(repo), *arguments],
+                            capture_output=True, check=False)
     if result.returncode:
-        raise ValueError("local Git inventory unavailable; check repository and fixed base commit")
+        raise ValueError("local Git inventory unavailable; check Git support and fixed local objects; no automatic fetch")
     return result.stdout.decode("utf-8", errors="strict")
 
 

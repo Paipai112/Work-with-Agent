@@ -106,6 +106,53 @@ def test_scope_keeps_staged_change_when_unstaged_change_cancels_its_net_diff(rep
     assert original.read_text() == "version A\n"
 
 
+def test_scope_fixed_base_ignores_local_git_replace_objects(repo_root, tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+    def git(*args):
+        return subprocess.run(["git", "-C", str(project), *args], text=True,
+                              capture_output=True, check=True).stdout.strip()
+    git("init", "-q")
+    git("config", "user.name", "Scope Test")
+    git("config", "user.email", "scope@example.invalid")
+    changed = project / "outside.txt"
+    changed.write_text("original\n")
+    git("add", "--", "outside.txt")
+    git("commit", "-qm", "fixture: original")
+    base = git("rev-parse", "HEAD")
+    changed.write_text("outside claim\n")
+    git("add", "--", "outside.txt")
+    git("commit", "-qm", "fixture: outside change")
+    git("replace", base, git("rev-parse", "HEAD"))
+    assert git("diff", base, "HEAD", "--name-only") == ""
+    before = git("status", "--porcelain=v1")
+    scope = write_json(tmp_path / "scope.json", ["src/**"])
+    result = run_helper(repo_root, "collaboration_scope.py", "--repo", project,
+                        "--base", base, "--scope", scope)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert json.loads(result.stdout)["out_of_scope"] == ["outside.txt"]
+    assert git("status", "--porcelain=v1") == before
+
+
+def test_scope_does_not_fetch_missing_git_objects(repo_root, tmp_path, monkeypatch):
+    commands = tmp_path / "bin"
+    commands.mkdir()
+    sentinel = tmp_path / "download-attempt"
+    fake = commands / "git"
+    fake.write_text(
+        f"#!{sys.executable}\nimport pathlib, sys\n"
+        f"if '--no-lazy-fetch' not in sys.argv: pathlib.Path({str(sentinel)!r}).write_text('fetch')\n"
+        "sys.exit(1)\n"
+    )
+    fake.chmod(0o755)
+    monkeypatch.setenv("PATH", str(commands) + os.pathsep + os.environ.get("PATH", ""))
+    scope = write_json(tmp_path / "scope.json", ["src/**"])
+    result = run_helper(repo_root, "collaboration_scope.py", "--repo", tmp_path,
+                        "--base", "a" * 40, "--scope", scope)
+    assert result.returncode == 2
+    assert not sentinel.exists(), "read-only scope inspection attempted a download"
+
+
 @pytest.mark.parametrize("template", ["claim", "research-claim", "handoff", "reassign", "release", "resume"])
 def test_constructs_and_validates_real_event_templates(repo_root, tmp_path, template):
     source = repo_root / "skills/github-collaboration/templates/events" / f"{template}.yml"

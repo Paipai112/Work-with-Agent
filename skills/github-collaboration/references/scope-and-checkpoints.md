@@ -13,7 +13,7 @@ python scripts/collaboration_scope.py --repo /absolute/project --base FULL_COMMI
 
 JSON: nonempty `scope` patterns, `changes`, optional `other_claims`. Changes have `status: added|modified|deleted|renamed|untracked`, `path`, and rename `previous_path`; other claims have `claim_url`/`scope`. Supply current verified allocations: helper cannot establish active claims.
 
-Git mode unions base→HEAD, HEAD→index, index→worktree and nonignored untracked paths separately, preventing staged/unstaged cancellation. Both rename ends and low-similarity delete/add moves count. Ignored untracked delivery needs explicit JSON inventory. No staging/Commit/network/Push.
+Git mode unions base→HEAD, HEAD→index, index→worktree and nonignored untracked paths separately, preventing cancellation. Both rename ends and low-similarity delete/add moves count. Ignored untracked delivery needs explicit JSON inventory. Fixed local objects only: no replace objects/lazy fetch; unsupported Git/missing objects → unknown. No staging/Commit/network/Push.
 
 Repository-relative POSIX: literals exact, `*`/`?` one segment, whole-segment `**` zero-or-more directories, terminal `**` descendants. `tests/*.py` excludes `tests/unit/a.py`; `tests/**/a.py` includes it and `tests/a.py`. No character classes, embedded `**`, absolute/traversal paths.
 
