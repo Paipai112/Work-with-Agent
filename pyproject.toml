@@ -10,6 +10,7 @@ dependencies = []
 
 [project.optional-dependencies]
 test = ["pytest>=8,<9", "PyYAML>=6,<7", "jsonschema[format]>=4.23,<5"]
+helpers = ["PyYAML>=6,<7", "jsonschema[format]>=4.23,<5"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -4,6 +4,8 @@ Read [preflight](preflight.md) and [identity and permissions](identity-and-permi
 
 ## Verify every event
 
+For candidate construction, schema checks, exact publication/correction or unknown API results, load [event helpers](event-helpers.md). Before delivery scope comparison or interruption/resume checkpoint recording, load [scope and checkpoints](scope-and-checkpoints.md).
+
 Validate event bodies with the installed Skill's `references/schemas/collaboration-event.schema.json`, using `Draft202012Validator` and `FormatChecker`. A missing/invalid/incompatible bundled schema means read-only; a working-tree schema cannot replace it. Schema validation checks structure, not authorship, authorization, process state or scope conflicts.
 
 Fetch the real GitHub Issue comment and verify hostname, immutable `repository_id`, owner/name, Issue number, actual ID/URL, and `user.id`/`user.login` against top-level `controlled_by_id`/`controlled_by`. Fetch predecessors in the same repository/Issue and compare their actual IDs/URLs and `event_id` with the links. Resolve edited, duplicate or contradictory events before relying on them. For handoff/resume/release/reassign, `github_comment_id` and `github_comment_url` identify the already-published predecessor, never the event being drafted. Capture the new comment's own ID/URL after posting and carry it forward.
