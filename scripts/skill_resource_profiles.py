@@ -35,7 +35,8 @@ PROFILES = {
     },
     "github-collaboration": {
         "schema_root": "references/schemas", "templates": False,
-        "helpers": READONLY_RESOURCES + EVENT_RESOURCES,
+        "helpers": READONLY_RESOURCES + EVENT_RESOURCES
+        + (("templates/project/.github/PULL_REQUEST_TEMPLATE/agent-change.md", "templates/pull-request-body.md"),),
     },
     "github-collaboration-check": {
         "schema_root": "references/schemas", "templates": False,

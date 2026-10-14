@@ -9,10 +9,10 @@
       "source_sha256": "1e787cbbc3a5122d171765c89adb44851783e04e3727b4aab9ae61858ca31bcb"
     },
     {
-      "copied_sha256": "9283b7e3e00cbdb063a750f40e256e608988a43c0af936e91b5d68c90befd09d",
+      "copied_sha256": "fcd26792fa2bfb8e9ac1bfcdc24f48c0e9d3d67f6878b3ded90450de8535e347",
       "destination": "references/schemas/collaboration-event.schema.json",
       "source": "schemas/collaboration-event.schema.json",
-      "source_sha256": "9283b7e3e00cbdb063a750f40e256e608988a43c0af936e91b5d68c90befd09d"
+      "source_sha256": "fcd26792fa2bfb8e9ac1bfcdc24f48c0e9d3d67f6878b3ded90450de8535e347"
     },
     {
       "copied_sha256": "d8c2f51b475163bcfaf7e4ccd48941bc10a8a814bbcf34685996b8e28661730e",
@@ -27,10 +27,10 @@
       "source_sha256": "c271b563aaecc7d0c62ee6f948d78f295decbcefce4d9cf7d46b3642940c7946"
     },
     {
-      "copied_sha256": "9b0b1abdf84918284d2bd4dc879ceef9a5e69eec1e567425ddd6685b973ea192",
+      "copied_sha256": "8bfbb99767012a848b048f45471cdab46144e6b14900d633db3746db4f5ee4d3",
       "destination": "scripts/run_pr_metadata_check.py",
       "source": "templates/project/.github/agent-collaboration/run_pr_metadata_check.py",
-      "source_sha256": "9b0b1abdf84918284d2bd4dc879ceef9a5e69eec1e567425ddd6685b973ea192"
+      "source_sha256": "8bfbb99767012a848b048f45471cdab46144e6b14900d633db3746db4f5ee4d3"
     },
     {
       "copied_sha256": "25e94f52dbfe62626d8df54bb473c418d7b4737890533646b7ae768f208ca1b1",
@@ -63,10 +63,10 @@
       "source_sha256": "6ab41d07736a94b1a7194f03d421e0c74730e64b099e50f3ce95bae08804c725"
     },
     {
-      "copied_sha256": "ad9f75299a52bb7f21572b528e6c9906f7ad02dfd64af68266ef2fc627a63c59",
+      "copied_sha256": "f5be87b58d4047c8548fceef5d493f48dbe05b92325002fa1a0d71b933f83b6f",
       "destination": "scripts/collaboration_scope.py",
       "source": "shared/scripts/collaboration_scope.py",
-      "source_sha256": "ad9f75299a52bb7f21572b528e6c9906f7ad02dfd64af68266ef2fc627a63c59"
+      "source_sha256": "f5be87b58d4047c8548fceef5d493f48dbe05b92325002fa1a0d71b933f83b6f"
     },
     {
       "copied_sha256": "75c021092d5a3d06b596b01fa9bae1cbf934f4da46c9895d912108ec319c3c76",
@@ -109,6 +109,12 @@
       "destination": "templates/events/resume.yml",
       "source": "skills/github-collaboration/templates/events/resume.yml",
       "source_sha256": "f0f78ed9b5d496c56af6b35529198554ddc71068e6a08696b5d1c24221a15da4"
+    },
+    {
+      "copied_sha256": "0b9931f5869ed4c413c5d3d6bab49bd25901c6a8a591d1d13e5069c4172fe12b",
+      "destination": "templates/pull-request-body.md",
+      "source": "templates/project/.github/PULL_REQUEST_TEMPLATE/agent-change.md",
+      "source_sha256": "0b9931f5869ed4c413c5d3d6bab49bd25901c6a8a591d1d13e5069c4172fe12b"
     }
   ]
 }

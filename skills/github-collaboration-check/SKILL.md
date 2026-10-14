@@ -7,8 +7,8 @@ metadata:
 
 # Read-only collaboration check
 
-Use for an explicit check, not an extra daily requirement. Report evidence, defects,
-gaps and the next safe action. Do not repair, post, change roles, approve, merge,
+Use for an explicit check, not an extra daily requirement.
+Do not repair, post, change roles, approve, merge,
 install dependencies or enable Actions. PASS grants none of those permissions.
 
 Confirm repository/scope; read [session core](references/session-core.md) for source,

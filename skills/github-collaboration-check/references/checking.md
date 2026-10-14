@@ -42,7 +42,6 @@ or stage Git changes from this Skill.
 
 ## Report
 
-Lead with verdict and failed/missing checks; include target/SHAs, command/result,
-freshness, unchecked areas and next safe action. Link safe evidence, never credentials
-or private content. PASS replaces neither current-HEAD independent review, approvals,
-protections nor refresh before a later write.
+Use the entry's report fields; add errors, freshness, unchecked areas and next action.
+Link safe evidence, never credentials/private content. PASS replaces no current-HEAD
+independent review, approval, protection or refresh before writing.

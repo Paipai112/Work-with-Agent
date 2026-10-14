@@ -22,7 +22,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Run deployed trusted metadata chain
+      - name: Prepare explicit trusted helper dependencies and run metadata chain
         shell: bash
         run: |
           python3 - <<'PY'
@@ -64,24 +64,37 @@ jobs:
               pull = event["pull_request"]
               if type(pull.get("number")) is not int or pull["number"] < 1 or not re.fullmatch(r"[0-9a-f]{40}", str(pull.get("head", {}).get("sha", ""))):
                   unknown()
-              path = ".github/agent-collaboration/run_pr_metadata_check.py"
               tree = get(f"repos/{repository}/git/trees/{sha}?recursive=1")
               if tree.get("truncated") is not False or not isinstance(tree.get("tree"), list):
                   unknown()
-              entries = [entry for entry in tree["tree"] if isinstance(entry, dict) and entry.get("path") == path]
-              if len(entries) != 1 or entries[0].get("type") != "blob" or entries[0].get("mode") not in {"100644", "100755"}:
-                  unknown()
-              item = get(f"repos/{repository}/contents/{path}?ref={sha}")
-              if item.get("type") != "file" or item.get("path") != path or item.get("encoding") != "base64":
-                  unknown()
-              raw = base64.b64decode("".join(item["content"].split()), validate=True)
-              blob = hashlib.sha1(f"blob {len(raw)}\0".encode() + raw).hexdigest()
-              if len(raw) > 262144 or item.get("sha") != blob or entries[0].get("sha") != blob or item.get("size") != len(raw):
-                  unknown()
+              sources = {}
+              for name in ("run_pr_metadata_check.py", "requirements-helpers.txt"):
+                  path = ".github/agent-collaboration/" + name
+                  entries = [entry for entry in tree["tree"] if isinstance(entry, dict) and entry.get("path") == path]
+                  if len(entries) != 1 or entries[0].get("type") != "blob" or entries[0].get("mode") not in {"100644", "100755"}:
+                      unknown()
+                  item = get(f"repos/{repository}/contents/{path}?ref={sha}")
+                  if item.get("type") != "file" or item.get("path") != path or item.get("encoding") != "base64":
+                      unknown()
+                  raw = base64.b64decode("".join(item["content"].split()), validate=True)
+                  blob = hashlib.sha1(f"blob {len(raw)}\0".encode() + raw).hexdigest()
+                  if len(raw) > 262144 or item.get("sha") != blob or entries[0].get("sha") != blob or item.get("size") != len(raw):
+                      unknown()
+                  sources[name] = raw
               with tempfile.TemporaryDirectory(prefix="agent-metadata-bootstrap-") as directory:
-                  launcher = Path(directory) / "run_pr_metadata_check.py"
-                  launcher.write_bytes(raw)
-                  result = subprocess.run([sys.executable, str(launcher), "--repository", repository,
+                  root = Path(directory)
+                  for name, raw in sources.items():
+                      (root / name).write_bytes(raw)
+                  if get(f"repos/{repository}/git/ref/heads/{quote(default, safe='')}").get("object", {}).get("sha") != sha:
+                      unknown()
+                  # Explicit Actions preparation only. The local launcher never installs dependencies.
+                  if subprocess.run([sys.executable, "-m", "venv", str(root / "runtime")], check=False).returncode:
+                      unknown()
+                  python = root / "runtime/bin/python"
+                  if subprocess.run([str(python), "-m", "pip", "install", "--disable-pip-version-check",
+                                     "--requirement", str(root / "requirements-helpers.txt")], check=False).returncode:
+                      unknown()
+                  result = subprocess.run([str(python), str(root / "run_pr_metadata_check.py"), "--repository", repository,
                                            "--repository-id", str(repo["id"]), "--pull-number", str(pull["number"]),
                                            "--expected-trusted-sha", sha, "--expected-head", pull["head"]["sha"],
                                            "--default-target-only"], check=False)

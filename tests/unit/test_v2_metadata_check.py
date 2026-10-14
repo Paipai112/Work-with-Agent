@@ -112,9 +112,13 @@ def test_valid_deployed_v2_claim_and_net_scope_can_pass(deployed_checker, v2_inp
     assert result.stdout.endswith("RESULT=pass\n")
 
 
-def test_real_pr_template_filled_with_v2_delivery_runs_formal_deployed_checker(repo_root, deployed_checker, v2_input):
+@pytest.mark.parametrize("template_path", [
+    "templates/project/.github/PULL_REQUEST_TEMPLATE/agent-change.md",
+    "skills/github-collaboration/templates/pull-request-body.md",
+])
+def test_real_pr_template_filled_with_v2_delivery_runs_formal_deployed_checker(repo_root, deployed_checker, v2_input, template_path):
     run, _ = deployed_checker
-    template = (repo_root / "templates/project/.github/PULL_REQUEST_TEMPLATE/agent-change.md").read_text()
+    template = (repo_root / template_path).read_text()
     before, block = template.split("<!-- agent-collaboration:metadata\n")
     candidate = json.loads(block.split("\n-->")[0])
     assert candidate["schema_version"] == 2 and "delivery" in candidate

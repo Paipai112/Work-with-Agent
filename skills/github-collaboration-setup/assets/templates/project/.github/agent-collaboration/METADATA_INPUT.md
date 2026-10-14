@@ -1,96 +1,60 @@
-# PR 元数据采集与检查输入
+# PR 元数据检查合同
 
-本地正式检查和 Actions 使用消费项目默认分支同一 SHA 上的采集器、checker、配置和授权文件。采集完成仅表示取得了当前快照；正式检查的 pass 表示该快照通过 checker 的声明检查。
+在线入口使用消费项目默认分支同 SHA 检查链；PASS 仅对快照有效，不授权写入/合并，不启用 Actions。
 
-## 一、运行入口
+## 运行与结果
 
-准备 Python 3.11+、已登录目标 GitHub 账号的 `gh`，以及仓库内容、PR 和 Issue 的读取权限。采集器与启动器使用 Python 标准库，所有 GitHub 请求均显式为 GET。
+需要 Python 3.11+、已登录 `gh`、内容/PR/Issue 读权限；GitHub 请求均为 GET。依赖见可信 `requirements-helpers.txt`（PyYAML/jsonschema），本地不自动安装。
 
 ```sh
 python3 .github/agent-collaboration/run_pr_metadata_check.py \
-  --repository owner/repository --pull-number 12 --output-dir metadata-output
+  --repository OWNER/REPO --pull-number N --output-dir NEW_DIRECTORY
 ```
 
-这条命令会输出一个 JSON 报告，并在指定目录保存 `metadata.json` 和 `check-report.json`。不传 `--output-dir` 时使用临时目录，退出后清理本次临时文件。
+输出 JSON、`metadata.json`、`check-report.json`；省略目录则临时保存、退出清理。持久目录须新建或空，无 symlink/父组件链接/`..`；排他写入保留旧字节。须支持目录描述符、`O_DIRECTORY`、`O_NOFOLLOW`、相对描述符操作，否则 unknown；可省略输出目录，不能降级跟随路径。Windows 原生未验。
 
-输出目录必须是新目录或空的普通目录，且路径及父组件不能是 symlink，也不能包含 `..`。既有目录被占用时，在写入输出前返回 unknown，保留原字节；每次保存快照请选择新目录。checker 的工作目录始终是本次临时目录，产物通过排他创建写入指定目录。
-
-持久输出要求系统支持目录描述符、`O_DIRECTORY`、`O_NOFOLLOW` 和相对描述符操作；能力缺失时返回 unknown，不能降级为跟随路径写入。可不传 `--output-dir` 使用临时检查并读取标准输出。Windows 原生运行本轮未验证。
-
-- 仅保存采集输入：给上述入口增加 `--collect-only`；标准输出为 payload JSON，不提供 checker 的 pass。
-- 直接采集：`python3 .github/agent-collaboration/collect_pr_metadata.py --repository owner/repository --pull-number 12`；这个入口通过同目录启动器定位并运行可信部署副本。
-- 绑定外部已核实目标：可提供 `--repository-id`、`--expected-head` 和 `--expected-trusted-sha`；程序仍独立 GET 核验，参数不会替代在线证据。
-- Actions 适配：工作流增加 `--default-target-only`，只检查以当前默认分支为目标的 PR。本地入口可交给 checker 核验配置登记的集成分支目标。
-
-本地启动器必须与已核验默认 SHA 上的部署版本字节一致。不一致时返回 unknown，并提示从该 SHA 更新启动器；不会把本地邻近的 checker 或 collector 当成正式权威执行。
-
-## 二、输入结构
-
-payload 保留旧主字段，并增加 `issue_comments` 与 `snapshot`。配置和授权保存为原始 UTF-8 文本，使 checker 能检查原始 YAML 语法。
-
-| 字段 | 内容 |
+| 参数/入口 | 含义 |
 | --- | --- |
-| `trusted_ref_verified` | 官方入口验证当前默认分支后写入的 `true` |
-| `trusted_sha` | 已核验默认分支的完整 40 位 SHA |
-| `repository` | 稳定 `id`、`full_name`、`default_branch` |
-| `pull` | GitHub PR 原始对象，包含实际 HEAD、base、作者与正文 |
-| `files` | 完整分页的变更文件记录，保留重命名信息 |
-| `reviews` | 完整分页的 GitHub 审核记录 |
-| `issues` | 主 Issue、关闭引用与 claim 引用涉及的全部 Issue 对象 |
-| `config` | 同可信 SHA 的配置原文 |
-| `authorization` | 由配置 `managed_paths.authorization` 指定、同可信 SHA 的授权原文 |
-| `claim_comments` | 规范 claim URL 到评论记录的映射；已确认不存在时为 `null` |
-| `issue_comments` | 十进制 Issue number 字符串到该 Issue 完整评论记录列表的映射 |
-| `snapshot` | v2 来源与采集时点记录 |
+| `--collect-only` | 仅输出 payload；退出 0 不是正式 PASS |
+| `--repository-id`、`--expected-head`、`--expected-trusted-sha` | 目标/漂移约束，仍独立在线核验 |
+| `--default-target-only` | 仅默认分支目标适用；本地可检查已登记集成分支 |
+| 同目录 `collect_pr_metadata.py` | 相同目标参数，经 launcher 运行可信部署副本 |
+| `check_pr_metadata.py INPUT_JSON OUTPUT_DIR` | 离线快照检查，输出 `RESULT=pass/fail/unknown` |
+| 离线增加 `--legacy-diagnostic` | 旧输入仅诊断，输出 `LEGACY_RESULT=pass/fail`；移除 snapshot 不可降级取得正式 PASS |
 
-`claim_comments` 与 `issue_comments` 的评论记录使用同一结构：
+在线 `result: pass/fail/unknown` 分别退出 0/1/2；unknown 含 `errors`、`snapshot: null`，不回显原始 GitHub 错误/凭据。缺资源/依赖、限流、超时、版本不兼容或无合法 checker 结果均为 unknown。
 
-```json
-{
-  "id": 1,
-  "url": "https://github.com/owner/repository/issues/7#issuecomment-1",
-  "user_id": 1001,
-  "login": "developer",
-  "issue_number": 7,
-  "body": "原始评论正文，保留换行",
-  "updated_at": "2026-10-14T00:00:00Z"
-}
-```
+## payload 与来源
 
-- 评论实际 ID、URL、所属 Issue 和作者稳定 ID 来自 GitHub 返回对象，并核对其来源关系。
-- 完整 Issue 评论保留 release、handoff、reassign、resume 和其他后续事件的原文；采集器不解释这些事件的授权效力。
-- claim 单条读取与完整评论列表不一致时，要求重新采集，不能拼接成完成快照。
+| 字段 | 数据 |
+| --- | --- |
+| `trusted_ref_verified`、`trusted_sha` | 已验证默认分支为 true、完整 40 位 SHA |
+| `repository`、`pull` | 仓库 id/full_name/default_branch；PR 原对象含 HEAD/base/作者/正文 |
+| `files`、`reviews`、`issues` | 完整分页文件（含 rename）、审核、主/关闭/claim 引用的 Issue |
+| `config`、`authorization` | 同 SHA UTF-8 原文；授权路径由 config 选择，不绕开 YAML 原文解析 |
+| `claim_comments` | 规范 claim URL→评论；已确认不存在为 null |
+| `issue_comments` | 十进制 Issue number 字符串→完整评论列表 |
+| `snapshot` | version=2、check_contract=2、source=github-get；collected_at/verified_at、repository_id/default_branch/trusted_sha/pull_number/head_sha/base_ref；trusted_resources 为路径→sha256/bytes |
 
-`snapshot.version` 为 `2`，`source` 为 `github-get`。其中记录 `collected_at`、`verified_at`、仓库 ID、默认分支、可信 SHA、PR number、HEAD SHA、base ref；`trusted_resources` 以部署路径为 key 保存每个资源的 SHA256 和字节数。
+评论含 `id/url/user_id/login/issue_number/body/updated_at`，核对 ID/URL/Issue/作者，保留正文换行。单条 claim 须与全列表一致；保留 release/handoff/reassign/resume，采集器不裁决授权。
 
-`snapshot.unverified` 明确列出本检查未证明的真人批准、实时账号权限、GitHub 原生分支保护与实际 Skill 加载。离线 JSON 的来源标记可由文件编辑者改写；离线 checker 结论仅适用于该输入，正式来源核验须通过在线可信入口完成。
+固定目录 `.github/agent-collaboration/` 包含 launcher、collector、checker（上述文件名），`collaboration_event.py`、`collaboration_scope.py`、`collaboration-event.schema.json`、`requirements-helpers.txt`、`config.yml`，另取 config 指定授权，共九项。均须同 SHA 普通 blob、树/Contents 字节及 blob SHA 一致；symlink/gitlink、歧义、截断或单文件超过 262144 字节 → unknown。本地 launcher 字节也须一致，不执行附近替代脚本或 PR 代码。
 
-## 三、可信部署与刷新
+`COLLECTOR_INPUT_VERSION/INPUT_VERSION=2` 握手输入，`FORMAL_CHECK_VERSION/CHECK_CONTRACT_VERSION=2` 握手判定。新增资源须同步固定清单/setup 映射/握手，不动态加载。Actions 校验同 SHA requirements 后建临时 venv/pip、调用同一入口；仅模拟验证，启用另批。
 
-启动器的固定程序资源表为 `TRUSTED_PROGRAM_FILES`，当前列出：
+## 固定交付与事件
 
-- `.github/agent-collaboration/run_pr_metadata_check.py`
-- `.github/agent-collaboration/collect_pr_metadata.py`
-- `.github/agent-collaboration/check_pr_metadata.py`
+PR 唯一 metadata 块使用 `schema_version: 2`；完整结构见[规范模板](../PULL_REQUEST_TEMPLATE/agent-change.md)。必填 delivery：development_base_sha（有效 claim 当前 base_head）、net_diff_base_sha、predecessors（按序含 pull_number/head_sha）、merge_order（前置编号后接本 PR）。SHA 完整；无前置仍须空 predecessors 和本 PR 真实编号（先建 Draft 再补）。开发基线不是授权 trusted_sha。
 
-启动器还从同 SHA 读取 `config.yml` 和配置指定的授权文件。每个资源须在同 SHA 的 Git 树中是唯一普通 blob，内容字节须同时匹配 Git 树与 Contents API 的 blob SHA；symlink、gitlink、歧义路径、截断树和超出 262144 字节的资源均返回 unknown。
+collector 提供 `predecessor_pulls`（声明顺序）、`predecessor_files`（number 字符串→全量文件）、`development_compare`、`net_diff`、`predecessor_compares`。比较均含 base_sha/head_sha/merge_base_sha/status/commits/files/complete；commits 为完整分页 SHA。相邻前置比较数量为 max(前置数−1,0)，验证实际祖先顺序，不只信 merge_order。
 
-`COLLECTOR_INPUT_VERSION = 2` 与采集器的 `INPUT_VERSION = 2` 是输入封装兼容握手。该常量只确认同一输入结构，不证明 checker 已实现新事件或叠加交付的判断。增强检查器所需 helper、schema 和依赖必须明确进入固定部署资源表；缺失或不匹配时不能提供正式 pass。
+- 有未合并前置：仅 Draft，两基线为最后前置固定 HEAD。总 diff 须能由真实前置文件与当前净增量解释；净增量过当前 claim scope。继承 added、净 modified 不强求同状态。
+- 前置全合并：净基线为当前 PR target SHA；API/net 路径、状态、rename 两端元组一致并过 scope。关闭未合并/固定 HEAD 漂移拒绝；无法解释为 unknown。squash/rebase 不默认收敛，重新核验基线/净 diff/审核，不自动 rebase/force。
+- 基线修订追加 claim 并链接前驱；revision 的 schema_version=1、kind=baseline，原始根 original_event_id/github_comment_id/github_comment_url/old_body_sha256、reason、from_base_head/to_base_head 必填。from 为前驱有效基线，to 为新值；身份/session/branch/scope 不变。correction 不得改基线；范围变化另行认领/预检，不追认旧写入。
+- 重分配核验可信 Leader 委派结构、精确目标和继任 claim；旧进程 unknown 必须独立分支。没有 native APPROVED 不自动失败；已有证据须对应当前 HEAD 且晚于相关合并/基线修订。
 
-采集结束前再次 GET 仓库身份、默认分支 SHA、PR HEAD/base/body、相关 Issue、完整评论及审核。变化时返回 unknown 并要求重采集。这个复核不能保证采集结束后没有变化；合并前仍须读取当时的目标与审核事实。
+## 完整性与未核验事项
 
-## 四、结果与错误
+每页 100 条；31 个满页、重复路径/审核/评论 ID、文件数与 changed_files 不符或达到 3000 上限 → unknown。[Compare API](https://docs.github.com/en/rest/commits/commits#compare-two-commits) 文件仅第一页、最多 300；达到 300 即 unknown。比较提交完整分页、末项固定 HEAD。结束前二次 GET 仓库/default SHA/PR/Issue/评论/审核/前置/比较；任何漂移重采集，合并前仍须再次刷新。
 
-| 模式或结果 | 退出码 | 含义 |
-| --- | --- | --- |
-| collect-only 成功 | `0` | 输出完整 payload；没有 checker 判定 |
-| 正式 `result: pass` | `0` | checker 完成并通过当前快照的声明检查 |
-| 正式 `result: fail` | `1` | checker 完成，快照存在可核验的拒绝项 |
-| `result: unknown` | `2` | 来源、完整性、时点或执行证据不足；不能提供完成快照或正式检查结论 |
-
-unknown 的标准输出为 JSON，包含 `errors` 与 `snapshot: null`。GitHub 原始错误和凭据不回显。
-
-- files 达到 GitHub 3000 条上限，或 `changed_files` 与取得数量不一致时，拒绝可能截断的列表。
-- 每页请求 100 条；连续 31 个满页、重复文件路径或审核/评论 ID 会使分页证据不足。
-- 不可读资源、限流、超时、部署版本不匹配和 checker 未正常给出兼容结果均返回 unknown。
-- 工作流文件是可选部署候选；该模板的模拟验证不启用远端 Actions，也不证明 Required Checks 或服务端审批已经生效。
+离线来源标记/complete 可被改写，不是签名；实时来源须在线核验。unverified：真人批准、实时权限、原生保护/Required Reviews、Skill 加载、协议当前 HEAD 审核、未列 Issue 冲突、历史逐次写入授权、旧进程终止。只采相关 Issue，拒绝已知冲突，不证明全仓独占。共享账号职责审核不等于原生独立账号审批；最终按项目规则核验。

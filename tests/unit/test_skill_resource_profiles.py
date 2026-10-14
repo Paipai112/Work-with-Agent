@@ -156,3 +156,17 @@ def test_duplicate_canonical_deployment_target_fails_before_output(repo_root, tm
     assert result.returncode != 0
     assert "duplicate" in result.stderr.lower()
     assert not target.exists()
+
+
+def test_daily_pr_template_uses_the_same_current_contract_as_setup(repo_root, tmp_path):
+    target = tmp_path / "github-collaboration"
+    result = sync(repo_root, target)
+    assert result.returncode == 0, result.stderr
+    copied = target / "templates/pull-request-body.md"
+    canonical = repo_root / "templates/project/.github/PULL_REQUEST_TEMPLATE/agent-change.md"
+    assert copied.is_file()
+    assert copied.read_bytes() == canonical.read_bytes()
+    manifest = json.loads((target / "RESOURCE_MANIFEST.json").read_text())
+    entry = [item for item in manifest["resources"] if item["destination"] == "templates/pull-request-body.md"]
+    assert len(entry) == 1
+    assert entry[0]["source"] == canonical.relative_to(repo_root).as_posix()

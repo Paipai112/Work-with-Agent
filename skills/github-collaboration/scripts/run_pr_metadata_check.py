@@ -18,9 +18,11 @@ from urllib.parse import quote
 
 DEPLOYED = ".github/agent-collaboration/"
 INPUT_VERSION = 2
+CHECK_CONTRACT_VERSION = 2
 SHA = re.compile(r"[0-9a-f]{40}")
 REPOSITORY = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
 TRUSTED_PROGRAM_FILES = ("run_pr_metadata_check.py", "collect_pr_metadata.py", "check_pr_metadata.py")
+TRUSTED_EXTRA_FILES = ("collaboration_event.py", "collaboration_scope.py", "collaboration-event.schema.json", "requirements-helpers.txt")
 
 
 class EvidenceUnavailable(Exception):
@@ -84,6 +86,7 @@ class GitHub:
 def load_module(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -181,7 +184,7 @@ def run(args, api):
     if args.expected_trusted_sha is not None and sha != args.expected_trusted_sha:
         raise EvidenceUnavailable("default branch changed since caller/event; refresh collection")
     sources = {}
-    for name in (*TRUSTED_PROGRAM_FILES, "config.yml"):
+    for name in (*TRUSTED_PROGRAM_FILES, *TRUSTED_EXTRA_FILES, "config.yml"):
         path = DEPLOYED + name
         sources[path] = api.content(args.repository, path, sha)
     # Installed copies locate the chain. Only byte-identical deployed launchers run it.
@@ -191,12 +194,14 @@ def run(args, api):
         raise EvidenceUnavailable("default branch changed before trusted code load; refresh collection")
     with tempfile.TemporaryDirectory(prefix="agent-metadata-") as directory:
         root = Path(directory)
-        for name in ("collect_pr_metadata.py", "check_pr_metadata.py"):
+        for name in (*TRUSTED_PROGRAM_FILES, *TRUSTED_EXTRA_FILES):
             (root / name).write_bytes(sources[DEPLOYED + name])
         checker = load_module("trusted_checker", root / "check_pr_metadata.py")
         collector = load_module("trusted_collector", root / "collect_pr_metadata.py")
         if (getattr(checker, "COLLECTOR_INPUT_VERSION", None) != INPUT_VERSION
-                or getattr(collector, "INPUT_VERSION", None) != INPUT_VERSION):
+                or getattr(collector, "INPUT_VERSION", None) != INPUT_VERSION
+                or getattr(checker, "FORMAL_CHECK_VERSION", None) != CHECK_CONTRACT_VERSION
+                or getattr(collector, "CHECK_CONTRACT_VERSION", None) != CHECK_CONTRACT_VERSION):
             raise EvidenceUnavailable("deployed collector/checker input version incompatible; upgrade the complete chain")
         config_text = sources[DEPLOYED + "config.yml"].decode("utf-8")
         config = checker.restricted_yaml(config_text)

@@ -18,12 +18,12 @@
 
 ## 剩余工作
 
-<!-- 说明阻塞、下一步及接手信息；目标为集成分支时，说明默认分支最终交付仍剩什么。 -->
+<!-- 说明阻塞、下一步及接手信息；目标为集成分支时，说明默认分支最终交付仍剩什么。叠加交付登记前置 PR 固定 HEAD、开发基线、净 diff 与合并顺序；前置未合并只能 Draft，合并后按当前基线重新检查及审核，squash/rebase 不默认净增量已收敛。 -->
 
-<!-- 下方是唯一机器 metadata 区块。0 和 __SETUP_REQUIRED__ 均是未填写候选值，提交 PR 前必须替换；closes_issues 可为空。workflow 为 daily 或 setup；使用真实账号 ID、当前 HEAD、base 和非空 claim_urls。机器字段不证明 Skill 已加载或取代审查。 -->
+<!-- 下方是唯一机器 metadata 区块。0 和 __SETUP_REQUIRED__ 均是未填写候选值；closes_issues 可为空。workflow 为 daily 或 setup。delivery 两基线填写完整 SHA；无前置时 predecessors=[]、merge_order=[本 PR 真实编号]，先创建 Draft 取得编号再补齐，不完整候选不能通过正式检查。development_base_sha 是有效 claim 当前基线；net_diff_base_sha 是当前净 diff 基线。 -->
 <!-- agent-collaboration:metadata
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "primary_issue": 0,
   "closes_issues": [],
   "actor_id": "__SETUP_REQUIRED__",
@@ -31,10 +31,16 @@
   "controlled_by_id": 0,
   "runtime": "__SETUP_REQUIRED__",
   "session_id": "__SETUP_REQUIRED__",
-  "skill_version": "0.1.1",
+  "skill_version": "0.2.0",
   "head_sha": "__SETUP_REQUIRED__",
   "base_branch": "__SETUP_REQUIRED__",
   "claim_urls": ["__SETUP_REQUIRED__"],
-  "workflow": "daily"
+  "workflow": "daily",
+  "delivery": {
+    "development_base_sha": "__SETUP_REQUIRED__",
+    "net_diff_base_sha": "__SETUP_REQUIRED__",
+    "predecessors": [],
+    "merge_order": []
+  }
 }
 -->
