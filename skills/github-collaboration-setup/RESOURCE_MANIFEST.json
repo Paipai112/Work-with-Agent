@@ -93,10 +93,10 @@
       "source_sha256": "704b06ec354be9ce4e5e50049dd5ae21c827740ccaf7fcc6c567bbbd289ff9db"
     },
     {
-      "copied_sha256": "ea2f85a25bc17b23e24c32c8e9b7059b5aa7f84bd7a53db89e4c1cd5597f019e",
+      "copied_sha256": "f1ed8771899f57dc90ce75ff3cb94e99a47ee63f4c130d38dd3c68ffa81bd500",
       "destination": "assets/templates/project/.github/agent-collaboration/check_pr_metadata.py",
       "source": "templates/project/.github/agent-collaboration/check_pr_metadata.py",
-      "source_sha256": "ea2f85a25bc17b23e24c32c8e9b7059b5aa7f84bd7a53db89e4c1cd5597f019e"
+      "source_sha256": "f1ed8771899f57dc90ce75ff3cb94e99a47ee63f4c130d38dd3c68ffa81bd500"
     },
     {
       "copied_sha256": "1bb5d2f11ebb43f043071eada8e5c52603dfcd7a85f0f56b8cb7e8bba5952270",
@@ -159,10 +159,10 @@
       "source_sha256": "1062a7f7559ac5c687704f0f138f6892093a719822e313e3b942b555a2b6bb7f"
     },
     {
-      "copied_sha256": "6ab41d07736a94b1a7194f03d421e0c74730e64b099e50f3ce95bae08804c725",
+      "copied_sha256": "422bdc3ffdcf2b0b2b315e121f69f743033f3ffcf4ca9308638d36943ea95087",
       "destination": "scripts/collaboration_event.py",
       "source": "shared/scripts/collaboration_event.py",
-      "source_sha256": "6ab41d07736a94b1a7194f03d421e0c74730e64b099e50f3ce95bae08804c725"
+      "source_sha256": "422bdc3ffdcf2b0b2b315e121f69f743033f3ffcf4ca9308638d36943ea95087"
     },
     {
       "copied_sha256": "f5be87b58d4047c8548fceef5d493f48dbe05b92325002fa1a0d71b933f83b6f",
@@ -213,10 +213,10 @@
       "source_sha256": "f0f78ed9b5d496c56af6b35529198554ddc71068e6a08696b5d1c24221a15da4"
     },
     {
-      "copied_sha256": "6ab41d07736a94b1a7194f03d421e0c74730e64b099e50f3ce95bae08804c725",
+      "copied_sha256": "422bdc3ffdcf2b0b2b315e121f69f743033f3ffcf4ca9308638d36943ea95087",
       "destination": "assets/templates/project/.github/agent-collaboration/collaboration_event.py",
       "source": "shared/scripts/collaboration_event.py",
-      "source_sha256": "6ab41d07736a94b1a7194f03d421e0c74730e64b099e50f3ce95bae08804c725"
+      "source_sha256": "422bdc3ffdcf2b0b2b315e121f69f743033f3ffcf4ca9308638d36943ea95087"
     },
     {
       "copied_sha256": "f5be87b58d4047c8548fceef5d493f48dbe05b92325002fa1a0d71b933f83b6f",

@@ -57,10 +57,10 @@
       "source_sha256": "1062a7f7559ac5c687704f0f138f6892093a719822e313e3b942b555a2b6bb7f"
     },
     {
-      "copied_sha256": "6ab41d07736a94b1a7194f03d421e0c74730e64b099e50f3ce95bae08804c725",
+      "copied_sha256": "422bdc3ffdcf2b0b2b315e121f69f743033f3ffcf4ca9308638d36943ea95087",
       "destination": "scripts/collaboration_event.py",
       "source": "shared/scripts/collaboration_event.py",
-      "source_sha256": "6ab41d07736a94b1a7194f03d421e0c74730e64b099e50f3ce95bae08804c725"
+      "source_sha256": "422bdc3ffdcf2b0b2b315e121f69f743033f3ffcf4ca9308638d36943ea95087"
     },
     {
       "copied_sha256": "f5be87b58d4047c8548fceef5d493f48dbe05b92325002fa1a0d71b933f83b6f",

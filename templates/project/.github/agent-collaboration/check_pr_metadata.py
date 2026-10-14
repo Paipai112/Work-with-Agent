@@ -751,7 +751,7 @@ def lineage_states(entries, authorization):
         if prior_id is None:
             if kind != "claim":
                 raise ValueError("non-claim event has no predecessor")
-            states[key] = {"root": entry, "current": entry, "status": "active"}
+            states[key] = {"root": entry, "current": entry, "status": "active", "review_threshold": None}
             roots[key] = key
             continue
         prior_key = (entry["issue_number"], prior_id)
@@ -785,6 +785,8 @@ def lineage_states(entries, authorization):
                         raise ValueError("baseline revision from/to does not match the recorded development baselines")
                 elif event["base_head"] != before["base_head"]:
                     raise ValueError("correction cannot silently revise a development baseline")
+                revised_at = timestamp(entry["record"]["updated_at"])
+                state["review_threshold"] = max(state["review_threshold"] or revised_at, revised_at)
                 state["current"] = entry
                 roots[key] = root
                 continue
@@ -796,7 +798,7 @@ def lineage_states(entries, authorization):
                     raise ValueError("successor claim differs from verified reassignment or reuses an uncertain writer branch")
             elif before["event"] not in {"handoff", "release"}:
                 raise ValueError("successor claim requires a terminal predecessor")
-            states[key] = {"root": entry, "current": entry, "status": "active"}
+            states[key] = {"root": entry, "current": entry, "status": "active", "review_threshold": state["review_threshold"]}
             roots[key] = key
             continue
         if kind == "reassign":
@@ -877,8 +879,8 @@ def formal_check(data):
             raise ValueError("claim branch/development baseline mismatch")
         selected.add(root)
         patterns.extend(event["scope"])
-        if event.get("revision") is not None:
-            review_thresholds.append(timestamp(state["current"]["record"]["updated_at"]))
+        if state["review_threshold"] is not None:
+            review_thresholds.append(state["review_threshold"])
         checkpoint = event.get("head_sha")
         if checkpoint is not None and checkpoint not in [metadata["delivery"]["development_base_sha"], *data["development_compare"]["commits"]]:
             raise ValueError("handoff/resume checkpoint is not in the collected development ancestry")

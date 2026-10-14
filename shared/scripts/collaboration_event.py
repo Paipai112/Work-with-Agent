@@ -279,6 +279,8 @@ def verify_predecessors(plan, event):
         normalize_comment(observed_plan, raw, comment_id)
         return predecessor
     if event.get("previous_event_id") is not None:
+        if event["github_comment_url"] != comment_url(plan, event["github_comment_id"]):
+            raise EventError("predecessor URL must bind the exact repository, Issue and comment ID")
         predecessor = linked_event(event["github_comment_id"], event["previous_event_id"])
         if event["event"] in {"handoff", "release", "resume"}:
             for field in ("controlled_by", "controlled_by_id", "actor_id"):
@@ -289,8 +291,26 @@ def verify_predecessors(plan, event):
     if event["event"] == "reassign":
         target = event["target"]
         claim = linked_event(target["claim_comment_id"], target["claim_event_id"])
-        if claim["event"] != "claim" or any(claim[field] != target[field] for field in ("controlled_by", "controlled_by_id", "actor_id", "session_id")):
+        identity_fields = ("controlled_by", "controlled_by_id", "actor_id")
+        if (claim["event"] != "claim" or target["claim_comment_url"] != comment_url(plan, target["claim_comment_id"])
+                or any(claim[field] != target[field] for field in identity_fields)):
             raise EventError("reassign target claim identity mismatch")
+        if any(predecessor[field] != target[field] for field in (*identity_fields, "session_id")):
+            raise EventError("reassign target current owner/session mismatch")
+        # The root anchors the allocation; a verified resume may change only its current session.
+        ancestor, comment_id, seen = predecessor, event["github_comment_id"], set()
+        root = (target["claim_comment_id"], target["claim_event_id"])
+        while (comment_id, ancestor["event_id"]) != root:
+            link = (comment_id, ancestor["event_id"])
+            if (link in seen or len(seen) >= 3100 or any(ancestor[field] != target[field] for field in identity_fields)
+                    or ancestor["event"] not in {"claim", "handoff", "release", "resume"}
+                    or ancestor["event"] == "claim" and ancestor.get("revision") is None
+                    or ancestor.get("previous_event_id") is None
+                    or ancestor.get("github_comment_url") != comment_url(plan, ancestor["github_comment_id"])):
+                raise EventError("reassign predecessor does not belong to the target original claim")
+            seen.add(link)
+            comment_id = ancestor["github_comment_id"]
+            ancestor = linked_event(comment_id, ancestor["previous_event_id"])
 
 
 def published_candidate(plan, event):

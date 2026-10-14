@@ -2,6 +2,7 @@
 
 import copy
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -336,25 +337,27 @@ def trusted_authorization(data, **changes):
         "sha256": hashlib.sha256(source).hexdigest(), "bytes": len(source)}
 
 
-def reassignment(data):
+def reassignment(data, predecessor=None, identifier=2):
     owner = yaml.safe_load(data["claim_comments"][CLAIM]["body"])
-    identity = {key: owner[key] for key in ("controlled_by", "controlled_by_id", "actor_id", "session_id")}
+    current = yaml.safe_load(predecessor["body"]) if predecessor else owner
+    identity = {key: current[key] for key in ("controlled_by", "controlled_by_id", "actor_id", "session_id")}
     successor = {"controlled_by": "new-developer", "controlled_by_id": 1002,
                  "actor_id": "backend-successor", "session_id": "new-run"}
     leader = {"controlled_by": "maintainer", "controlled_by_id": 2001,
               "actor_id": "repository-governance", "session_id": "leader-run"}
-    event = child_event(data, "reassign", 2, **leader,
+    event = child_event(data, "reassign", identifier, predecessor, **leader,
                         target={**identity, "claim_event_id": owner["event_id"],
                                 "claim_comment_id": 1, "claim_comment_url": CLAIM},
                         successor=successor, approval_url="https://github.com/sample/repo/issues/7#issuecomment-50",
                         reason="Owner is unavailable; preserve checkpoint on a separate branch",
                         old_process_status="unknown", stop_evidence=None)
-    record = append_event(data, event, 2)
-    claim = child_event(data, "claim", 3, record, **successor,
+    event.pop("revision", None)
+    record = append_event(data, event, identifier)
+    claim = child_event(data, "claim", identifier + 1, record, **successor,
                         branch="agent/backend-successor/issue-7-resume", expected_handoff="pull-request")
     for key in ("target", "successor", "approval_url", "reason", "old_process_status", "stop_evidence"):
         claim.pop(key)
-    successor_record = append_event(data, claim, 3)
+    successor_record = append_event(data, claim, identifier + 1)
     data["pull"]["user"] = {"login": successor["controlled_by"], "id": successor["controlled_by_id"]}
     data["pull"]["head"]["ref"] = claim["branch"]
     set_metadata(data, **successor, claim_urls=[successor_record["url"]])
@@ -367,6 +370,73 @@ def reassignment(data):
             "approved_at": "2026-10-13T00:00:00Z", "approved_head_sha": SHA},
         "status": "active", "granted_at": "2026-10-13T00:00:00Z"}])
     return event, successor_record
+
+
+@pytest.fixture
+def deployed_event_helper(deployed_checker, v2_input, monkeypatch):
+    _, directory = deployed_checker
+    specification = importlib.util.spec_from_file_location("deployed_event_helper", directory / "collaboration_event.py")
+    helper = importlib.util.module_from_spec(specification)
+    specification.loader.exec_module(helper)
+
+    def get_comment(plan, method, endpoint):
+        assert method == "GET", "predecessor verification must not write to GitHub"
+        identifier = int(endpoint.rsplit("/", 1)[-1])
+        record = next(item for item in v2_input["issue_comments"]["7"] if item["id"] == identifier)
+        return {"id": identifier, "html_url": record["url"],
+                "user": {"id": record["user_id"], "login": record["login"]},
+                "body": record["body"], "updated_at": record["updated_at"]}
+
+    monkeypatch.setattr(helper, "github", get_comment)
+    plan = {"repository": {"hostname": "github.com", "id": 123, "owner": "sample", "name": "repo"},
+            "issue_number": 7}
+    return helper, plan
+
+
+def test_reassignment_after_resume_binds_current_session_and_original_claim(deployed_checker, v2_input, deployed_event_helper):
+    run, _ = deployed_checker
+    helper, plan = deployed_event_helper
+    handoff = append_event(v2_input, child_event(v2_input, "handoff", 2), 2)
+    resumed = append_event(v2_input, child_event(v2_input, "resume", 3, handoff, session_id="run-2"), 3)
+    event, _ = reassignment(v2_input, resumed, 4)
+    result = run(v2_input)
+    assert result.returncode == 0, result.stdout + result.stderr
+    helper.verify_predecessors(plan, event)
+
+
+@pytest.mark.parametrize("failure", ["old_session", "root_identity", "root_url", "unrelated_root", "cycle", "ancestor_pointer"])
+def test_resumed_reassignment_cannot_replace_current_session_or_original_root(deployed_checker, v2_input, deployed_event_helper, failure):
+    run, _ = deployed_checker
+    helper, plan = deployed_event_helper
+    original = v2_input["claim_comments"][CLAIM]
+    handoff = append_event(v2_input, child_event(v2_input, "handoff", 2), 2)
+    resumed = append_event(v2_input, child_event(v2_input, "resume", 3, handoff, session_id="run-2"), 3)
+    if failure == "unrelated_root":
+        unrelated = yaml.safe_load(original["body"])
+        unrelated["event_id"] = "unrelated-claim"
+        other = append_event(v2_input, unrelated, 4)
+    event, _ = reassignment(v2_input, resumed, 5)
+    if failure == "old_session":
+        event["target"]["session_id"] = "run-1"
+    elif failure == "root_identity":
+        root_event = yaml.safe_load(original["body"])
+        root_event["actor_id"] = "different-responsibility"
+        original["body"] = yaml.safe_dump(root_event, sort_keys=False)
+    elif failure == "root_url":
+        event["target"]["claim_comment_url"] = "https://github.com/other/repo/issues/7#issuecomment-1"
+    elif failure == "unrelated_root":
+        event["target"].update(claim_event_id="unrelated-claim", claim_comment_id=other["id"], claim_comment_url=other["url"])
+    else:
+        ancestor = yaml.safe_load(handoff["body"])
+        ancestor["previous_event_id"] = "resume-3"
+        if failure == "cycle":
+            ancestor.update(github_comment_id=resumed["id"], github_comment_url=resumed["url"])
+        handoff["body"] = yaml.safe_dump(ancestor, sort_keys=False)
+    v2_input["issue_comments"]["7"][-2]["body"] = yaml.safe_dump(event, sort_keys=False)
+    result = run(v2_input)
+    assert result.returncode == 1, result.stdout + result.stderr
+    with pytest.raises(helper.EventError):
+        helper.verify_predecessors(plan, event)
 
 
 def test_verified_leader_reassignment_allows_successor_on_a_separate_branch(deployed_checker, v2_input):
@@ -490,6 +560,84 @@ def test_draft_cannot_reuse_review_before_a_baseline_revision(deployed_checker, 
                             "user": {"id": 1002}, "submitted_at": "2026-10-14T00:10:00Z"}]
     result = run(v2_input)
     assert result.returncode == 1
+
+
+def review_revision(data, kind="baseline"):
+    revision = baseline_revision(data)
+    if kind == "baseline":
+        revision["base_head"] = SHA
+        revision["revision"].update(from_base_head=PRIOR, to_base_head=SHA)
+        delivery = metadata(data)["delivery"]
+        delivery["development_base_sha"] = SHA
+        set_metadata(data, delivery=delivery)
+        data["development_compare"].update(base_sha=SHA, merge_base_sha=SHA)
+    else:
+        revision["revision"]["kind"] = "correction"
+        revision["revision"].pop("from_base_head")
+        revision["revision"].pop("to_base_head")
+    return append_event(data, revision, 2)
+
+
+def test_revision_review_threshold_survives_handoff_and_resume(deployed_checker, v2_input, deployed_event_helper):
+    run, _ = deployed_checker
+    helper, plan = deployed_event_helper
+    stacked(v2_input, merged=True, ready=True)
+    v2_input["reviews"][0]["submitted_at"] = "2026-10-14T00:25:00Z"
+    revision = review_revision(v2_input)
+    before = run(v2_input)
+    assert before.returncode == 1 and "recorded review is stale" in before.stdout, before.stdout + before.stderr
+    event = child_event(v2_input, "handoff", 3, revision)
+    event.pop("revision")  # The real handoff and resume templates have no revision field.
+    helper.verify_predecessors(plan, helper.validate_event(event))
+    handoff = append_event(v2_input, event, 3)
+    handoff["updated_at"] = "2026-10-14T00:45:00Z"
+    event = child_event(v2_input, "resume", 4, handoff, session_id="run-2")
+    helper.verify_predecessors(plan, helper.validate_event(event))
+    resumed = append_event(v2_input, event, 4)
+    resumed["updated_at"] = "2026-10-14T00:50:00Z"
+    set_metadata(v2_input, session_id="run-2")
+    result = run(v2_input)
+    assert result.returncode == 1 and "recorded review is stale" in result.stdout, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("kind", ["baseline", "correction"])
+@pytest.mark.parametrize("route", ["resume", "handoff_claim", "release_claim", "reassign", "resumed_reassign"])
+@pytest.mark.parametrize("review_at,expected", [("00:25:00", 1), ("00:30:00", 0), ("00:40:00", 0)])
+def test_review_revision_timestamp_is_inherited_by_every_successor(deployed_checker, v2_input, deployed_event_helper, kind, route, review_at, expected):
+    run, _ = deployed_checker
+    helper, plan = deployed_event_helper
+    stacked(v2_input, merged=True, ready=True)
+    v2_input["reviews"][0].update(user={"id": 3001}, submitted_at=f"2026-10-14T{review_at}Z")
+    predecessor = review_revision(v2_input, kind)
+    if route != "reassign":
+        terminal_kind = "release" if route == "release_claim" else "handoff"
+        event = child_event(v2_input, terminal_kind, 3, predecessor)
+        event.pop("revision")
+        helper.verify_predecessors(plan, helper.validate_event(event))
+        predecessor = append_event(v2_input, event, 3)
+        predecessor["updated_at"] = "2026-10-14T00:45:00Z"
+    if route in {"resume", "resumed_reassign"}:
+        event = child_event(v2_input, "resume", 4, predecessor, session_id="run-2")
+        helper.verify_predecessors(plan, helper.validate_event(event))
+        predecessor = append_event(v2_input, event, 4)
+        predecessor["updated_at"] = "2026-10-14T00:50:00Z"
+        set_metadata(v2_input, session_id="run-2")
+    if route in {"reassign", "resumed_reassign"}:
+        event, _ = reassignment(v2_input, predecessor, predecessor["id"] + 1)
+        helper.verify_predecessors(plan, helper.validate_event(event))
+    elif route in {"handoff_claim", "release_claim"}:
+        event = child_event(v2_input, "claim", 4, predecessor, session_id="run-2", expected_handoff="pull-request")
+        for field in ("head_sha", "release_mode"):
+            event.pop(field, None)
+        helper.verify_predecessors(plan, helper.validate_event(event))
+        claim = append_event(v2_input, event, 4)
+        claim["updated_at"] = "2026-10-14T00:50:00Z"
+        v2_input["claim_comments"] = {claim["url"]: claim}
+        set_metadata(v2_input, session_id="run-2", claim_urls=[claim["url"]])
+    result = run(v2_input)
+    assert result.returncode == expected, result.stdout + result.stderr
+    if expected == 1:
+        assert "recorded review is stale" in result.stdout
 
 
 def test_claim_cannot_expand_scope_through_a_correction_revision(deployed_checker, v2_input):
