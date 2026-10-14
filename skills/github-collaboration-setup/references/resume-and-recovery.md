@@ -2,7 +2,7 @@
 
 A progress record is not a role grant or approval of today's diff. Refresh [preflight](preflight-and-identity.md), [authorization](authorization.md), [local configuration](local-configuration.md) and [ownership](managed-resources.md) for the actual resumed action.
 
-Keep stable `operation_id`; repository/host/ID/default/source SHA; account/actor/session/mode; branch/base/HEAD; template; each resource kind/path/ID/baseline/current/candidate digests; approval scope/evidence; application/read-back state and returned IDs; Commit/pushed HEAD/PR; separate Actions/setting/check approvals; errors and `next_safe_action`. Exclude secrets. States include planned, approved, write-sent-result-unknown, read-back-verified and blocked; 2xx alone is not verified.
+Keep local configuration's complete `operation_id` plan plus returned IDs, Commit/pushed HEAD/PR, separate Actions/setting/check approvals and errors. No secrets. States: planned, approved, write-sent-result-unknown, read-back-verified, blocked; 2xx is not read-back.
 
 1. Re-establish identity, effective role/default-branch authority, protections, current source/branch/HEAD. Old Bootstrap/Recovery sessions do not transfer; obtain fresh bound confirmation.
 2. Compare current item IDs/bytes/fields with baseline and approval digest. Drift/revocation/unknown approval invalidates that item; show new diff and obtain exact approval. Never replay verified completed items.

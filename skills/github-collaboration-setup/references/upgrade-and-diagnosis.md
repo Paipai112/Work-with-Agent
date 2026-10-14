@@ -1,14 +1,14 @@
 # Package upgrade and discovery diagnosis
 
-Use [platform installation](platform-installation.md) and conditional [package verification](package-verification.md). Diagnose is read-only. Exact directory-owner approval covers package installation only; project entry/config/authorization and Git changes separately use project preflight/authorization/local configuration. No project is required for user-package installation; report its project position as not applicable.
+Use [platform installation](platform-installation.md) and conditional [package verification](package-verification.md). Diagnosis is read-only. Package approval covers no project/Git edit; those need project procedures. Package-only installation reports project status not applicable.
 
 ## Inventory → approved replacement
 
-1. Record actual client/OS/version, native/WSL, CWD and target. For an existing project compare trusted required name/minimum version, actual discovered package and proposed version.
-2. Enumerate supported/added discovery roots, same-name paths, versions, source/full file inventories/digests, trust/disable/override and parent/target symlinks. Missing old digest/source or local changes are unknown/conflict, not standard old release. Manifest covers listed resources only; whole-package inventory includes instructions.
-3. Verify proposed fixed repository/tag/commit/permalink and full bytes. Show current/old verified baseline/candidate digest and exact added/replaced/preserved files, project/client effects and precedence. Offer retain, explicitly chosen independent supported path, reviewed merge or named-target replacement; never merge same-name packages automatically.
-4. Bind approval to exact source/target/current/candidate digests. Re-read before copying; drift invalidates approval. Validate in separate staging, back up old full directory/digest outside auto-discovery, then process one approved target. Copy/check failure stops subsequent packages. Pending/unpublished source permits proposals only.
-5. New-session test proves actual path/version/all resources and intended project directory coverage. Unsatisfied project minimum still stops dependent daily writes.
+1. Record client/OS/version, native/WSL, CWD/target and project minimum versus discovered/proposed package.
+2. Inventory supported/added roots, same-name paths/versions/full source inventory/digests, trust/disable/overrides and symlinks. Missing baseline/local edits mean unknown/conflict, not standard release. Manifest excludes no unlisted instructions.
+3. Verify candidate source/full bytes. Show baseline/current/candidate digests, exact added/replaced/preserved files, effects/precedence; choose retain, independent supported path, reviewed merge or named replacement, never auto-merge same names.
+4. Exact source/target/current/candidate approval; re-read (drift invalidates). Validate in separate staging, back up whole old package outside discovery, process one target; failure stops subsequent packages. Unpublished source allows proposals only.
+5. Package verification's new-session test must prove actual path/version/resources/directory coverage. Unmet project minimum stops daily writes.
 
 ## Fault diagnosis
 
@@ -22,8 +22,8 @@ Use [platform installation](platform-installation.md) and conditional [package v
 | Missing resources | Full fixed-source inventory/relative refs; local edits need choice before completion |
 | Native Windows fails, WSL passes | Separate client/user-directory/shell/project records; Windows USERPROFILE/literal paths are not Linux ~ |
 
-Report PASS/FAIL/UNVERIFIED with actual client/session/path/source/digest/directory/evidence; no machine evidence means UNVERIFIED. Static nine-platform contracts are not tested compatibility. Current platform sources are linked in platform installation.
+Report PASS/FAIL/UNVERIFIED with client/session/path/source/digest/directory/evidence; no machine test means UNVERIFIED, not static-contract compatibility. Platform installation links current sources.
 
 ## Rollback
 
-Verify recorded old backup inventory/full digest, current target and actual discovery/precedence. Show current → old exact restoration, affected clients/projects and named target; get explicit approval, restore that target only, rehash and new-session validate. Missing/mismatched backup, fresh user edits or unknown precedence needs a choice; no automatic deletion/discard or success claim. Project entry/minimum-version downgrade is a separate governance proposal.
+Follow package verification's exact approved whole-digest restoration, then new-session validate. Missing/mismatched backup, fresh edits or unknown discovery/precedence needs a choice, never automatic discard. Project entry/minimum-version downgrade is separate governance.

@@ -4,31 +4,31 @@ Scope and checkpoint sections are independently loaded for their respective oper
 
 ## Scope
 
-Before a scoped commit verify current claim/session facts via [claims and handoffs](claims-and-handoffs.md). The package's `scripts/collaboration_scope.py` is read-only, Python 3.11+ standard library only; examples start at the package root.
+Verify [claim/session](claims-and-handoffs.md) before scoped Commit. Examples use this package's read-only `scripts/collaboration_scope.py`, Python 3.11+ standard library, from package root.
 
 ```sh
 python scripts/collaboration_scope.py --input scope-input.json
 python scripts/collaboration_scope.py --repo /absolute/project --base FULL_COMMIT_SHA --scope scope.json --other-claims other-claims.json
 ```
 
-JSON input has `scope` (nonempty pattern list), `changes`, optional `other_claims`. Each change has `status: added|modified|deleted|renamed|untracked`, `path`; renames also have `previous_path`. Competing claims have `claim_url` and `scope`. Supply verified current allocations; this helper does not determine whether a claim is active.
+JSON: nonempty `scope` patterns, `changes`, optional `other_claims`. Changes have `status: added|modified|deleted|renamed|untracked`, `path`, and rename `previous_path`; other claims have `claim_url`/`scope`. Supply current verified allocations: helper cannot establish active claims.
 
-Git mode separately combines base-to-HEAD commits, HEAD-to-index changes, index-to-worktree changes and nonignored untracked files. Opposing staged/unstaged changes cannot hide a path through net cancellation. It checks both rename paths and performs no staging, commit, network or push. Ignored untracked delivery files require explicit JSON inventory. Low-similarity moves may appear as deletion/addition; both paths are checked.
+Git mode unions base→HEAD, HEAD→index, index→worktree and nonignored untracked paths separately, preventing staged/unstaged cancellation. Both rename ends and low-similarity delete/add moves count. Ignored untracked delivery needs explicit JSON inventory. No staging/Commit/network/Push.
 
-Use repository-relative POSIX paths. Literals match exactly; `*`/`?` stay within one segment, whole-segment `**` spans zero or more directory segments, terminal `**` spans descendants. `tests/*.py` excludes `tests/unit/a.py`; `tests/**/a.py` includes that path and `tests/a.py`. Character classes, embedded `**`, absolute paths and traversal are rejected.
+Repository-relative POSIX: literals exact, `*`/`?` one segment, whole-segment `**` zero-or-more directories, terminal `**` descendants. `tests/*.py` excludes `tests/unit/a.py`; `tests/**/a.py` includes it and `tests/a.py`. No character classes, embedded `**`, absolute/traversal paths.
 
-Results list `paths`, `out_of_scope` and path/claim-URL `conflicts`. Pass means only supplied inventory/patterns fit with no listed overlap. `authorization_verified` remains false. Resolve scope changes/conflicts before affected writes. Exit codes: 0 comparison pass, 1 out-of-scope/conflict, 2 invalid/unavailable input.
+Outputs `paths`, `out_of_scope`, path/claim-URL `conflicts`; pass means supplied inventory fits without listed overlap, not authority (`authorization_verified: false`). Resolve changes/conflicts before writes. Exits: 0 pass, 1 scope/conflict, 2 invalid/unavailable.
 
 ## Checkpoint
 
-Use for interruption/resume progress. The same read-only standard-library helper neither releases claims nor grants resume/push authority.
+Use for interruption/resume progress only, not claim release or resume/Push authority.
 
 ```sh
 python scripts/collaboration_scope.py --checkpoint checkpoint-input.json
 ```
 
-Record `repository`, `issue_number`, `actor_id`, `session_id`, `claim_url`, `completed`, `tests`, `uncommitted_changes`, `remaining_steps`. Code may add `branch`/full `head_sha`; research may add `artifact_urls`. Tests name `command` and observed `status: pass|fail|unknown`; changes follow the scope inventory fields. Optional `process_observation` preserves a bound PID/time/coordinator observation. Exclude credentials/raw sensitive output.
+Fields: `repository`, `issue_number`, `actor_id`, `session_id`, `claim_url`, `completed`, `tests`, `uncommitted_changes`, `remaining_steps`; optional code `branch`/full `head_sha`, research `artifact_urls`, bound PID/time/coordinator `process_observation`. Tests record `command`/observed `status: pass|fail|unknown`; changes use Scope inventory. No credentials/raw sensitive output.
 
-The validated record goes to stdout; preserve existing records when saving it. Permission/claim-state input fields are rejected. Output always says `old_process_status: unknown`, `claim_released: false`, `push_authorized: false`, `authorization_verified: false`. Missing process or silence never establishes termination. The helper performs no release, resume, Git write or process termination.
+Validated stdout record: preserve old records when saving. Permission/claim-state inputs fail; output always `old_process_status: unknown`, `claim_released: false`, `push_authorized: false`, `authorization_verified: false`. No release/resume/Git write/process termination; silence/missing process proves no stop.
 
-Refresh repository, actor/account, claim lineage, branch/HEAD and session facts on resume. Same-branch resume requires verified handoff or current direct stop confirmation; an unknown old process uses independent-branch reassignment. A checkpoint reconstructs progress and cannot authorize that transition.
+Resume refreshes repository/account/actor/session/lineage/branch/HEAD. Same branch requires verified handoff or current direct stop confirmation; unknown process uses independent-branch reassignment. Checkpoint grants no transition authority.

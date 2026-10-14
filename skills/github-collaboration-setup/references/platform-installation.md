@@ -1,14 +1,14 @@
 # Install an independent collaboration package
 
-Use [package verification](package-verification.md) for fixed source, full bytes/manifest, directory ownership approval and new-session validation. Existing packages/faults use [upgrade/diagnosis](upgrade-and-diagnosis.md). Package installation needs no project/Leader; project-governance changes separately use [preflight](preflight-and-identity.md). Install one named complete package, never a lone SKILL.md or nested same-name directory.
+Follow [package verification](package-verification.md); existing packages/faults add [upgrade/diagnosis](upgrade-and-diagnosis.md). Install one complete package, never lone SKILL.md/nested same-name directory. Project/Git changes separately need [preflight](preflight-and-identity.md).
 
 ## 安装作用范围与会话安全
 
-User-level discovery affects all projects for that client/user. Disclose implicit discovery and setup's explicit-invocation policy in the proposal. Inspect symlinks, same-name collision/overrides and trust **before opening** the worktree: checkout alone can auto-load instructions. Begin from verified content; not executing scripts is insufficient proof of trust. Package approval grants no role/global-rule edit.
+User discovery affects all projects: disclose it and setup's explicit invocation. Inspect symlinks/collision/overrides/trust **before opening** a worktree; checkout can auto-load instructions. Verified content is required even without script execution. Package approval grants no role/global-rule edit.
 
 ## Locations and invocation
 
-Replace `<skill>` with the selected package name. Project paths require an explicit project-level installation choice. Windows native and Linux/WSL are separate; nine static contracts in `tests/platform/install-contract.yml` are not nine native test results.
+Use selected `<skill>`; project location needs explicit choice. Windows native ≠ Linux/WSL; nine `tests/platform/install-contract.yml` contracts are not native results.
 
 | Client | macOS/Linux user | Windows native PowerShell user | Project relative root | Explicit invocation |
 | --- | --- | --- | --- | --- |
@@ -16,7 +16,7 @@ Replace `<skill>` with the selected package name. Project paths require an expli
 | Claude Code | `~/.claude/skills/<skill>/` | `Join-Path $env:USERPROFILE '.claude\skills\<skill>'` | `.claude/skills/<skill>/` | `/<skill>` |
 | Pi Agent | `~/.pi/agent/skills/<skill>/` | `Join-Path $env:USERPROFILE '.pi\agent\skills\<skill>'` | `.agents/skills/<skill>/` | `/skill:<skill>` |
 
-`Join-Path` returns a path; Codex's `$<skill>` is a prompt, not PowerShell. Use literal path arguments for spaces; `Test-Path -LiteralPath` first, existing targets stop for upgrade choice. A new approved target may create its parent and `Copy-Item -LiteralPath <verified-package> -Destination <target> -Recurse`. macOS/Linux likewise checks exact target before complete directory copy.
+`Join-Path` returns a path; `$<skill>` is a Codex prompt, not PowerShell. Spaces require literal paths; `Test-Path -LiteralPath` before copy, existing target uses upgrade choice. Approved new target: create parent, `Copy-Item -LiteralPath <verified-package> -Destination <target> -Recurse`. macOS/Linux also checks target first.
 
 ### 各客户端的发现边界
 
@@ -26,6 +26,6 @@ Replace `<skill>` with the selected package name. Project paths require an expli
 
 ## Verify actual discovery
 
-Use package verification's real new-session record: exact client/OS/architecture/native-or-WSL, commit/digest, target/actual discovered path and time; open all relative resources. Configured projects test root/nested/space-containing paths and proper entry; package-only install needs no invented entry. Native Windows adds PowerShell paths, Git for Windows when needed, CRLF/BOM. Menu visibility/copying is not loading proof; missing/colliding/disabled/untrusted states stay FAIL/UNVERIFIED.
+Use package verification's new-session record/testing, including architecture and native/WSL. Native Windows additionally tests PowerShell paths, required Git for Windows, CRLF/BOM. Missing/colliding/disabled/untrusted remains FAIL/UNVERIFIED, not menu/copy success.
 
-Pi project default is shared `.agents/skills/`. Recorded macOS/Pi 0.87.1 (2026-10-01) found root `.pi/skills/` from root only, whereas `.agents/skills/` worked root/nested/spaces. Existing `.pi/skills/` is reported, never automatically moved/duplicated; this observation proves no other OS/version. The old badlogic/pi-mono URL redirected to earendil-works/pi at the 2026-09-26 check; runtime behavior follows current official sources.
+Pi project default: `.agents/skills/`. macOS/Pi 0.87.1 (2026-10-01): root `.pi/skills/` worked only from root; `.agents/skills/` worked root/nested/spaces. Report existing `.pi/skills/`, never auto-move/duplicate; no other OS/version is proven. The old badlogic/pi-mono URL redirected to earendil-works/pi (2026-09-26); verify current official behavior.

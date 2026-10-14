@@ -1,6 +1,6 @@
 # Authorization for setup writes
 
-Use [preflight](preflight-and-identity.md) and [session core](session-core.md) for same-SHA selectors, stable identity, Member default and frozen-ceiling calculation. Diagnose can report missing facts without a role grant. Installation approval is separate from project authority.
+Use [preflight](preflight-and-identity.md); requested governance writes also load [elevated authority](elevated-authority.md). Diagnosis/installation need no project role. These procedures do not substitute for human approval.
 
 ## Validate current authority
 
@@ -10,9 +10,7 @@ Use this package's `assets/schemas/config.schema.json` and `assets/schemas/autho
 
 Missing import/checkers or invalid data means unverified, never silently skipped validation; propose environment repair and stop dependent writes.
 
-Persistent authority comes only from exactly one approved active default-branch delegation matching host/repository/default branch, authenticated ID/login and selected actor. Validate proposal provenance `default_branch_source_sha` separately from today's source/read-back SHA. Local files, proposed selectors, `granted_by` and candidate active status grant nothing. Custom normalized filenames inside the configured governance directory are valid; unavailable/damaged governance needs repair/recovery, not a fallback.
-
-A write requires: effective Leader or current bounded Bootstrap/Recovery session ∩ frozen ceiling ∩ fresh account rights ∩ delegated/project scope ∩ actual inherited protection ∩ approval of the exact change/action. Maintain/Admin alone is Member; below Maintain cannot act as Leader. Unknown applicable rules block affected writes, while verified unsupported enforcement is disclosed without dropping protocol review or known stronger gates. Refresh before each governance action/review/merge.
+Resolve actual selectors at default SHA; unavailable/damaged governance needs repair/recovery, not fallback. Elevation's frozen-ceiling/scope/account/protection/action intersection governs every write; refresh before governance/review/merge.
 
 ## Grant changes
 

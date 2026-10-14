@@ -24,7 +24,7 @@ Keep `operation_id`, verified repository/account/actor/session/mode/source and b
 
 Show each resource diff/effect/unknown and approval scope. For a dirty entry show unstaged, staged, candidate and **proposed staged diff**. Get treatment and Commit-ownership choices before writing/staging. An inseparable hunk needs separately reviewed user Commit, verified isolation or deferral: **Do not stage the whole file** without ownership. Exact file approval covers neither Commit/Push/PR nor remote/Actions changes.
 
-Immediately re-read identity/authority/protection, target/digest and approved candidate. Drift stops that item for a new diff/approval. Apply only approved block/resource; preserve unrelated bytes, exact stage paths and existing history. Read back bytes/digest/outside region and surrounding state; mismatch remains unresolved, not an automatic replay. Pre-read/write is not atomic.
+Use ownership's **one-item approval/apply loop** with exact stage paths/history preserved. Read back bytes/digest/outside region and surrounding state; mismatch stays unresolved, not automatic replay.
 
 ## Project facts and delivery
 
