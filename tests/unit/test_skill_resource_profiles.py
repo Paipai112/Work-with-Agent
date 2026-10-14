@@ -1,6 +1,7 @@
 """Public sync CLI boundaries for three explicitly selected product packages."""
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 
@@ -134,3 +135,20 @@ def test_setup_deploys_shared_helpers_as_real_project_candidates(repo_root, tmp_
     ], cwd=tmp_path, capture_output=True, text=True)
     assert validated.returncode == 0, validated.stdout + validated.stderr
     assert json.loads(validated.stdout)["authorization_verified"] is False
+
+
+def test_duplicate_canonical_deployment_target_fails_before_output(repo_root, tmp_path):
+    source = tmp_path / "source"
+    for name in ("schemas", "templates", "shared", "skills/github-collaboration/templates/events"):
+        shutil.copytree(repo_root / name, source / name)
+    # A second handwritten copy must not silently override the shared source.
+    duplicate = source / "templates/project/.github/agent-collaboration/collaboration_event.py"
+    duplicate.write_text("raise RuntimeError('different canonical copy')\n")
+    target = tmp_path / "github-collaboration-setup"
+    result = subprocess.run([
+        sys.executable, str(repo_root / "scripts/sync_skill_resources.py"),
+        "--repo-root", str(source), "--destination", str(target),
+    ], capture_output=True, text=True)
+    assert result.returncode != 0
+    assert "duplicate" in result.stderr.lower()
+    assert not target.exists()

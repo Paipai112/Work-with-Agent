@@ -68,6 +68,11 @@ def _resource_map(repo_root: Path, destination: Path, profile: str) -> list[tupl
         if not helper.is_file():
             raise SyncError(f"canonical resource is missing: {helper}")
         resources.append((helper, destination / target))
+    destinations: set[Path] = set()
+    for _, target in resources:
+        if target in destinations:
+            raise SyncError(f"duplicate canonical resource destination: {target.relative_to(destination)}")
+        destinations.add(target)
     return resources
 
 
