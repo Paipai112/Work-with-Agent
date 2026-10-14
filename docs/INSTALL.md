@@ -179,11 +179,12 @@ PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 "$test_venv/bin/pytho
 校验文件清单和资源摘要，展示项目级 .agents/skills 的安装差异。
 目录已存在时报告现有来源及本地差异，保留原内容并按审阅后的方案处理。
 在安装授权内复制到不存在且安全的精确目标，回读比较，并用新会话只读显式调用所选 Skill。
-随后用 github-collaboration-setup 做 preflight，核验已有 Leader 或准备限定 Bootstrap。
-从固定发行提交生成消费项目 INSTALL_SKILL.md 的四项真实元数据及同 SHA 的 docs/INSTALL.md 永久链接，
-增量提出项目协议、授权、事实索引和入口改动，按已有授权完成必要审批与治理 PR。
-Actions、Required Checks 和 Rulesets 保持默认关闭；如需启用，逐项说明影响并取得对应批准。
-最终报告实际固定 SHA、包摘要、加载路径、项目配置读回、权限状态及尚未完成项。
+若只安装 daily 或 check，报告固定 SHA、包摘要、实际加载路径及缺口后结束，不改项目治理文件。
+只有还需配置或升级项目时，才在单独安装授权内准备 setup 完整包并显式调用其只读 preflight；
+治理写入前核验已有 Leader 或准备限定 Bootstrap，再从固定发行提交生成消费项目 INSTALL_SKILL.md
+的四项真实元数据及同 SHA 的 docs/INSTALL.md 永久链接，增量提出协议、授权、事实索引和入口改动，
+按已有授权完成必要审批与治理 PR。Actions、Required Checks 和 Rulesets 保持默认关闭；
+如需启用，逐项说明影响并取得对应批准。配置接入完成后另外报告项目读回、权限状态及尚未完成项。
 ```
 
 本项目以 [MIT 许可证](../LICENSE) 开源发布。
