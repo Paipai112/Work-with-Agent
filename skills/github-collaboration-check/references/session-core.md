@@ -1,6 +1,6 @@
 # Session facts and authority
 
-Use the caller's preflight for mode and bundled schemas. These gates verify facts, not grant authority. Unknown stops its dependent write/conclusion, not all read-only diagnosis; diagnosis needs no Leader role.
+Gates verify facts, not authority. Unknown stops its dependent write/conclusion; read-only diagnosis needs no Leader. Validate data with trusted tools; read needed fields/results, not schemas/manifests/base64 dumps.
 
 ## Establish the session
 

@@ -39,10 +39,10 @@
       "source_sha256": "25e94f52dbfe62626d8df54bb473c418d7b4737890533646b7ae768f208ca1b1"
     },
     {
-      "copied_sha256": "16e95cb627cb963cf78d67057f1d981de2003c54f8bf4da91584841bb9b97e7a",
+      "copied_sha256": "47d557692237e34b9755290ff2f752e74b616632c7243917ef2377856f0a7dc9",
       "destination": "references/session-core.md",
       "source": "shared/references/session-core.md",
-      "source_sha256": "16e95cb627cb963cf78d67057f1d981de2003c54f8bf4da91584841bb9b97e7a"
+      "source_sha256": "47d557692237e34b9755290ff2f752e74b616632c7243917ef2377856f0a7dc9"
     },
     {
       "copied_sha256": "d5cdef79325166d59466edb9df99dd079127f2483288ecc1c34a3d927cef94ec",
