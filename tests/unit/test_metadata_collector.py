@@ -7,6 +7,7 @@ import json
 import os
 import subprocess
 import sys
+import shutil
 
 import pytest
 import yaml
@@ -22,19 +23,42 @@ CLAIM = "https://github.com/sample/repo/issues/7#issuecomment-1"
 def github_cli(repo_root, fixture_path, tmp_path):
     data = json.loads(fixture_path("github/pr-valid.json").read_text())
     data["pull"]["base"].update({"sha": SHA, "repo": {"id": 123, "full_name": "sample/repo"}})
-    data["pull"].update({"state": "open", "updated_at": "2026-10-14T00:00:00Z", "changed_files": 101})
+    data["pull"].update({"state": "open", "draft": True, "updated_at": "2026-10-14T00:00:00Z", "changed_files": 101})
+    metadata = json.loads(data["pull"]["body"].split("<!-- agent-collaboration:metadata\n")[1].split("\n-->")[0])
+    metadata.update(schema_version=2, skill_version="0.2.0", delivery={"development_base_sha": SHA,
+                    "net_diff_base_sha": SHA, "predecessors": [], "merge_order": [12]})
+    data["pull"]["body"] = data["pull"]["body"].split("<!-- agent-collaboration:metadata\n")[0] + "<!-- agent-collaboration:metadata\n" + json.dumps(metadata) + "\n-->"
     data["files"] = [{"filename": f"src/file-{n}.py", "status": "modified"} for n in range(101)]
     reviews = [{"id": n, "state": "COMMENTED", "commit_id": HEAD,
                 "user": {"id": 2000 + n, "login": f"reviewer-{n}"}} for n in range(101)]
     comments = [{"id": n, "html_url": f"https://github.com/sample/repo/issues/7#issuecomment-{n}",
                  "issue_url": "https://api.github.com/repos/sample/repo/issues/7",
-                 "body": "event: claim\nscope:\n  - src/**" if n == 1 else f"comment {n}",
+                 "body": f"comment {n}",
                  "updated_at": "2026-10-14T00:00:00Z",
                  "user": {"id": 1001, "login": "developer"}} for n in range(1, 102)]
-    comments[-1]["body"] = "event: release\nprevious_event_id: claim-1"
+    event = {"event": "claim", "event_id": "claim-1", "previous_event_id": None,
+             "controlled_by": "developer", "controlled_by_id": 1001, "actor_id": "backend-api",
+             "session_id": "run-1", "runtime": "codex", "scope": ["src/**"],
+             "branch": data["pull"]["head"]["ref"], "base_head": SHA, "expected_handoff": "pull-request"}
+    comments[0]["body"] = yaml.safe_dump(event, sort_keys=False)
+    event.update(event_id="other-claim", scope=["docs/**"])
+    comments[1]["body"] = yaml.safe_dump(event, sort_keys=False)
+    event.update(event="release", event_id="release-101", previous_event_id="other-claim", release_mode="self",
+                 github_comment_id=2, github_comment_url=comments[1]["html_url"])
+    event.pop("expected_handoff")
+    comments[-1]["body"] = yaml.safe_dump(event, sort_keys=False)
     auth_path = DEPLOYED + "grants.yml"
     data["config"]["managed_paths"]["authorization"] = auth_path
-    source_root = repo_root / "templates/project" / DEPLOYED
+    package = tmp_path / "standalone-setup"
+    synchronized = subprocess.run([sys.executable, str(repo_root / "scripts/sync_skill_resources.py"),
+                                   "--destination", str(package), "--profile", "github-collaboration-setup"],
+                                  text=True, capture_output=True, check=False)
+    assert synchronized.returncode == 0, synchronized.stdout + synchronized.stderr
+    consumer = tmp_path / "consumer"
+    shutil.copytree(package / "assets/templates/project", consumer)
+    source_root = consumer / DEPLOYED
+    data["config"] = yaml.safe_load((source_root / "config.yml").read_text())
+    data["config"]["managed_paths"]["authorization"] = auth_path
     class IndentedListDumper(yaml.SafeDumper):
         def increase_indent(self, flow=False, indentless=False):
             return super().increase_indent(flow, False)
@@ -44,7 +68,8 @@ def github_cli(repo_root, fixture_path, tmp_path):
         auth_path: yaml.dump(data["authorization"], Dumper=IndentedListDumper).encode(),
         DEPLOYED + "check_pr_metadata.py": (source_root / "check_pr_metadata.py").read_bytes(),
     }
-    for name in ("collect_pr_metadata.py", "run_pr_metadata_check.py"):
+    for name in ("collect_pr_metadata.py", "run_pr_metadata_check.py", "collaboration_event.py", "collaboration_scope.py",
+                 "collaboration-event.schema.json", "requirements-helpers.txt"):
         path = source_root / name
         if path.exists():
             sources[DEPLOYED + name] = path.read_bytes()
@@ -54,6 +79,9 @@ def github_cli(repo_root, fixture_path, tmp_path):
         "repos/sample/repo/pulls/12": data["pull"],
         "repos/sample/repo/issues/7": data["issues"][0],
         "repos/sample/repo/issues/comments/1": comments[0],
+        f"repos/sample/repo/compare/{SHA}...{HEAD}?per_page=100&page=1": {
+            "status": "ahead", "base_commit": {"sha": SHA}, "merge_base_commit": {"sha": SHA}, "total_commits": 1,
+            "commits": [{"sha": HEAD}], "files": data["files"]},
     }
     for endpoint, values in (("pulls/12/files", data["files"]),
                              ("pulls/12/reviews", reviews), ("issues/7/comments", comments)):
@@ -100,7 +128,7 @@ if isinstance(response, dict) and "error" in response:
 print(json.dumps(response))
 ''')
     executable.chmod(0o700)
-    environment = {**os.environ, "PATH": str(tmp_path) + os.pathsep + os.environ["PATH"],
+    environment = {**{key: value for key, value in os.environ.items() if key != "PYTHONPATH"}, "PATH": str(tmp_path) + os.pathsep + os.environ["PATH"],
                    "FAKE_GH_RESPONSES": str(fixture), "FAKE_GH_LOG": str(log),
                    "FAKE_GH_COUNTS": str(counts), "PYTHONDONTWRITEBYTECODE": "1"}
 
@@ -110,7 +138,7 @@ print(json.dumps(response))
         command = [sys.executable, str(executable_path or source_root / name),
                    "--repository", "sample/repo", "--pull-number", "12", *arguments]
         return subprocess.run(command, text=True, capture_output=True,
-                              env={**environment, **(extra_environment or {})}, check=False)
+                              env={**environment, **(extra_environment or {})}, cwd=consumer, check=False)
 
     return run, responses, log, data, sources
 
@@ -123,15 +151,164 @@ def test_collector_cli_preserves_paginated_facts_and_comment_text(github_cli):
     assert (len(payload["files"]), len(payload["reviews"]), len(payload["issue_comments"]["7"])) == (101, 101, 101)
     assert payload["claim_comments"][CLAIM] == {
         "id": 1, "url": CLAIM, "user_id": 1001, "login": "developer", "issue_number": 7,
-        "body": "event: claim\nscope:\n  - src/**", "updated_at": "2026-10-14T00:00:00Z",
+        "body": responses["repos/sample/repo/issues/comments/1"]["body"], "updated_at": "2026-10-14T00:00:00Z",
     }
-    assert payload["issue_comments"]["7"][-1]["body"] == "event: release\nprevious_event_id: claim-1"
+    assert yaml.safe_load(payload["issue_comments"]["7"][-1]["body"])["event"] == "release"
     assert payload["snapshot"]["version"] == 2
+    assert payload["snapshot"]["check_contract"] == 2
+    assert payload["net_diff"]["commits"] == [HEAD]
+    assert payload["development_compare"]["base_sha"] == SHA
+    assert payload["predecessor_pulls"] == [] and payload["predecessor_files"] == {} and payload["predecessor_compares"] == []
     assert payload["snapshot"]["trusted_resources"][DEPLOYED + "grants.yml"]["sha256"]
     assert payload["trusted_sha"] == SHA and payload["trusted_ref_verified"] is True
     requests = [json.loads(line) for line in log.read_text().splitlines()]
     assert all(request[:5] == ["api", "--method", "GET", "--hostname", "github.com"] for request in requests)
     assert all(f"?ref={SHA}" in request[-1] for request in requests if "/contents/" in request[-1])
+    assert len(payload["snapshot"]["trusted_resources"]) == 9
+
+
+@pytest.mark.parametrize("failure", ["files_cap", "commit_truncation", "wrong_base", "changed_comparison", "changed_files"])
+def test_compare_and_fixed_file_collection_fail_closed(github_cli, failure):
+    run, responses, _, _, _ = github_cli
+    endpoint = f"repos/sample/repo/compare/{SHA}...{HEAD}?per_page=100&page=1"
+    value = responses[endpoint]
+    if failure == "files_cap":
+        value["files"] = [{"filename": f"src/{n}.py", "status": "added"} for n in range(300)]
+    elif failure == "commit_truncation":
+        value["total_commits"] = 101
+    elif failure == "wrong_base":
+        value["base_commit"]["sha"] = "c" * 40
+    else:
+        if failure == "changed_files":
+            endpoint = "repos/sample/repo/pulls/12/files?per_page=100&page=2"
+            value = responses[endpoint]
+            changed = copy.deepcopy(value)
+            changed[0]["filename"] = "src/changed.py"
+        else:
+            changed = copy.deepcopy(value)
+            changed["files"][0]["filename"] = "src/changed.py"
+        responses[endpoint] = {"responses": [copy.deepcopy(value), changed]}
+    result = run()
+    assert result.returncode == 2, result.stdout
+    assert json.loads(result.stdout)["result"] == "unknown"
+
+
+def test_compare_commits_are_paginated_and_bound_to_fixed_head(github_cli):
+    run, responses, log, _, _ = github_cli
+    endpoint = f"repos/sample/repo/compare/{SHA}...{HEAD}?per_page=100&page="
+    first = responses[endpoint + "1"]
+    first["total_commits"] = 101
+    first["commits"] = [{"sha": f"{n:040x}"} for n in range(1, 101)]
+    responses[endpoint + "2"] = {**copy.deepcopy(first), "commits": [{"sha": HEAD}]}
+    responses[endpoint + "2"].pop("files")
+    result = run()
+    assert result.returncode == 0, result.stdout
+    payload = json.loads(result.stdout)
+    assert len(payload["net_diff"]["commits"]) == 101
+    assert payload["net_diff"]["commits"][-1] == HEAD
+    assert sum(json.loads(line)[-1] == endpoint + "2" for line in log.read_text().splitlines()) >= 2
+
+
+@pytest.mark.parametrize("name", ["collaboration_event.py", "collaboration_scope.py", "collaboration-event.schema.json", "requirements-helpers.txt"])
+def test_missing_trusted_helper_schema_or_requirements_returns_unknown(github_cli, name):
+    run, responses, _, _, _ = github_cli
+    del responses[f"repos/sample/repo/contents/{DEPLOYED}{name}?ref={SHA}"]
+    result = run(launcher=True)
+    assert result.returncode == 2
+    assert json.loads(result.stdout)["result"] == "unknown"
+
+
+def stacked_responses(responses, data):
+    prior = "c" * 40
+    before, raw = data["pull"]["body"].split("<!-- agent-collaboration:metadata\n")
+    metadata = json.loads(raw.split("\n-->")[0])
+    metadata["delivery"].update(development_base_sha=prior, net_diff_base_sha=prior,
+                                predecessors=[{"pull_number": 11, "head_sha": prior}], merge_order=[11, 12])
+    data["pull"]["body"] = before + "<!-- agent-collaboration:metadata\n" + json.dumps(metadata) + "\n-->"
+    event = yaml.safe_load(responses["repos/sample/repo/issues/comments/1"]["body"])
+    event["base_head"] = prior
+    responses["repos/sample/repo/issues/comments/1"]["body"] = yaml.safe_dump(event, sort_keys=False)
+    predecessor_files = [{"filename": f"docs/prior-{n}.md", "status": "added"} for n in range(101)]
+    responses["repos/sample/repo/pulls/11"] = {"number": 11, "head": {"sha": prior},
+        "base": {"ref": "main", "sha": SHA, "repo": {"id": 123}}, "state": "open", "merged": False,
+        "changed_files": len(predecessor_files), "merged_at": None, "merge_commit_sha": None}
+    for page in (1, 2):
+        responses[f"repos/sample/repo/pulls/11/files?per_page=100&page={page}"] = predecessor_files[(page-1)*100:page*100]
+    files = data["files"] + predecessor_files
+    data["pull"]["changed_files"] = len(files)
+    for page in (1, 2, 3):
+        responses[f"repos/sample/repo/pulls/12/files?per_page=100&page={page}"] = files[(page-1)*100:page*100]
+    responses[f"repos/sample/repo/compare/{prior}...{HEAD}?per_page=100&page=1"] = {
+        "status": "ahead", "base_commit": {"sha": prior}, "merge_base_commit": {"sha": prior},
+        "total_commits": 1, "commits": [{"sha": HEAD}], "files": data["files"]}
+    return prior
+
+
+def test_collector_and_launcher_bind_complete_predecessor_files_to_fixed_head(github_cli):
+    run, responses, log, data, _ = github_cli
+    prior = stacked_responses(responses, data)
+    collected = run()
+    assert collected.returncode == 0, collected.stdout[:3000]
+    payload = json.loads(collected.stdout)
+    assert payload["predecessor_pulls"][0]["head"]["sha"] == prior
+    assert len(payload["predecessor_files"]["11"]) == 101
+    assert payload["net_diff"]["base_sha"] == prior
+    endpoints = [json.loads(line)[-1] for line in log.read_text().splitlines()]
+    assert endpoints.count("repos/sample/repo/pulls/11/files?per_page=100&page=2") == 2
+    result = run(launcher=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("change", ["head", "merge_state", "files", "comparison"])
+def test_predecessor_or_net_facts_drift_discards_the_entire_snapshot(github_cli, change):
+    run, responses, _, data, _ = github_cli
+    prior = stacked_responses(responses, data)
+    endpoint = ("repos/sample/repo/pulls/11/files?per_page=100&page=2" if change == "files" else
+                f"repos/sample/repo/compare/{prior}...{HEAD}?per_page=100&page=1" if change == "comparison" else
+                "repos/sample/repo/pulls/11")
+    before = copy.deepcopy(responses[endpoint])
+    after = copy.deepcopy(before)
+    if change == "head":
+        after["head"]["sha"] = "d" * 40
+    elif change == "merge_state":
+        after.update(state="closed", merged=True, merged_at="2026-10-14T00:20:00Z")
+    elif change == "files":
+        after[0]["filename"] = "docs/changed.md"
+    else:
+        after["files"][0]["filename"] = "src/changed.py"
+    responses[endpoint] = {"responses": [before, after]}
+    result = run()
+    assert result.returncode == 2
+    assert json.loads(result.stdout)["snapshot"] is None
+
+
+@pytest.mark.parametrize("dependency", ["yaml", "jsonschema"])
+def test_missing_runtime_dependency_is_unknown_and_local_launcher_never_installs(github_cli, tmp_path, dependency):
+    run, _, log, _, _ = github_cli
+    site = tmp_path / "missing-dependency"
+    site.mkdir()
+    marker = tmp_path / "forbidden-install"
+    (site / "sitecustomize.py").write_text(f'''import builtins, subprocess
+from pathlib import Path
+original_import = builtins.__import__
+def unavailable(name, *args, **kwargs):
+    if name == {dependency!r} or name.startswith({dependency!r} + "."):
+        raise ImportError("dependency unavailable")
+    return original_import(name, *args, **kwargs)
+builtins.__import__ = unavailable
+original_run = subprocess.run
+def no_install(command, *args, **kwargs):
+    if "pip" in command or Path(command[0]).name in {{"pip", "pip3", "uv"}}:
+        Path({str(marker)!r}).write_text("unexpected dependency installation")
+        raise AssertionError("local installation is forbidden")
+    return original_run(command, *args, **kwargs)
+subprocess.run = no_install
+''')
+    result = run(launcher=True, extra_environment={"PYTHONPATH": str(site)})
+    assert result.returncode == 2
+    assert json.loads(result.stdout)["result"] == "unknown"
+    assert not marker.exists()
+    assert all("pip" not in json.loads(line) for line in log.read_text().splitlines())
 
 
 def test_collector_rejects_default_sha_changed_during_collection(github_cli):
@@ -142,6 +319,14 @@ def test_collector_rejects_default_sha_changed_during_collection(github_cli):
     result = run()
     assert result.returncode == 2
     assert json.loads(result.stdout)["result"] == "unknown"
+    assert json.loads(result.stdout)["snapshot"] is None
+
+
+def test_collector_rejects_an_already_stale_default_target_base(github_cli):
+    run, _, _, data, _ = github_cli
+    data["pull"]["base"]["sha"] = "c" * 40
+    result = run()
+    assert result.returncode == 2
     assert json.loads(result.stdout)["snapshot"] is None
 
 
@@ -368,7 +553,7 @@ def test_requested_artifacts_match_the_public_launcher_report(github_cli, tmp_pa
     assert json.loads((destination / "check-report.json").read_text()) == report
     payload = json.loads((destination / "metadata.json").read_text())
     assert payload["snapshot"] == report["snapshot"]
-    assert payload["claim_comments"][CLAIM]["body"] == "event: claim\nscope:\n  - src/**"
+    assert yaml.safe_load(payload["claim_comments"][CLAIM]["body"])["event"] == "claim"
 
 
 @pytest.mark.parametrize("case", ["metadata", "report", "other_file", "directory_symlink", "parent_symlink"])

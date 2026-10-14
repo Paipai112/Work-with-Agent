@@ -79,7 +79,7 @@ def skill_text(repo_root: Path) -> Callable[[str], str]:
 def run_metadata_check(repo_root: Path, tmp_path: Path):
     def run(input_path: Path) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
-            [sys.executable, str(repo_root / "templates/project/.github/agent-collaboration/check_pr_metadata.py"), str(input_path), str(tmp_path)],
+            [sys.executable, str(repo_root / "templates/project/.github/agent-collaboration/check_pr_metadata.py"), str(input_path), str(tmp_path), "--legacy-diagnostic"],
             text=True,
             capture_output=True,
             check=False,
