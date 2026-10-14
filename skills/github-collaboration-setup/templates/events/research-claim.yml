@@ -1,0 +1,12 @@
+# Branchless research/decision only. Repository file changes require a code claim and PR.
+event: claim
+event_id: example-research-claim-issue-124
+previous_event_id: null
+controlled_by: alex
+controlled_by_id: 1234
+actor_id: product-research
+session_id: example-research-session
+runtime: codex
+task_kind: research
+scope: ["decision: payment provider selection"]
+expected_handoff: accepted-result

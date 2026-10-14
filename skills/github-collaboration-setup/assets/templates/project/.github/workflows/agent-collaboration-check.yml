@@ -1,19 +1,10 @@
-# Optional asset. Do not install/enable or make required without separate user approvals.
-# Before enabling, test repository event policy and budget: GitHub documents a
-# default public-repository pull_request_target block effective 2026-11-02.
-# Probe the actual event policy and obtain a successful trusted run before
-# separately proposing a Required Check. Never auto-relax the event policy.
-# This checks metadata declarations; it verifies claim comment existence and
-# author against the controlling account, but not human approval, effective
-# account permissions, real Skill loading, or independently authenticated
-# Agent actors. Closing keywords in commit messages are not covered; re-read
-# Issue state after merge.
-# The checker accepts only setup-generated restricted YAML (no aliases, merge
-# keys, tags, multiple documents, duplicate keys or unsupported scalar forms).
-# Review changes after this run do not automatically rerun this event; native
-# Required Reviews and a fresh merge-time gate remain separate obligations.
-# v0.1 supports final PRs targeting the default branch only. Do not make this
-# context required on integration branches; their internal review uses the Skill.
+# Optional local candidate: enabling or requiring it needs separate authorization.
+# Probe current repository event policy, runner/budget and a successful trusted
+# run before proposing a Required Check; never auto-relax the event policy.
+# Only collaboration metadata is checked. Human approval, live permissions,
+# native review/protection and real Skill loading remain outside this check.
+# Reviews/comments can change after a run; merge-time rechecking is separate.
+# This adapter supports final PRs targeting the default branch only.
 name: Agent collaboration metadata
 on:
   pull_request_target:
@@ -31,12 +22,12 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Validate trusted PR metadata
+      - name: Run deployed trusted metadata chain
         shell: bash
         run: |
           python3 - <<'PY'
           import base64
-          import importlib.util
+          import hashlib
           import json
           import os
           import re
@@ -46,138 +37,55 @@ jobs:
           from pathlib import Path
           from urllib.parse import quote
 
-          def fail(message):
-              print("::error::" + message.replace("%", "%25").replace("\n", "%0A"))
-              raise SystemExit(1)
+          def unknown():
+              print(json.dumps({"result": "unknown", "errors": ["trusted Actions launcher unavailable or stale; refresh deployment/event"], "snapshot": None}))
+              raise SystemExit(2)
 
-          def api(endpoint):
-              result = subprocess.run(["gh", "api", "--method", "GET", endpoint],
-                                      capture_output=True, text=True, check=False)
-              if result.returncode != 0:
-                  fail("GitHub metadata unavailable; fail closed")
-              try:
-                  return json.loads(result.stdout)
-              except json.JSONDecodeError:
-                  fail("GitHub metadata invalid; fail closed")
+          def get(endpoint):
+              result = subprocess.run(["gh", "api", "--method", "GET", "--hostname", "github.com", endpoint],
+                                      capture_output=True, text=True, check=False, timeout=30)
+              if result.returncode:
+                  unknown()
+              return json.loads(result.stdout)
 
-          def pages(endpoint):
-              output = []
-              for page in range(1, 32):
-                  batch = api(f"{endpoint}?per_page=100&page={page}")
-                  if not isinstance(batch, list):
-                      fail("GitHub metadata page invalid; fail closed")
-                  output.extend(batch)
-                  if len(batch) < 100:
-                      return output
-              fail("GitHub metadata pagination exceeded limit; fail closed")
-
-          def content(repo, path, sha):
-              endpoint = f"repos/{repo}/contents/{quote(path, safe='/')}?ref={sha}"
-              item = api(endpoint)
-              if item.get("type") != "file" or item.get("encoding") != "base64":
-                  fail("trusted file unavailable; fail closed")
-              try:
-                  return base64.b64decode(item["content"], validate=False)
-              except (KeyError, ValueError):
-                  fail("trusted file invalid; fail closed")
-
-          repo_name = os.environ.get("GITHUB_REPOSITORY", "")
-          sha = os.environ.get("GITHUB_SHA", "")
-          if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo_name) or not re.fullmatch(r"[0-9a-f]{40}", sha):
-              fail("trusted repository or SHA unverified")
           try:
-              event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
-          except (KeyError, OSError, json.JSONDecodeError):
-              fail("event payload unavailable")
-          if event.get("repository", {}).get("full_name") != repo_name:
-              fail("event repository mismatch")
-          number = event.get("pull_request", {}).get("number")
-          if not isinstance(number, int) or number < 1:
-              fail("event PR number unavailable")
-          repo = api(f"repos/{repo_name}")
-          if repo.get("full_name") != repo_name or repo.get("id") != event["repository"].get("id"):
-              fail("repository identity mismatch")
-          default = repo.get("default_branch")
-          if not isinstance(default, str) or not default:
-              fail("default branch unavailable")
-          ref = api(f"repos/{repo_name}/git/ref/heads/{quote(default, safe='')}")
-          if ref.get("object", {}).get("sha") != sha:
-              fail("workflow SHA is not current default-branch HEAD")
-          pull = api(f"repos/{repo_name}/pulls/{number}")
-          if pull.get("number") != number or pull.get("base", {}).get("repo", {}).get("id") != repo["id"]:
-              fail("PR target mismatch")
-          if pull.get("head", {}).get("sha") != event["pull_request"].get("head", {}).get("sha"):
-              fail("PR HEAD changed since event; rerun on current event")
-          if pull.get("base", {}).get("ref") != default:
-              fail("this optional workflow supports default-branch target PRs only")
-          files = pages(f"repos/{repo_name}/pulls/{number}/files")
-          if len(files) >= 3000:
-              fail("PR file list may be truncated by GitHub; fail closed")
-          reviews = pages(f"repos/{repo_name}/pulls/{number}/reviews")
-          config_bytes = content(repo_name, ".github/agent-collaboration/config.yml", sha)
-          checker_bytes = content(repo_name, ".github/agent-collaboration/check_pr_metadata.py", sha)
-          if any(len(x) > 262144 for x in (config_bytes, checker_bytes)):
-              fail("trusted file too large")
-          with tempfile.TemporaryDirectory() as directory:
-              root = Path(directory)
-              script = root / "check_pr_metadata.py"
-              script.write_bytes(checker_bytes)
-              # Import only the same pinned default-branch code that is executed below.
-              module_spec = importlib.util.spec_from_file_location("trusted_metadata", script)
-              checker = importlib.util.module_from_spec(module_spec)
-              module_spec.loader.exec_module(checker)
-              try:
-                  config = checker.restricted_yaml(config_bytes.decode("utf-8"))
-                  authorization_path = checker.managed_paths(config)["authorization"]
-                  body = pull.get("body") or ""
-                  issue_numbers = checker.linked_issue_numbers(body)
-                  metadata = checker.metadata_from_body(body)
-              except (ValueError, TypeError, KeyError):
-                  fail("invalid trusted config or PR collaboration metadata")
-              auth_bytes = content(repo_name, authorization_path, sha)
-              if len(auth_bytes) > 262144:
-                  fail("trusted file too large")
-              issues = [api(f"repos/{repo_name}/issues/{n}") for n in issue_numbers]
-
-              def claim_comment(endpoint):
-                  result = subprocess.run(["gh", "api", "--method", "GET", endpoint],
-                                          capture_output=True, text=True, check=False)
-                  if result.returncode == 0:
-                      try:
-                          return json.loads(result.stdout)
-                      except json.JSONDecodeError:
-                          fail("claim comment invalid; fail closed")
-                  message = (result.stdout or "") + (result.stderr or "")
-                  if "HTTP 404" in message or "HTTP 410" in message:
-                      return None
-                  fail("claim comment unavailable; fail closed")
-
-              claim_comments = {}
-              for url in metadata["claim_urls"]:
-                  match = checker.CLAIM_URL.fullmatch(url)
-                  fetched = claim_comment(f"repos/{repo_name}/issues/comments/{match.group(3)}")
-                  if fetched is None:
-                      claim_comments[url] = None
-                      continue
-                  try:
-                      issue_number = int(str(fetched["issue_url"]).rstrip("/").rsplit("/", 1)[-1])
-                      claim_comments[url] = {
-                          "user_id": fetched["user"]["id"],
-                          "login": fetched["user"]["login"],
-                          "issue_number": issue_number,
-                      }
-                  except (KeyError, TypeError, ValueError):
-                      fail("claim comment invalid; fail closed")
-
-              payload = {
-                  "trusted_ref_verified": True, "trusted_sha": sha,
-                  "repository": {"id": repo["id"], "full_name": repo["full_name"], "default_branch": default},
-                  "pull": pull, "files": files, "reviews": reviews, "issues": issues,
-                  "config": config, "authorization": auth_bytes.decode("utf-8"),
-                  "claim_comments": claim_comments,
-              }
-              metadata = root / "metadata.json"
-              metadata.write_text(json.dumps(payload), encoding="utf-8")
-              result = subprocess.run([sys.executable, str(script), str(metadata), str(root)], check=False)
-              raise SystemExit(result.returncode)
+              repository = os.environ["GITHUB_REPOSITORY"]
+              sha = os.environ["GITHUB_SHA"]
+              event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
+              if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository) or not re.fullmatch(r"[0-9a-f]{40}", sha):
+                  unknown()
+              repo = get(f"repos/{repository}")
+              if repo.get("full_name") != repository or repo.get("id") != event.get("repository", {}).get("id") or event.get("repository", {}).get("full_name") != repository:
+                  unknown()
+              default = repo["default_branch"]
+              ref = get(f"repos/{repository}/git/ref/heads/{quote(default, safe='')}")
+              if ref.get("object", {}).get("sha") != sha:
+                  unknown()
+              pull = event["pull_request"]
+              if type(pull.get("number")) is not int or pull["number"] < 1 or not re.fullmatch(r"[0-9a-f]{40}", str(pull.get("head", {}).get("sha", ""))):
+                  unknown()
+              path = ".github/agent-collaboration/run_pr_metadata_check.py"
+              tree = get(f"repos/{repository}/git/trees/{sha}?recursive=1")
+              if tree.get("truncated") is not False or not isinstance(tree.get("tree"), list):
+                  unknown()
+              entries = [entry for entry in tree["tree"] if isinstance(entry, dict) and entry.get("path") == path]
+              if len(entries) != 1 or entries[0].get("type") != "blob" or entries[0].get("mode") not in {"100644", "100755"}:
+                  unknown()
+              item = get(f"repos/{repository}/contents/{path}?ref={sha}")
+              if item.get("type") != "file" or item.get("path") != path or item.get("encoding") != "base64":
+                  unknown()
+              raw = base64.b64decode("".join(item["content"].split()), validate=True)
+              blob = hashlib.sha1(f"blob {len(raw)}\0".encode() + raw).hexdigest()
+              if len(raw) > 262144 or item.get("sha") != blob or entries[0].get("sha") != blob or item.get("size") != len(raw):
+                  unknown()
+              with tempfile.TemporaryDirectory(prefix="agent-metadata-bootstrap-") as directory:
+                  launcher = Path(directory) / "run_pr_metadata_check.py"
+                  launcher.write_bytes(raw)
+                  result = subprocess.run([sys.executable, str(launcher), "--repository", repository,
+                                           "--repository-id", str(repo["id"]), "--pull-number", str(pull["number"]),
+                                           "--expected-trusted-sha", sha, "--expected-head", pull["head"]["sha"],
+                                           "--default-target-only"], check=False)
+                  raise SystemExit(result.returncode)
+          except (OSError, KeyError, TypeError, ValueError, AttributeError, subprocess.TimeoutExpired):
+              unknown()
           PY

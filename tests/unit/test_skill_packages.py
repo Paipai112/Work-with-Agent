@@ -356,7 +356,7 @@ def test_verifier_rejects_a_missing_linked_file(repo_root: Path, tmp_path: Path)
 def test_verifier_checks_references_from_a_linked_document(repo_root: Path, tmp_path: Path):
     skill = run_sync(repo_root, tmp_path / "package")
     references = skill / "references"
-    references.mkdir()
+    references.mkdir(exist_ok=True)
     (references / "guide.md").write_text("Read [missing](missing.md).\n", encoding="utf-8")
     (skill / "SKILL.md").write_text(
         "---\nname: package\ndescription: Test package.\n---\n"
@@ -448,7 +448,7 @@ def test_verifier_rejects_non_manifest_file_symlink_outside_package(
     external = tmp_path / "external-guide.md"
     external.write_text("External instructions.\n", encoding="utf-8")
     references = skill / "references"
-    references.mkdir()
+    references.mkdir(exist_ok=True)
     (references / "guide.md").symlink_to(external)
 
     result = run_verifier(skill, repo_root)
