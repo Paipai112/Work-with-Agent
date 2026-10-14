@@ -4,6 +4,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+import pytest
+
 
 def sync(repo_root: Path, destination: Path, *extra: str):
     return subprocess.run([
@@ -75,3 +77,60 @@ def test_verifier_rejects_even_an_internal_package_symlink(repo_root, tmp_path):
     ], capture_output=True, text=True)
     assert checked.returncode != 0
     assert "symlink" in checked.stderr
+
+
+@pytest.mark.parametrize("profile", ["github-collaboration", "github-collaboration-setup", "github-collaboration-check"])
+def test_each_package_has_its_own_readonly_launch_and_byte_verification(repo_root, tmp_path, profile):
+    target = tmp_path / profile
+    result = sync(repo_root, target)
+    assert result.returncode == 0, result.stderr
+    for helper in ("run_pr_metadata_check.py", "verify_installed_skill.py"):
+        copied = target / "scripts" / helper
+        assert copied.is_file()
+        help_result = subprocess.run([sys.executable, str(copied), "--help"],
+                                     cwd=tmp_path, capture_output=True, text=True)
+        assert help_result.returncode == 0, help_result.stderr
+    if profile == "github-collaboration-check":
+        assert not (target / "scripts/collaboration_event.py").exists()
+        assert not (target / "templates/events").exists()
+
+
+@pytest.mark.parametrize("profile", ["github-collaboration", "github-collaboration-setup"])
+def test_construct_event_runs_from_an_isolated_package(repo_root, tmp_path, profile):
+    target = tmp_path / profile
+    result = sync(repo_root, target)
+    assert result.returncode == 0, result.stderr
+    fields = tmp_path / "fields.json"
+    fields.write_text(json.dumps({"event_id": "isolated-package-claim"}))
+    constructed = subprocess.run([
+        sys.executable, str(target / "scripts/collaboration_event.py"), "construct",
+        "--template", "claim", "--fields", str(fields),
+    ], cwd=tmp_path, capture_output=True, text=True)
+    assert constructed.returncode == 0, constructed.stdout + constructed.stderr
+    report = json.loads(constructed.stdout)
+    assert report["event"]["event_id"] == "isolated-package-claim"
+    assert report["authorization_verified"] is False
+    assert (target / "scripts/collaboration_scope.py").is_file()
+    assert (target / "scripts/requirements-helpers.txt").read_bytes() == (repo_root / "shared/requirements-helpers.txt").read_bytes()
+
+
+def test_setup_deploys_shared_helpers_as_real_project_candidates(repo_root, tmp_path):
+    target = tmp_path / "github-collaboration-setup"
+    result = sync(repo_root, target)
+    assert result.returncode == 0, result.stderr
+    deployed = target / "assets/templates/project/.github/agent-collaboration"
+    expected = {
+        "collaboration_event.py": "shared/scripts/collaboration_event.py",
+        "collaboration_scope.py": "shared/scripts/collaboration_scope.py",
+        "collaboration-event.schema.json": "schemas/collaboration-event.schema.json",
+        "requirements-helpers.txt": "shared/requirements-helpers.txt",
+    }
+    for destination, source in expected.items():
+        assert (deployed / destination).is_file(), destination
+        assert (deployed / destination).read_bytes() == (repo_root / source).read_bytes()
+    body = repo_root / "skills/github-collaboration/templates/events/claim.yml"
+    validated = subprocess.run([
+        sys.executable, str(deployed / "collaboration_event.py"), "validate", "--body", str(body),
+    ], cwd=tmp_path, capture_output=True, text=True)
+    assert validated.returncode == 0, validated.stdout + validated.stderr
+    assert json.loads(validated.stdout)["authorization_verified"] is False

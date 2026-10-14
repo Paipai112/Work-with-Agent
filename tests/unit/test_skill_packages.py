@@ -66,7 +66,7 @@ def test_sync_is_reproducible(repo_root: Path, tmp_path: Path):
 
 def test_generated_python_cache_is_not_a_distributed_resource(repo_root: Path, tmp_path: Path):
     isolated = tmp_path / "source"
-    for name in ("schemas", "templates", "shared"):
+    for name in ("schemas", "templates", "shared", "skills/github-collaboration/templates/events"):
         shutil.copytree(repo_root / name, isolated / name)
     cache = isolated / "templates/project/.github/agent-collaboration/__pycache__"
     cache.mkdir(parents=True, exist_ok=True)
@@ -91,7 +91,8 @@ def test_generated_python_cache_is_not_a_distributed_resource(repo_root: Path, t
 
 def test_sync_skill_writes_to_the_named_repository_skill(repo_root: Path, tmp_path: Path):
     isolated_repo = tmp_path / "repo"
-    shutil.copytree(repo_root / "schemas", isolated_repo / "schemas")
+    for name in ("schemas", "templates", "shared", "skills/github-collaboration/templates/events"):
+        shutil.copytree(repo_root / name, isolated_repo / name)
 
     result = subprocess.run(
         [
@@ -225,7 +226,7 @@ def test_sync_rejects_canonical_symlinks_before_any_output(
     repo_root: Path, tmp_path: Path, source_path: str, existing_destination: bool
 ):
     isolated_repo = tmp_path / "repo"
-    for directory in ("schemas", "templates", "shared"):
+    for directory in ("schemas", "templates", "shared", "skills/github-collaboration/templates/events"):
         shutil.copytree(repo_root / directory, isolated_repo / directory)
     source = isolated_repo / source_path
     external = tmp_path / "external-resource"
@@ -528,10 +529,12 @@ def test_verifier_rejects_an_incomplete_resource_manifest(repo_root: Path, tmp_p
     assert "manifest resource set does not match canonical resources" in result.stderr
 
 
-def test_daily_skill_profile_copies_only_schemas_to_its_runtime_reference_path(
+def test_daily_skill_profile_contains_operation_resources_but_no_project_template(
     repo_root: Path, tmp_path: Path
 ):
     skill = run_sync(repo_root, tmp_path / "github-collaboration")
     assert (skill / "references" / "schemas" / "config.schema.json").is_file()
     assert not (skill / "assets").exists()
-    assert not (skill / "scripts").exists()
+    assert (skill / "scripts/collaboration_event.py").is_file()
+    assert (skill / "scripts/collaboration_scope.py").is_file()
+    assert not (skill / "scripts/managed_block.py").exists()
