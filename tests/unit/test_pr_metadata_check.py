@@ -2,6 +2,8 @@ import importlib.util
 import json
 
 import pytest
+import yaml
+from jsonschema import Draft202012Validator, FormatChecker
 
 
 MARKER = "<!-- agent-collaboration:metadata\n"
@@ -65,6 +67,111 @@ def test_real_template_yaml_subset_is_accepted(run_metadata_check, fixture_path,
     path.write_text(json.dumps(data))
     result = run_metadata_check(path)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_setup_template_candidates_accept_equivalent_list_indentation(
+    run_metadata_check, fixture_path, repo_root, tmp_path
+):
+    data = json.loads(fixture_path("github/pr-valid.json").read_text())
+    templates = repo_root / "templates/project/.github/agent-collaboration"
+    integration = "agent/release-coordination/issue-7-integration"
+    config = (templates / "config.yml").read_text().replace(
+        "label_namespace: agent-collaboration/", "label_namespace: project-agents/"
+    ).replace("integration_branches: []", f"integration_branches:\n    - {integration}")
+    authorization = (templates / "authorization.yml").read_text()
+    for field, value in {
+        "hostname": "github.com", "repository_id": "123", "owner": "sample",
+        "name": "repo", "default_branch": "main", "default_branch_source_sha": "a" * 40,
+    }.items():
+        authorization = authorization.replace(f"{field}: __SETUP_REQUIRED__", f"{field}: {value}")
+    assert "__SETUP_REQUIRED__" not in authorization
+    update_metadata(
+        data, skill_version=yaml.safe_load(config)["minimum_runtime_skill_version"],
+        base_branch=integration,
+    )
+    data["pull"]["base"]["ref"] = integration
+    data["authorization"] = authorization
+    auth_schema = json.loads((repo_root / "schemas/authorization.schema.json").read_text())
+    Draft202012Validator(auth_schema, format_checker=FormatChecker()).validate(
+        yaml.safe_load(authorization)
+    )
+    config_schema = json.loads((repo_root / "schemas/config.schema.json").read_text())
+
+    results = []
+    for candidate in (config, config.replace("    - ", "  - ")):
+        Draft202012Validator(config_schema, format_checker=FormatChecker()).validate(
+            yaml.safe_load(candidate)
+        )
+        data["config"] = candidate
+        result = run_case(data, run_metadata_check, tmp_path)
+        assert result.returncode == 0, result.stdout + result.stderr
+        results.append(result.stdout)
+    assert results[0] == results[1]
+
+
+def test_authorization_mapping_lists_accept_equivalent_root_indentation(
+    run_metadata_check, fixture_path, tmp_path
+):
+    data = json.loads(fixture_path("github/pr-valid.json").read_text())
+    authorization = fixture_path("config/valid-authorization.yml").read_text().replace(
+        "123456789", "123"
+    ).replace("example-org", "sample").replace("example-repo", "repo")
+    prefix, mappings = authorization.split("leader_delegations:\n")
+    indentless = prefix + "leader_delegations:\n" + "\n".join(
+        line[2:] for line in mappings.splitlines()
+    ) + "\n"
+    results = []
+    for candidate in (authorization, indentless):
+        data["authorization"] = candidate
+        result = run_case(data, run_metadata_check, tmp_path)
+        assert result.returncode == 0, result.stdout + result.stderr
+        results.append(result.stdout)
+    assert results[0] == results[1]
+
+
+@pytest.mark.parametrize(("original", "replacement", "message"), [
+    ("  authorization: .github/agent-collaboration/authorization.yml\n", "",
+     "trusted managed paths unsupported"),
+    ("integration_branches: []", "integration_branches: false", "invalid integration branch policy"),
+])
+def test_edited_setup_config_candidates_keep_missing_field_and_type_checks(
+    original, replacement, message, run_metadata_check, fixture_path, repo_root, tmp_path
+):
+    data = json.loads(fixture_path("github/pr-valid.json").read_text())
+    config = (repo_root / "templates/project/.github/agent-collaboration/config.yml").read_text()
+    update_metadata(data, skill_version=yaml.safe_load(config)["minimum_runtime_skill_version"])
+    assert original in config
+    data["config"] = config.replace(original, replacement)
+    result = run_case(data, run_metadata_check, tmp_path)
+    assert result.returncode == 1
+    assert message in result.stdout
+
+
+@pytest.mark.parametrize(("field", "source", "line"), [
+    ("config", "schema_version: 1\nschema_version: 1\n", 4),
+    ("authorization", "schema_version: 1\nrepository: *shared\n", 4),
+    ("authorization", "schema_version: 1\nrepository: &shared value\n", 4),
+    ("authorization", "schema_version: 1\nrepository: !vault REDACTED_CANARY\n", 4),
+    ("config", "schema_version: 1\n<<: *shared\n", 4),
+    ("config", "schema_version: 1\n---\n", 4),
+    ("config", "schema_version: 1\n...\n", 4),
+    ("config", "schema_version: yes\n", 3),
+    ("config", 'schema_version: "\\q_REDACTED_CANARY"\n', 3),
+    ("config", "schema_version: 1\n bad: 2\n", 4),
+    ("config", "managed_paths:\n  entry_files:\n  - AGENTS.md\n  entry_files: []\n", 6),
+    ("authorization", "leader_delegations:\n- actor_id: release-coordination\n  actor_id: backend-api\n", 5),
+])
+def test_rejected_yaml_reports_original_line_without_echoing_values(
+    field, source, line, run_metadata_check, fixture_path, tmp_path
+):
+    data = json.loads(fixture_path("github/pr-valid.json").read_text())
+    data[field] = "# Candidate configuration\n\n" + source
+    result = run_case(data, run_metadata_check, tmp_path)
+    assert result.returncode == 1
+    assert f"{field} YAML:" in result.stdout
+    assert f"line {line}" in result.stdout
+    assert "REDACTED_CANARY" not in result.stdout + result.stderr
+    assert "Traceback" not in result.stdout + result.stderr
 
 
 def test_duplicate_yaml_key_fails_closed(run_metadata_check, fixture_path, tmp_path):
