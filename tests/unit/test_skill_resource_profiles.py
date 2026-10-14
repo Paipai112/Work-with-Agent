@@ -46,3 +46,32 @@ def test_named_package_rejects_a_conflicting_profile_before_output(repo_root, tm
     result = sync(repo_root, target, "--profile", "github-collaboration-setup")
     assert result.returncode != 0
     assert not target.exists()
+
+
+def test_internal_destination_symlink_is_rejected_before_any_resource_write(repo_root, tmp_path):
+    target = tmp_path / "github-collaboration-check"
+    target.mkdir()
+    redirect = target / "user-owned"
+    redirect.mkdir()
+    (redirect / "note.txt").write_bytes(b"preserve\r\n")
+    (target / "references").symlink_to(redirect, target_is_directory=True)
+    result = sync(repo_root, target)
+    assert result.returncode != 0
+    assert "symbolic link" in result.stderr
+    assert sorted(path.name for path in redirect.iterdir()) == ["note.txt"]
+    assert (redirect / "note.txt").read_bytes() == b"preserve\r\n"
+    assert not (target / "RESOURCE_MANIFEST.json").exists()
+
+
+def test_verifier_rejects_even_an_internal_package_symlink(repo_root, tmp_path):
+    target = tmp_path / "github-collaboration-check"
+    result = sync(repo_root, target)
+    assert result.returncode == 0, result.stderr
+    (target / "SKILL.md").write_text("---\nname: github-collaboration-check\ndescription: Test\n---\n")
+    (target / "linked.json").symlink_to(target / "references/schemas/config.schema.json")
+    checked = subprocess.run([
+        sys.executable, str(repo_root / "scripts/verify_skill_packages.py"),
+        "--repo-root", str(repo_root), str(target),
+    ], capture_output=True, text=True)
+    assert checked.returncode != 0
+    assert "symlink" in checked.stderr

@@ -108,6 +108,11 @@ def _validate_planned_paths(destination: Path, planned: list[tuple[Path, bytes]]
         except ValueError as error:
             relative = path.relative_to(destination).as_posix()
             raise SyncError(f"planned output escapes destination: {relative}") from error
+        component = destination
+        for part in path.relative_to(destination).parts:
+            component /= part
+            if component.is_symlink():
+                raise SyncError(f"planned output contains a symbolic link: {component.relative_to(destination)}")
 
 
 def sync(repo_root: Path, destination: Path, accept_reviewed_diff: bool, profile: str | None = None) -> None:

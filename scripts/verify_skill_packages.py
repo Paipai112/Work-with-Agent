@@ -128,8 +128,9 @@ def _check_script_syntax(skill: Path, errors: list[str]) -> None:
 def _check_package_symlinks(skill: Path, errors: list[str]) -> None:
     root = skill.resolve()
     for path in sorted(skill.rglob("*")):
-        if path.is_symlink() and not _inside(path.resolve(), root):
-            errors.append(f"{path}: symlink escapes skill directory")
+        if path.is_symlink():
+            reason = "symlink escapes skill directory" if not _inside(path.resolve(), root) else "symlink is not a package resource"
+            errors.append(f"{path}: {reason}")
 
 
 def _expected_resources(skill: Path, repo_root: Path, profile: str) -> set[tuple[str, str]]:
