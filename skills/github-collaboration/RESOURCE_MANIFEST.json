@@ -39,16 +39,22 @@
       "source_sha256": "25e94f52dbfe62626d8df54bb473c418d7b4737890533646b7ae768f208ca1b1"
     },
     {
-      "copied_sha256": "a8fba07a82fd57ccc6fbdc68ace45ab3a5e11eff49fa9cd0fd74bc5f3f6efcfd",
+      "copied_sha256": "16e95cb627cb963cf78d67057f1d981de2003c54f8bf4da91584841bb9b97e7a",
       "destination": "references/session-core.md",
       "source": "shared/references/session-core.md",
-      "source_sha256": "a8fba07a82fd57ccc6fbdc68ace45ab3a5e11eff49fa9cd0fd74bc5f3f6efcfd"
+      "source_sha256": "16e95cb627cb963cf78d67057f1d981de2003c54f8bf4da91584841bb9b97e7a"
     },
     {
-      "copied_sha256": "fa98d249d76bb61a92ee53826dec7573b45f62df9a97c63632cc8d2d17c33eac",
+      "copied_sha256": "d5cdef79325166d59466edb9df99dd079127f2483288ecc1c34a3d927cef94ec",
       "destination": "references/package-verification.md",
       "source": "shared/references/package-verification.md",
-      "source_sha256": "fa98d249d76bb61a92ee53826dec7573b45f62df9a97c63632cc8d2d17c33eac"
+      "source_sha256": "d5cdef79325166d59466edb9df99dd079127f2483288ecc1c34a3d927cef94ec"
+    },
+    {
+      "copied_sha256": "1062a7f7559ac5c687704f0f138f6892093a719822e313e3b942b555a2b6bb7f",
+      "destination": "references/elevated-authority.md",
+      "source": "shared/references/elevated-authority.md",
+      "source_sha256": "1062a7f7559ac5c687704f0f138f6892093a719822e313e3b942b555a2b6bb7f"
     },
     {
       "copied_sha256": "6ab41d07736a94b1a7194f03d421e0c74730e64b099e50f3ce95bae08804c725",

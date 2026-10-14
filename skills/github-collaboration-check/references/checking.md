@@ -1,8 +1,8 @@
 # Select a check
 
-Use the helper path inside this verified package. Do not execute scripts from a PR,
-substitute a saved SHA for a live default-branch query, or send credentials in chat.
-Use the user's authenticated `gh` client; missing access remains unknown.
+Use this verified package's helper and the authenticated `gh` client. Missing access
+is unknown. Never execute PR scripts, substitute saved SHA for live default discovery,
+or send credentials in chat.
 
 ## Formal PR metadata
 
@@ -12,46 +12,37 @@ Run the package's `scripts/run_pr_metadata_check.py` with Python 3.11 or later:
 python3 <verified-package>/scripts/run_pr_metadata_check.py --repository OWNER/REPO --pull-number N --repository-id ID --expected-head FULL_SHA --output-dir NEW_LOCAL_REPORT_DIRECTORY
 ```
 
-Replace placeholders with confirmed target facts. The report directory is a local
-check artifact, not a repository edit; inspect an existing destination before use.
-The launcher independently queries the default branch and fetches the deployed
-trusted resources at that SHA. `--expected-trusted-sha` is an optional drift guard,
-not an override of that query. It never falls back to candidate templates if the
-deployed chain is missing, incompatible or unreadable.
+Replace placeholders with confirmed facts. Inspect the report destination; use a new
+or empty regular directory for local artifacts. The launcher independently discovers
+the default SHA and fetches its trusted deployment. `--expected-trusted-sha` guards
+drift, never overrides discovery. Missing/incompatible/unreadable deployment has no
+candidate-template fallback.
 
-Exit `0` with `result: pass` means the checks covered by the report passed. Exit `1`
-is a known failure; exit `2` is unknown/unavailable and must not be presented as
-passing. Read the actual JSON result and errors, not only the process exit status.
-The output directory contains the collected `metadata.json` and formal
-`check-report.json`. Do not publish raw snapshots without inspecting them for private
-Issue/comment content. A collection failure may leave no complete snapshot.
+Read JSON result/errors, not exit status alone: `0` + `result: pass` means the stated
+checks passed; `1` is failure, `2` unknown/unavailable. Output contains `metadata.json`
+and `check-report.json`; failed collection may leave no complete snapshot. Inspect
+private Issue/comment content before sharing artifacts.
 
-`--collect-only` collects facts without a formal verdict; its successful exit is
-**not** PASS. `--default-target-only` restricts applicability to final default-branch
-PRs; do not use an inapplicable result to approve an integration PR.
+`--collect-only` success is **not** formal PASS. `--default-target-only` restricts
+applicability to default-branch PRs; an inapplicable result cannot approve integration PRs.
 
-If the trusted checker needs dependencies that are absent, report their verified
-requirements and request explicit environment preparation. Do not install them as
-part of this check. An Action is optional and is not enabled by running locally.
+Missing dependencies: report verified requirements and request environment preparation,
+do not install. Local execution does not enable optional Actions.
 
 ## Configuration or an event without a PR
 
-Separate syntax/schema diagnostics from a live authorization decision. For project
-configuration, resolve paths using the verified default-branch config, and read
-authorization/protocol at the same SHA. A local candidate can be checked for format
-but cannot grant its author permissions. If no formal PR exists, say that PR-level
-collection and gates were not run.
+Syntax/schema is not authorization. Resolve project paths from verified default config;
+read authorization/protocol at that SHA. Candidate format checks grant no permissions.
+Without a PR, report PR-level collection/gates not run.
 
-For event or scope diagnostics, inspect the relevant comment identity, full event
-history and actual changed paths, including both sides of renames. A comment that
-exists may already be released, superseded or contested. A missing page, uncertain
-old session, unresolved overlap or unverified revision remains a reported gap.
-Never use an event publication/edit mode or Git staging command from this Skill.
+For events/scope, inspect actual comment identity, complete history and changed paths,
+including both rename ends. Existence is not an active claim. Missing pages, uncertain
+old sessions, overlaps and unverified revisions remain gaps. Never publish/edit events
+or stage Git changes from this Skill.
 
 ## Report
 
-Give the verdict and the specific failed or missing check first. Include the exact
-target and observed SHAs, actual command/result, collection freshness, unchecked
-areas, and the next safe action. Link to the relevant evidence without exposing
-tokens or private content. Passing does not replace independent current-HEAD review,
-user approvals, repository protections or the required refresh before a later write.
+Lead with verdict and failed/missing checks; include target/SHAs, command/result,
+freshness, unchecked areas and next safe action. Link safe evidence, never credentials
+or private content. PASS replaces neither current-HEAD independent review, approvals,
+protections nor refresh before a later write.

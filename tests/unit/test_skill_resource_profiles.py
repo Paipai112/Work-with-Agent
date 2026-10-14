@@ -91,7 +91,7 @@ def test_each_package_has_its_own_readonly_launch_and_byte_verification(repo_roo
         help_result = subprocess.run([sys.executable, str(copied), "--help"],
                                      cwd=tmp_path, capture_output=True, text=True)
         assert help_result.returncode == 0, help_result.stderr
-    for name in ("session-core.md", "package-verification.md"):
+    for name in ("session-core.md", "package-verification.md", "elevated-authority.md"):
         resource = target / "references" / name
         assert resource.is_file()
         assert resource.read_bytes() == (repo_root / "shared/references" / name).read_bytes()

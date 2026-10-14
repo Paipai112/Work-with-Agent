@@ -5,6 +5,7 @@ READONLY_RESOURCES = (
     ("shared/scripts/verify_installed_skill.py", "scripts/verify_installed_skill.py"),
     ("shared/references/session-core.md", "references/session-core.md"),
     ("shared/references/package-verification.md", "references/package-verification.md"),
+    ("shared/references/elevated-authority.md", "references/elevated-authority.md"),
 )
 EVENT_RESOURCES = (
     ("shared/scripts/collaboration_event.py", "scripts/collaboration_event.py"),
