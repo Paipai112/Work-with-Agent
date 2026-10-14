@@ -27,7 +27,7 @@ def test_daily_entrypoint_is_discoverable_and_routes_writes(skill_text, repo_roo
 
     assert metadata["name"] == SKILL_NAME
     assert metadata["description"].startswith("Use when ")
-    assert metadata["metadata"]["version"] == "0.1.1"
+    assert metadata["metadata"]["version"] == "0.2.0"
     assert len(text.splitlines()) < 500
     assert all(operation in text.lower() for operation in WRITE_OPERATIONS)
     assert re.search(r"\]\(references/preflight\.md\)", text)
@@ -44,64 +44,61 @@ def test_daily_openai_metadata_supports_implicit_discovery(repo_root: Path):
     assert f"${SKILL_NAME}" in metadata["interface"]["default_prompt"]
 
 
-def test_preflight_has_ordered_independent_gates(skill_text):
-    text = skill_text(f"{SKILL_NAME}/references/preflight.md")
-    steps = re.findall(r"^\d+\. (.+)$", text, flags=re.MULTILINE)
+def _preflight_sources(repo_root, skill_text):
+    router = skill_text(f"{SKILL_NAME}/references/preflight.md")
+    # Canonical shared sources are generated into each package by profiles.
+    # These checks cover instruction structure, not actual Agent compliance.
+    core = (repo_root / "shared/references/session-core.md").read_text()
+    package = (repo_root / "shared/references/package-verification.md").read_text()
+    assert "](session-core.md)" in router
+    assert "](package-verification.md)" in router
+    return router, core, package
 
-    assert len(steps) >= 9
-    for index, term in enumerate(
-        (
-            "仓库",
-            "默认分支",
-            "当前 SHA",
-            "Skill 版本",
-            "账号",
-            "职责身份",
-            "角色",
-            "Issue",
-            "Git 状态",
-        )
+
+def test_preflight_routes_independent_risk_gates(repo_root, skill_text):
+    router, core, _ = _preflight_sources(repo_root, skill_text)
+    for term in (
+        "repository_id", "default branch", "same SHA", "actual discovered Skill",
+        "account", "actor_id", "permission_ceiling", "claim", "index",
     ):
-        assert term in steps[index]
+        assert term in core, term
+    assert "references/schemas/config.schema.json" in router
+    assert "references/schemas/authorization.schema.json" in router
+    assert "FormatChecker" in router
 
 
-def test_preflight_fails_closed_when_source_or_authority_is_uncertain(skill_text):
-    text = skill_text(f"{SKILL_NAME}/references/preflight.md")
-
-    for condition in ("缺失", "不可发现", "不兼容", "读取失败", "身份", "授权", "过期"):
-        assert condition in text
-    assert "read-only" in text
-    assert "member" in text
-    assert "leader:<ceiling>" in text
-    assert "未确认的本地文件" in text
-
-
-def test_preflight_resolves_governance_paths_from_pinned_config(skill_text):
-    text = skill_text(f"{SKILL_NAME}/references/preflight.md")
-
-    assert "managed_paths.protocol" in text
-    assert "managed_paths.authorization" in text
-    assert "INSTALL_SKILL.md" in text
-    assert "同一 SHA" in text
-    assert "路径缺失" in text
-    assert "歧义" in text
+def test_preflight_stops_dependent_writes_without_blocking_diagnosis(repo_root, skill_text):
+    router, core, _ = _preflight_sources(repo_root, skill_text)
+    assert "Read-only diagnosis" in core
+    assert "Unknown evidence stops only" in core
+    assert "read-only" in core
+    assert "member" in core
+    assert "leader:<ceiling>" in core
+    assert "default branch" in core
+    assert "PR/integration branch or working copy" in core
+    assert "no redownload" in router
 
 
-def test_preflight_verifies_installed_skill_against_release_source(skill_text):
-    text = skill_text(f"{SKILL_NAME}/references/preflight.md")
+def test_preflight_resolves_governance_paths_from_pinned_config(repo_root, skill_text):
+    _, core, _ = _preflight_sources(repo_root, skill_text)
+    for term in ("managed_paths.protocol", "managed_paths.authorization", "INSTALL_SKILL.md", "same SHA"):
+        assert term in core
+    assert "hardcoded fallback" in core
+    assert "ambiguous" in core and "symlink" in core
 
+
+def test_package_verification_is_conditional_and_release_binding_remains_external(repo_root, skill_text):
+    _, core, package = _preflight_sources(repo_root, skill_text)
     for field in (
-        "source_repository_url",
-        "release_tag",
-        "resolved_commit_sha",
-        "installation_page_permalink",
-        "RESOURCE_MANIFEST.json",
+        "source_repository_url", "release_tag", "resolved_commit_sha",
+        "installation_page_permalink", "RESOURCE_MANIFEST.json",
     ):
-        assert field in text
-    assert "metadata.version" in text
-    assert "完整 40 位" in text
-    assert "本地打包完成" in text
-    assert "不等于公开发布" in text
+        assert field in package
+    assert "metadata.version" in core
+    assert "40-character" in package
+    assert "reuse unchanged verification" in core
+    assert "release_binding_verified=false" in package
+    assert "does **not** authenticate" in package
 
 
 def test_entrypoint_forbids_only_unscoped_stage_all(skill_text):

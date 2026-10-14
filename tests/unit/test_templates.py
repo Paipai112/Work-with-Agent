@@ -38,8 +38,8 @@ def test_project_templates_parse_and_reference_only_repository_facts(repo_root):
     project = repo_root / "templates/project/.github/agent-collaboration"
     config = yaml.safe_load((project / "config.yml").read_text(encoding="utf-8"))
 
-    assert config["protocol_version"] == "0.1.1"
-    assert config["minimum_runtime_skill_version"] == "0.1.1"
+    assert config["protocol_version"] == "0.2.0"
+    assert config["minimum_runtime_skill_version"] == "0.2.0"
     assert config["managed_paths"]["pull_request_template"] == (
         ".github/PULL_REQUEST_TEMPLATE/agent-change.md"
     )
@@ -130,7 +130,7 @@ def test_managed_block_templates_are_body_only_and_point_to_installation(repo_ro
         assert ".github/agent-collaboration/README.md" in text
         assert "[安装说明](.github/agent-collaboration/INSTALL_SKILL.md)" in text
         assert "github-collaboration" in text
-        assert "0.1.1" in text
+        assert "0.2.0" in text
 
 
 def test_github_templates_offer_structured_agent_workflows(repo_root):

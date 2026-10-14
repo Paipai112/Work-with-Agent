@@ -1,8 +1,10 @@
 # Delivery scope and local checkpoints
 
-Use before a scoped commit or when preserving interruption/resume progress. Verify current claim/session facts via [claims and handoffs](claims-and-handoffs.md). The package's `scripts/collaboration_scope.py` is read-only and requires Python 3.11+ standard library only. Examples assume package root.
+Scope and checkpoint sections are independently loaded for their respective operation.
 
 ## Scope
+
+Before a scoped commit verify current claim/session facts via [claims and handoffs](claims-and-handoffs.md). The package's `scripts/collaboration_scope.py` is read-only, Python 3.11+ standard library only; examples start at the package root.
 
 ```sh
 python scripts/collaboration_scope.py --input scope-input.json
@@ -18,6 +20,8 @@ Use repository-relative POSIX paths. Literals match exactly; `*`/`?` stay within
 Results list `paths`, `out_of_scope` and path/claim-URL `conflicts`. Pass means only supplied inventory/patterns fit with no listed overlap. `authorization_verified` remains false. Resolve scope changes/conflicts before affected writes. Exit codes: 0 comparison pass, 1 out-of-scope/conflict, 2 invalid/unavailable input.
 
 ## Checkpoint
+
+Use for interruption/resume progress. The same read-only standard-library helper neither releases claims nor grants resume/push authority.
 
 ```sh
 python scripts/collaboration_scope.py --checkpoint checkpoint-input.json

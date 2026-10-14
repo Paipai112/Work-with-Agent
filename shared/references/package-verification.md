@@ -1,0 +1,21 @@
+# Verify a package and its fixed source
+
+Read this on installation/update, first use without a trusted verification record, or drift in a record's inputs. Normal sessions use the unchanged record as [session core](session-core.md) specifies; local edits do not require downloading the whole package again.
+
+## Source and bytes
+
+1. Verify the maintainer-selected, accessible release repository and published installation metadata: `source_repository_url`, `release_tag`, full 40-character `resolved_commit_sha`, and `installation_page_permalink`. Resolve the tag to that exact commit and verify the permalink belongs to the same commit. Public/private access is separate from licensing. `unpublished`, missing/conflicting fields, search results, an unverified Fork or floating `main` cannot supply an installable source or a configuration-complete claim.
+2. Compare the **complete** `skills/<skill-name>/` file set, bytes and `RESOURCE_MANIFEST.json` to the actual discovered/installation candidate directory. With an already verified source Git checkout, use the bundled read-only [verification helper](../scripts/verify_installed_skill.py):
+
+   `python3 scripts/verify_installed_skill.py --source-repo <verified-source-git> --source-sha <40-char-sha> --skill <skill-name> --installed <directory>`
+
+   It reads fixed Git objects without replace objects or lazy fetch; unsupported Git/missing objects return unknown. It compares the complete pinned package file set/bytes and declared copied-resource hashes, rejecting extra/missing files, symlinks and drift. Exit 0 means that match, 1 means drift, 2 means unknown. It does not independently prove canonical-source→resource-list completeness; the verified source's `verify_skill_packages.py` checks that publishing contract separately. `release_binding_verified=false`: the helper does **not** authenticate the release URL/tag-to-commit binding, download, install or repair. If unavailable, compare the same inventory/bytes independently. A manifest alone covers no unlisted instructions. Runtime resources remain within this one package; another Skill/source checkout cannot supply missing files.
+3. Record repository/tag/commit/permalink, package name/version, full file inventory/digest, verified manifest, actual target/discovery path, client/OS/version, verification evidence/time and project minimum-version compatibility. At subsequent sessions compare these recorded inputs and the local digest. Any change invalidates the affected verification; reuse neither stale provenance nor cached elevation.
+
+## Installation target
+
+Package installation uses the target directory owner's exact proposal approval; it needs no initialized GitHub project or Leader role. The proposal names source, whole-package digest, client/OS, exact target, existing content/collisions, scope of discovery and affected projects. Inspect the target and parent components without following symlinks. Copy one complete verified directory only after approval; an existing/modified/unknown target needs the caller's upgrade/conflict procedure, not overwrite or automatic merging of same-name packages. Keep backups in an explicitly named location the client cannot auto-discover. Recompute copied bytes.
+
+User-level discovery can affect every project; governance setup remains explicitly invoked according to its invocation metadata. Check all client-supported discovery roots, added paths, disabled/override settings, project trust and same-name precedence. Report settings before proposing changes. Native Windows and WSL are distinct environments; never claim one proves the other.
+
+Verify from a new session at the intended directory: actual `SKILL.md` path/version, intended explicit invocation and all relative resources. For an installed project also test root, nested and space-containing paths and its platform-specific entry file; a package-only install needs no invented project entry. Record failure/unknown separately from file copying or menu visibility. Package approval grants no Leader role and covers no project-governance edit or Git action. Rollback requires the recorded old whole-package digest, an inspected current target and explicit approval of the exact restoration; never discard user changes automatically.
