@@ -3,9 +3,11 @@
 import argparse
 import base64
 import binascii
+from contextlib import contextmanager
 import hashlib
 import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
@@ -113,7 +115,62 @@ def arguments(argv=None):
     return args
 
 
+@contextmanager
+def output_directory(path, create=False):
+    """Walk directory descriptors without following symlinks in any component."""
+    if (not all(hasattr(os, name) for name in ("O_DIRECTORY", "O_NOFOLLOW"))
+            or any(operation not in getattr(os, "supports_dir_fd", set()) for operation in (os.open, os.mkdir))
+            or os.listdir not in getattr(os, "supports_fd", set())):
+        raise EvidenceUnavailable("safe output directory capabilities unavailable; omit --output-dir or use a supported platform")
+    absolute = Path(path).absolute()
+    if ".." in absolute.parts:
+        raise EvidenceUnavailable("output directory must not contain parent traversal")
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    descriptor = os.open(absolute.anchor, flags)
+    try:
+        for component in absolute.parts[1:]:
+            try:
+                child = os.open(component, flags, dir_fd=descriptor)
+            except FileNotFoundError:
+                if not create:
+                    yield None
+                    return
+                try:
+                    os.mkdir(component, mode=0o700, dir_fd=descriptor)
+                except FileExistsError:
+                    pass
+                child = os.open(component, flags, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+        yield descriptor
+    except (OSError, NotImplementedError) as error:
+        raise EvidenceUnavailable("output directory unavailable, non-regular or contains a symlink") from error
+    finally:
+        os.close(descriptor)
+
+
+def require_empty_output(descriptor):
+    if descriptor is not None and os.listdir(descriptor):
+        raise EvidenceUnavailable("output directory is occupied; choose a new or empty regular directory")
+
+
+def save_outputs(path, payload, report=None):
+    with output_directory(path, create=True) as descriptor:
+        require_empty_output(descriptor)
+        outputs = {"metadata.json": payload}
+        if report is not None:
+            outputs["check-report.json"] = report
+        for name, value in outputs.items():
+            handle = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                             0o600, dir_fd=descriptor)
+            with os.fdopen(handle, "w", encoding="utf-8") as stream:
+                stream.write(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+
+
 def run(args, api):
+    if args.output_dir:
+        with output_directory(args.output_dir) as descriptor:
+            require_empty_output(descriptor)
     repository = api.get(f"repos/{args.repository}")
     if (not isinstance(repository, dict) or repository.get("full_name") != args.repository
             or type(repository.get("id")) is not int or repository["id"] < 1
@@ -147,15 +204,15 @@ def run(args, api):
         sources[auth_path] = api.content(args.repository, auth_path, sha)
         payload = collector.collect(api, checker, args, repository, sha, config_text,
                                     sources[auth_path].decode("utf-8"), sources)
-        destination = Path(args.output_dir) if args.output_dir else root
-        destination.mkdir(parents=True, exist_ok=True)
-        input_path = destination / "metadata.json"
+        input_path = root / "metadata.json"
         input_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         if args.collect_only:
+            if args.output_dir:
+                save_outputs(args.output_dir, payload)
             print(json.dumps(payload, ensure_ascii=False))
             return 0
         result = subprocess.run([sys.executable, str(root / "check_pr_metadata.py"),
-                                 str(input_path), str(destination)], capture_output=True,
+                                 str(input_path), str(root)], capture_output=True,
                                 text=True, check=False, timeout=30)
         declared = re.findall(r"(?m)^RESULT=(pass|fail|unknown)$", result.stdout)
         if ((result.returncode, declared) not in ((0, ["pass"]), (1, ["fail"]))):
@@ -163,7 +220,7 @@ def run(args, api):
         report = {"result": "pass" if result.returncode == 0 else "fail", "snapshot": payload["snapshot"],
                   "check_report": result.stdout, "unverified": payload["snapshot"]["unverified"]}
         if args.output_dir:
-            (destination / "check-report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            save_outputs(args.output_dir, payload, report)
         print(json.dumps(report, ensure_ascii=False))
         return 0 if result.returncode == 0 else 1
 
@@ -171,7 +228,7 @@ def run(args, api):
 def main(argv=None):
     try:
         return run(arguments(argv), GitHub())
-    except (EvidenceUnavailable, OSError, ValueError, TypeError, KeyError, SyntaxError, ImportError,
+    except (EvidenceUnavailable, OSError, ValueError, TypeError, KeyError, SyntaxError, ImportError, NotImplementedError,
             AttributeError, subprocess.TimeoutExpired) as error:
         message = str(error) if isinstance(error, EvidenceUnavailable) or type(error).__name__ == "CollectionUnavailable" else "trusted metadata chain invalid or unavailable"
         print(json.dumps({"result": "unknown", "errors": [message], "snapshot": None}))

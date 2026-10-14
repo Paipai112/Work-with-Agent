@@ -369,3 +369,60 @@ def test_requested_artifacts_match_the_public_launcher_report(github_cli, tmp_pa
     payload = json.loads((destination / "metadata.json").read_text())
     assert payload["snapshot"] == report["snapshot"]
     assert payload["claim_comments"][CLAIM]["body"] == "event: claim\nscope:\n  - src/**"
+
+
+@pytest.mark.parametrize("case", ["metadata", "report", "other_file", "directory_symlink", "parent_symlink"])
+def test_output_location_conflicts_return_unknown_and_preserve_original_bytes(github_cli, tmp_path, case):
+    run, _, _, _, _ = github_cli
+    original = tmp_path / "original-output"
+    original.mkdir()
+    destination = original
+    if case in {"metadata", "report", "other_file"}:
+        name = {"metadata": "metadata.json", "report": "check-report.json", "other_file": "user.txt"}[case]
+        (original / name).write_bytes(b"original user bytes\r\n")
+    else:
+        link = tmp_path / "linked-output"
+        link.symlink_to(original, target_is_directory=True)
+        destination = link if case == "directory_symlink" else link / "nested-output"
+    before = {path.name: path.read_bytes() for path in original.iterdir()}
+    result = run("--output-dir", str(destination), launcher=True)
+    assert result.returncode == 2
+    assert json.loads(result.stdout)["result"] == "unknown"
+    assert {path.name: path.read_bytes() for path in original.iterdir()} == before
+
+
+def test_existing_empty_regular_directory_can_receive_artifacts(github_cli, tmp_path):
+    run, _, _, _, _ = github_cli
+    destination = tmp_path / "empty-output"
+    destination.mkdir()
+    result = run("--output-dir", str(destination), launcher=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert json.loads((destination / "check-report.json").read_text())["result"] == "pass"
+
+
+@pytest.mark.parametrize("limitation", ["flag", "dir_fd", "not_implemented"])
+def test_unsupported_output_safety_capabilities_return_unknown(github_cli, tmp_path, limitation):
+    run, _, _, _, _ = github_cli
+    site = tmp_path / "limited-os"
+    site.mkdir()
+    source = {
+        "flag": "import os\ndel os.O_NOFOLLOW\n",
+        "dir_fd": "import os\nos.supports_dir_fd.discard(os.open)\n",
+        "not_implemented": "import os\noriginal = os.open\ndef unsupported(*args, **kwargs):\n    raise NotImplementedError('directory descriptors unsupported')\nos.open = unsupported\nos.supports_dir_fd.add(unsupported)\n",
+    }[limitation]
+    (site / "sitecustomize.py").write_text(source)
+    destination = tmp_path / "unsupported-output"
+    result = run("--output-dir", str(destination), launcher=True, extra_environment={"PYTHONPATH": str(site)})
+    assert result.returncode == 2
+    assert json.loads(result.stdout)["result"] == "unknown"
+    assert not destination.exists()
+
+
+def test_temporary_check_does_not_require_persistent_output_capabilities(github_cli, tmp_path):
+    run, _, _, _, _ = github_cli
+    site = tmp_path / "temporary-only-os"
+    site.mkdir()
+    (site / "sitecustomize.py").write_text("import os\ndel os.O_NOFOLLOW\n")
+    result = run(launcher=True, extra_environment={"PYTHONPATH": str(site)})
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert json.loads(result.stdout)["result"] == "pass"

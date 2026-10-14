@@ -13,6 +13,10 @@ python3 .github/agent-collaboration/run_pr_metadata_check.py \
 
 这条命令会输出一个 JSON 报告，并在指定目录保存 `metadata.json` 和 `check-report.json`。不传 `--output-dir` 时使用临时目录，退出后清理本次临时文件。
 
+输出目录必须是新目录或空的普通目录，且路径及父组件不能是 symlink，也不能包含 `..`。既有目录被占用时，在写入输出前返回 unknown，保留原字节；每次保存快照请选择新目录。checker 的工作目录始终是本次临时目录，产物通过排他创建写入指定目录。
+
+持久输出要求系统支持目录描述符、`O_DIRECTORY`、`O_NOFOLLOW` 和相对描述符操作；能力缺失时返回 unknown，不能降级为跟随路径写入。可不传 `--output-dir` 使用临时检查并读取标准输出。Windows 原生运行本轮未验证。
+
 - 仅保存采集输入：给上述入口增加 `--collect-only`；标准输出为 payload JSON，不提供 checker 的 pass。
 - 直接采集：`python3 .github/agent-collaboration/collect_pr_metadata.py --repository owner/repository --pull-number 12`；这个入口通过同目录启动器定位并运行可信部署副本。
 - 绑定外部已核实目标：可提供 `--repository-id`、`--expected-head` 和 `--expected-trusted-sha`；程序仍独立 GET 核验，参数不会替代在线证据。
