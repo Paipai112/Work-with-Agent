@@ -21,4 +21,9 @@ For files hash full bytes; for remote resources deterministically hash stable ID
 
 New installs keep authorization outside automatic whole-file ownership. If an old registry already tracks it, show entry/ID/recoverable baseline/prior/current digests before P/E: evidence-only E changes authorization digest, while updating registry in E violates the evidence-only rule. Obtain an explicit choice to retain/defer pending a non-circular maintenance plan, or separately approve migration out of automatic ownership. Preserve the original entry/baseline as audit history and show exact registry diff. Until verified, both registry and authorization remain intact.
 
-Apply one approved item after fresh identity/authority and digest checks; GET/read back exact path/ID and bind returned ID/digest. Unknown mutation outcome uses ID, or exact repository/type/name/path for creation; ambiguous matches stop before retry.
+## One-item approval/apply loop
+
+1. GET exact local bytes or full paginated/inherited remote state; record repository/path/stable ID and untouched fields. 403/404/missing fields are unknown, not absence.
+2. Show baseline/current/candidate diff/digests, ownership, exact fields/effects/unknowns. Obtain individual approval for this item; file treatment, Commit, Push, PR, Actions execution and each setting remain separate.
+3. Refresh identity/default authority/account/protection and exact target/candidate digest. Drift invalidates this item. Apply approved bytes/fields only; preserve user/unowned/inherited/stronger state.
+4. GET/read back path/ID, approved and untouched values; bind returned ID/digest. Unknown result queries stable ID, or exact repository/type/name/path for creation; ambiguity stops, no blind retry. Local pre-read/write is not atomic.

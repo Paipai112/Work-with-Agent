@@ -2,12 +2,7 @@
 
 Use [preflight](preflight-and-identity.md), [authorization](authorization.md), [ownership](managed-resources.md), and [Actions/protection](actions-and-rulesets.md) when relevant. Diagnose is read-only. Check live [GitHub REST docs](https://docs.github.com/en/rest) for host/version/plan and exact endpoint rights; account Admin/Maintain alone is insufficient.
 
-## Per-item loop
-
-1. GET full paginated current/inherited state for the verified repository and exact resource ID. 403/404/missing fields are unknown, not absence. Same name is not ownership.
-2. Show verified baseline → current/proposed and exact candidate. Remote digest covers stable ID plus named managed fields; record untouched fields. Missing ancestor/overlap needs approved retain/merge/new-resource/takeover choice.
-3. Obtain **individual** approval bound to repository, ID/path, current/candidate digest, fields, effects, effective permission and trigger/cost uncertainty. File diff, Commit, Actions trigger, Push, PR and each remote setting are separate gates. Preserve stronger inherited/unowned protection.
-4. Refresh identity/default authority/account, exact resource and digest. Drift invalidates this item. Apply only approved fields; GET ID/path and compare approved **and untouched** values. Unknown result queries ID or unique repository/type/name/path before retry; retain user state.
+Use ownership's **one-item approval/apply loop**, binding exact endpoint rights and trigger/cost uncertainty. Same name is never ownership.
 
 ## Resource-specific contracts
 
@@ -25,6 +20,6 @@ Use [preflight](preflight-and-identity.md), [authorization](authorization.md), [
 
 Organization Rulesets require separate organization authority; repository ownership cannot claim them. No partial bundled template may replace a complete remote object.
 
-New native Required Reviews/CODEOWNERS require an additional eligible account distinct from PR author. Shared-account actors provide protocol evidence only; no account means defer **new** native requirements, while **existing** ones remain binding. Registered integration PRs use project review; the default-target-only metadata Action is inapplicable there and skipped is not validation.
+New native reviews/CODEOWNER/check requirements additionally load Actions/protection's satisfiability gates; do not weaken existing requirements.
 
 Runtime primary references: [Labels](https://docs.github.com/en/rest/issues/labels), [templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/about-issue-and-pull-request-templates), [PR selection](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/creating-a-pull-request-template-for-your-repository), [Actions settings](https://docs.github.com/en/rest/actions/permissions), [Rulesets](https://docs.github.com/en/rest/repos/rules), [branch protection](https://docs.github.com/en/rest/branches/branch-protection).

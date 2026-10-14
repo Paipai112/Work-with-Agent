@@ -69,13 +69,13 @@ def test_preflight_routes_independent_risk_gates(repo_root, skill_text):
 
 def test_preflight_stops_dependent_writes_without_blocking_diagnosis(repo_root, skill_text):
     router, core, _ = _preflight_sources(repo_root, skill_text)
-    assert "Read-only diagnosis" in core
-    assert "Unknown evidence stops only" in core
+    assert "read-only diagnosis" in core.lower()
+    assert "Unknown stops its dependent write/conclusion" in core
     assert "read-only" in core
     assert "member" in core
     assert "leader:<ceiling>" in core
     assert "default branch" in core
-    assert "PR/integration branch or working copy" in core
+    assert "PR/integration branch or working-copy authority" in core
     assert "no redownload" in router
 
 
@@ -96,9 +96,24 @@ def test_package_verification_is_conditional_and_release_binding_remains_externa
         assert field in package
     assert "metadata.version" in core
     assert "40-character" in package
-    assert "reuse unchanged verification" in core
+    assert "reuse unchanged verification" in core.lower()
     assert "release_binding_verified=false" in package
     assert "does **not** authenticate" in package
+
+
+def test_elevation_is_conditionally_routed_without_blocking_read_only_diagnosis(repo_root, skill_text):
+    _, core, _ = _preflight_sources(repo_root, skill_text)
+    authority = (repo_root / "shared/references/elevated-authority.md").read_text()
+    assert "](elevated-authority.md)" in core
+    for trigger in ("matching active grant", "requested Leader operation", "ambiguous identity/authority"):
+        assert trigger in core
+    for boundary in (
+        "exactly one", "permission_ceiling", "uri", "date-time",
+        "default_branch_source_sha", "specific-action approval", "delegated responsibility/**scope**",
+        "below Maintain", "current-session", "same-SHA", "Read-only checks need no Leader calculation",
+    ):
+        assert boundary in authority, boundary
+    assert "](elevated-authority.md)" in skill_text(f"{SKILL_NAME}/references/identity-and-permissions.md")
 
 
 def test_entrypoint_forbids_only_unscoped_stage_all(skill_text):

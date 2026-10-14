@@ -209,5 +209,13 @@ def test_coordination_reference_requires_bundled_schema_and_trusted_comment_enve
     text = skill_text("github-collaboration/references/claims-and-handoffs.md")
     assert "references/schemas/collaboration-event.schema.json" in text
     assert "missing" in text.lower() and "read-only" in text.lower()
-    for key in ("user.id", "user.login", "repository_id", "issue", "previous_event_id"):
+    # The instruction uses collector-normalized user_id/login, not GitHub's
+    # nested user.id/user.login spelling. This checks documentation risk coverage,
+    # not a model's actual compliance with envelope verification.
+    for key in ("repository id", "issue", "id/url", "author id/login", "controlled_by_id", "controlled_by", "previous_event_id"):
         assert key in text.lower()
+    assert "GET predecessors" in text
+    assert "](event-helpers.md)" in text
+    helper = skill_text("github-collaboration/references/event-helpers.md")
+    for key in ("user_id", "login", "issue_number", "GET-verifies", "author/body"):
+        assert key in helper
