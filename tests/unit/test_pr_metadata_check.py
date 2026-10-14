@@ -25,7 +25,7 @@ def run_case(data, run_metadata_check, tmp_path):
 def test_valid_business_pr_passes(run_metadata_check, fixture_path):
     result = run_metadata_check(fixture_path("github/pr-valid.json"))
     assert result.returncode == 0, result.stdout + result.stderr
-    assert result.stdout.endswith("RESULT=pass\n")
+    assert result.stdout.endswith("LEGACY_RESULT=pass\n")
 
 
 def test_missing_metadata_fields_fail(run_metadata_check, fixture_path):
@@ -59,7 +59,7 @@ def test_unverified_trusted_ref_fails_closed(run_metadata_check, fixture_path, t
 def test_real_template_yaml_subset_is_accepted(run_metadata_check, fixture_path, repo_root, tmp_path):
     data = json.loads(fixture_path("github/pr-valid.json").read_text())
     data["config"] = (repo_root / "templates/project/.github/agent-collaboration/config.yml").read_text()
-    update_metadata(data, skill_version="0.1.1")
+    update_metadata(data, skill_version=yaml.safe_load(data["config"])["minimum_runtime_skill_version"])
     data["authorization"] = fixture_path("config/valid-authorization.yml").read_text().replace(
         "123456789", "123"
     ).replace("example-org", "sample").replace("example-repo", "repo")

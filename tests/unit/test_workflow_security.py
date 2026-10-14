@@ -1,5 +1,8 @@
 import ast
 import json
+import sys
+from pathlib import Path
+import yaml
 
 import pytest
 from test_metadata_collector import github_cli, SHA
@@ -15,6 +18,9 @@ def test_trusted_workflow_never_executes_pr_content(load_yaml, repo_root):
     assert "secrets." not in text
     assert "${{ github.event.pull_request.body" not in text
     assert "ref: $GITHUB_SHA" not in text
+    assert '"-m", "venv"' in text
+    assert '"-m", "pip", "install"' in text
+    assert "requirements-helpers.txt" in text
 
 
 def test_workflow_is_stable_and_only_runs_for_default_target(load_yaml):
@@ -45,9 +51,11 @@ def test_workflow_and_local_launcher_use_same_deployed_chain(
     metadata["claim_urls"].append(related_claim)
     for number in (8, 9):
         responses[f"repos/sample/repo/issues/{number}"] = {"number": number, "state": "open"}
+    claim_event = yaml.safe_load(responses["repos/sample/repo/issues/comments/1"]["body"])
+    claim_event["event_id"] = "claim-9"
     related_comment = {"id": 1003, "html_url": related_claim,
                        "issue_url": "https://api.github.com/repos/sample/repo/issues/9",
-                       "body": "event: claim", "updated_at": "2026-10-14T00:00:00Z",
+                       "body": yaml.safe_dump(claim_event, sort_keys=False), "updated_at": "2026-10-14T00:00:00Z",
                        "user": {"id": 1001, "login": "developer"}}
     responses["repos/sample/repo/issues/8/comments?per_page=100&page=1"] = []
     responses["repos/sample/repo/issues/9/comments?per_page=100&page=1"] = [related_comment]
@@ -68,8 +76,32 @@ def test_workflow_and_local_launcher_use_same_deployed_chain(
     source = "\n".join(line[10:] for line in script.splitlines())
     script_path = tmp_path / "workflow.py"
     script_path.write_text(source)
+    site = tmp_path / "explicit-dependencies"
+    site.mkdir()
+    dependency_log = tmp_path / "dependency-commands.jsonl"
+    (site / "sitecustomize.py").write_text('''
+import json, os, subprocess, sys
+from pathlib import Path
+original_run = subprocess.run
+def run(command, *args, **kwargs):
+    if len(command) > 3 and command[1:3] == ["-m", "venv"]:
+        directory = Path(command[3]) / "bin"
+        directory.mkdir(parents=True)
+        (directory / "python").symlink_to(sys.executable)
+    elif len(command) > 4 and command[1:4] == ["-m", "pip", "install"]:
+        assert "--requirement" in command
+        manifest = Path(command[command.index("--requirement") + 1])
+        assert manifest.is_file() and "PyYAML" in manifest.read_text() and "jsonschema" in manifest.read_text()
+    else:
+        return original_run(command, *args, **kwargs)
+    with Path(os.environ["DEPENDENCY_LOG"]).open("a") as stream:
+        stream.write(json.dumps(command) + "\\n")
+    return subprocess.CompletedProcess(command, 0)
+subprocess.run = run
+''')
     result = run(executable_path=script_path, extra_environment={
         "GITHUB_REPOSITORY": "sample/repo", "GITHUB_SHA": SHA, "GITHUB_EVENT_PATH": str(event_path),
+        "PYTHONPATH": str(site), "DEPENDENCY_LOG": str(dependency_log),
     })
     assert result.returncode == (2 if integration_target else 0), result.stdout + result.stderr
     if not integration_target:
@@ -79,5 +111,8 @@ def test_workflow_and_local_launcher_use_same_deployed_chain(
         assert "repos/sample/repo/issues/7/comments?per_page=100&page=2" in endpoints
         assert {f"repos/sample/repo/issues/{number}" for number in (7, 8, 9)} <= set(endpoints)
         assert {"repos/sample/repo/issues/comments/1", "repos/sample/repo/issues/comments/1003"} <= set(endpoints)
+        dependency_commands = [json.loads(line) for line in dependency_log.read_text().splitlines()]
+        assert dependency_commands[0][1:3] == ["-m", "venv"]
+        assert dependency_commands[1][1:4] == ["-m", "pip", "install"]
         local = run(launcher=True)
         assert json.loads(local.stdout)["result"] == "pass"

@@ -162,6 +162,9 @@ def test_pr_template_can_be_completed_for_partial_or_multi_issue_delivery(
         return result
 
     metadata = json.loads(blocks[0].group(1), object_pairs_hook=unique_keys)
+    assert metadata["schema_version"] == 2
+    assert metadata["skill_version"] == "0.2.0"
+    assert set(metadata["delivery"]) == {"development_base_sha", "net_diff_base_sha", "predecessors", "merge_order"}
     data = json.loads(fixture_path("github/pr-valid.json").read_text(encoding="utf-8"))
     data["pull"]["body"] = template
     candidate = tmp_path / "template-candidate.json"
@@ -180,6 +183,8 @@ def test_pr_template_can_be_completed_for_partial_or_multi_issue_delivery(
         head_sha=data["pull"]["head"]["sha"],
         base_branch=data["pull"]["base"]["ref"],
         claim_urls=["https://github.com/sample/repo/issues/7#issuecomment-1"],
+        delivery={"development_base_sha": "a" * 40, "net_diff_base_sha": "a" * 40,
+                  "predecessors": [], "merge_order": [data["pull"]["number"]]},
     )
     block = blocks[0]
     data["pull"]["body"] = (
