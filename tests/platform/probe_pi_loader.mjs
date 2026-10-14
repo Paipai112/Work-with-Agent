@@ -15,7 +15,7 @@ const loader = new DefaultResourceLoader({
 });
 await loader.reload();
 const loaded = loader.getSkills();
-const names = new Set(["github-collaboration-setup", "github-collaboration"]);
+const names = new Set(["github-collaboration-setup", "github-collaboration", "github-collaboration-check"]);
 const resources = JSON.parse(resourcesJson);
 const skills = loaded.skills.filter(skill => names.has(skill.name) && resources.includes(skill.filePath));
 const expansions = skills.map(skill => {
@@ -43,7 +43,7 @@ console.log(JSON.stringify({
   interface: "installed SDK DefaultResourceLoader.reload/getSkills + AgentSession skill expansion + read tool",
   skills, diagnostics: loaded.diagnostics.filter(item => [...names].some(name => JSON.stringify(item).includes(name))), expansions,
   outside_fixture_same_name_count: loaded.skills.filter(skill => names.has(skill.name) && !resources.includes(skill.filePath)).length,
-  prompt_metadata_contains_both: skills.length === 2 && skills.every(skill => formatSkillsForPrompt(skills).includes(skill.filePath)),
+  prompt_metadata_contains_all: skills.length === names.size && skills.every(skill => formatSkillsForPrompt(skills).includes(skill.filePath)),
   context_files: loader.getAgentsFiles().agentsFiles.filter(file => file.content.includes("platform-entry:")).map(file => ({ path: file.path, contains_test_entry: true })),
   project_trusted: options.trusted, discovery_disabled: options.disabled,
   resource_reads: { attempted: reads.length, successful: reads.filter(read => read.ok).length,

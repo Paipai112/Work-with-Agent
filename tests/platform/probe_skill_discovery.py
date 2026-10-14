@@ -28,7 +28,7 @@ import time
 from urllib.parse import unquote, urlsplit
 
 
-SKILL_NAMES = ("github-collaboration-setup", "github-collaboration")
+SKILL_NAMES = ("github-collaboration-setup", "github-collaboration", "github-collaboration-check")
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RESOURCE_LINK = re.compile(r"\[[^\]]*\]\(([^\s)]+)(?:\s+[^)]*)?\)")
 SCENARIOS = {

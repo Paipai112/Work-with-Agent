@@ -45,11 +45,11 @@ def test_install_contract_names_all_nine_native_combinations(load_yaml):
     assert all(row["wsl_is_separate"] for row in matrix if row["os"] == "windows-native")
 
 
-def test_both_packages_declare_a_version_for_installation_readback(repo_root: Path):
-    for name in ("github-collaboration-setup", "github-collaboration"):
+def test_three_packages_declare_a_version_for_installation_readback(repo_root: Path):
+    for name in ("github-collaboration-setup", "github-collaboration", "github-collaboration-check"):
         text = (repo_root / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
         frontmatter = yaml.safe_load(text.split("---", 2)[1])
-        assert frontmatter.get("metadata", {}).get("version") == "0.1.1"
+        assert frontmatter.get("metadata", {}).get("version") == "0.2.0"
 
 
 def test_paths_and_commands_point_to_discoverable_skill_folders(load_yaml):

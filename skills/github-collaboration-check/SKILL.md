@@ -2,7 +2,7 @@
 name: github-collaboration-check
 description: Use when asked to inspect GitHub Agent collaboration configuration, events, claimed file scope, or PR metadata without changing the repository or GitHub.
 metadata:
-  version: "0.1.1"
+  version: "0.2.0"
 ---
 
 # Read-only collaboration check
