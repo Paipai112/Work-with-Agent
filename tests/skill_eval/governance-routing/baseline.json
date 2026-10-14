@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "source_commit": "b6d42a062eff7233a79670a4372fcfc23acdfabf",
+  "frozen_scenarios": "tests/skill_eval/governance-routing/scenarios.yml",
+  "guidance_snapshot": {
+    "retrieval": "git show SOURCE_COMMIT:PATH",
+    "files": {
+      "skills/github-collaboration/references/git-and-pull-requests.md": "ae323a7a5988e3458e054269174facd6b39b65bf302f4e32797199d867075485",
+      "skills/github-collaboration-setup/references/local-configuration.md": "b12e1a83a8060fea66c21e8159e883dfc56d2306375c0539b01facedc5609182"
+    },
+    "note": "The immutable Git commit preserves the old guidance. This is a source snapshot, not a decision sample."
+  },
+  "deterministic_cli_baseline": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 /Users/m/Documents/Codex/2026-08-24/wo/github-agent-collaboration/.worktrees/v0.1-implementation/.venv/bin/python -m pytest -p no:cacheprovider tests/unit/test_governance_routing.py -q",
+    "observed_exit_code": 0,
+    "observed_summary": "5 passed in 0.52s",
+    "cases": {
+      "registered-entry-outside-block": "checker CLI rejects daily routing for the actual Git diff",
+      "nested-entry-installation-link": "checker CLI rejects daily routing for the actual nested-entry link deletion",
+      "registered-entry-rename": "checker CLI checks the old registered path in the actual Git rename diff",
+      "registered-entry-missing-diff": "checker CLI rejects daily routing despite absent patch text",
+      "dirty-entry-staging-ownership": "managed_block CLI previews separately and preserves outside bytes, source bytes, staged diff and unstaged diff"
+    },
+    "limits": [
+      "CLI assertions do not establish how an Agent interprets the old or revised guidance.",
+      "The renderer does not verify user consent or Commit ownership; those remain Agent procedure requirements.",
+      "The checker uses conservative paths and does not prove arbitrary prose has no instruction effect."
+    ]
+  },
+  "independent_agent_behavior_baseline": {
+    "status": "not_run",
+    "calls": 0,
+    "samples": [],
+    "reason": "All four collaboration slots were occupied. The parent requested no additional CLI model runs before T08 fixes the model, client, task set and explicit call budget.",
+    "next_action": "T08 should replay these frozen prompts against the preserved old guidance and revised guidance, recording actual tool calls and choices."
+  }
+}
