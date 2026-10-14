@@ -304,6 +304,100 @@ def existing_comment(body):
             "body": body, "updated_at": "2026-10-14T00:00:00Z"}
 
 
+def self_release_plan(repo_root):
+    plan = publication_plan(repo_root)
+    original = existing_comment(plan["body"])
+    event = yaml.safe_load(plan["body"])
+    event.update(event="release", event_id="release-completed-123", previous_event_id=event["event_id"],
+                 release_mode="self", github_comment_id=456,
+                 github_comment_url="https://github.com/acme/repo/issues/123#issuecomment-456", head_sha="b" * 40)
+    event.pop("expected_handoff", None)
+    plan["body"] = yaml.safe_dump(event, sort_keys=False)
+    return approve(plan), original
+
+
+@pytest.mark.parametrize("issue_state", ["open", "closed"])
+def test_completed_task_self_release_publishes_once_and_reads_back(repo_root, tmp_path, fake_github, issue_state):
+    state_file, environment = fake_github
+    plan, original = self_release_plan(repo_root)
+    state = json.loads(state_file.read_text())
+    state["issue"]["state"] = issue_state
+    state["comments"] = [original]
+    write_json(state_file, state)
+    plan_path = write_json(tmp_path / "release.json", plan)
+    receipt = tmp_path / "receipt.json"
+    result = run_helper(repo_root, "collaboration_event.py", "apply", "--plan", plan_path,
+                        "--write", "--receipt", receipt, env=environment)
+    assert result.returncode == 0, result.stdout + result.stderr
+    report = json.loads(result.stdout)
+    assert report["state"] == "read-back-verified"
+    assert report["comment"]["body"] == plan["body"]
+    retry = run_helper(repo_root, "collaboration_event.py", "apply", "--plan", plan_path,
+                       "--write", "--receipt", receipt, env=environment)
+    assert retry.returncode == 0, retry.stdout + retry.stderr
+    assert json.loads(retry.stdout)["remote_write_performed"] is False
+    saved = json.loads(state_file.read_text())
+    assert len(saved["comments"]) == 2
+    assert sum(method == "POST" for method, _ in saved["log"]) == 1
+
+
+@pytest.mark.parametrize("template", ["claim", "research-claim", "handoff", "reassign", "resume"])
+def test_closed_issue_rejects_other_events_without_mutation(repo_root, tmp_path, fake_github, template):
+    state_file, environment = fake_github
+    plan = publication_plan(repo_root)
+    event = yaml.safe_load((repo_root / "skills/github-collaboration/templates/events" / f"{template}.yml").read_text())
+    event.update(controlled_by="alex", controlled_by_id=1234)
+    if event.get("github_comment_id") is not None:
+        event["github_comment_url"] = f"https://github.com/acme/repo/issues/123#issuecomment-{event['github_comment_id']}"
+    if template == "reassign":
+        event["target"]["claim_comment_url"] = f"https://github.com/acme/repo/issues/123#issuecomment-{event['target']['claim_comment_id']}"
+    plan["body"] = yaml.safe_dump(event, sort_keys=False)
+    plan_path = write_json(tmp_path / "event.json", approve(plan))
+    preview = run_helper(repo_root, "collaboration_event.py", "apply", "--plan", plan_path, env=environment)
+    assert preview.returncode == 0, preview.stdout + preview.stderr
+    state = json.loads(state_file.read_text())
+    state["issue"]["state"] = "closed"
+    write_json(state_file, state)
+    result = run_helper(repo_root, "collaboration_event.py", "apply", "--plan", plan_path,
+                        "--write", "--receipt", tmp_path / "receipt.json", env=environment)
+    assert result.returncode == 1, result.stdout + result.stderr
+    saved = json.loads(state_file.read_text())
+    assert ["GET", "repos/acme/repo/issues/123"] in saved["log"]
+    assert all(method == "GET" for method, _ in saved["log"])
+    assert saved["comments"] == []
+
+
+@pytest.mark.parametrize("mismatch", ["repository", "account-id", "account-login", "issue-number", "issue-is-pr",
+                                      "predecessor-url", "predecessor-event-id", "predecessor-account", "predecessor-actor"])
+def test_closed_issue_self_release_keeps_identity_and_predecessor_bindings(repo_root, tmp_path, fake_github, mismatch):
+    state_file, environment = fake_github
+    plan, original = self_release_plan(repo_root)
+    state = json.loads(state_file.read_text())
+    state["issue"]["state"] = "closed"
+    state["comments"] = [original]
+    if mismatch == "repository": state["repository"]["id"] = 99
+    elif mismatch == "account-id": state["user"]["id"] = 999
+    elif mismatch == "account-login": state["user"]["login"] = "other"
+    elif mismatch == "issue-number": state["issue"]["number"] = 124
+    elif mismatch == "issue-is-pr": state["issue"]["pull_request"] = {}
+    elif mismatch == "predecessor-url": original["html_url"] = "https://github.com/acme/repo/issues/124#issuecomment-456"
+    else:
+        predecessor = yaml.safe_load(original["body"])
+        if mismatch == "predecessor-event-id": predecessor["event_id"] = "other-claim"
+        elif mismatch == "predecessor-account":
+            predecessor.update(controlled_by="other", controlled_by_id=999)
+            original["user"] = {"id": 999, "login": "other"}
+        elif mismatch == "predecessor-actor": predecessor["actor_id"] = "frontend-ui"
+        original["body"] = yaml.safe_dump(predecessor, sort_keys=False)
+    write_json(state_file, state)
+    result = run_helper(repo_root, "collaboration_event.py", "apply", "--plan", write_json(tmp_path / "release.json", plan),
+                        "--write", "--receipt", tmp_path / "receipt.json", env=environment)
+    assert result.returncode == 1, result.stdout + result.stderr
+    saved = json.loads(state_file.read_text())
+    assert all(method == "GET" for method, _ in saved["log"])
+    assert len(saved["comments"]) == 1
+
+
 def edit_plan(repo_root):
     plan = publication_plan(repo_root)
     original = plan["body"]

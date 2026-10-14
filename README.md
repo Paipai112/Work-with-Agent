@@ -11,7 +11,9 @@
 
 下文把三个包简称为 setup（配置）、daily（日常）和 check（只读检查）。这里给出接入顺序；Agent 执行某项操作时，仍需读取所选 Skill 中该操作的完整规则。
 
-本目录为 **v0.2.0 候选**，不能据此认定版本已经发布。远端源仓当前仍为 [Paipai112/baton](https://github.com/Paipai112/baton)，拟改名为 `Paipai112/Work-with-Agent`；改名与 Release 分别由维护者批准。安装依据是实际发布的标签解析出的完整提交 SHA，不是目录名或浮动分支。旧标签、摘要和历史证据保持原样。
+公开源仓为 [Paipai112/Work-with-Agent](https://github.com/Paipai112/Work-with-Agent)，仓库稳定 ID 为 `1398932546`。正式安装 `v0.2.0` 时，先核验实际 Release／标签并解析完整提交 SHA；隔离验收可显式选择已发布的 `v0.2.0-rc.1`。目录名和浮动分支不能代替固定来源，旧标签、摘要和历史证据保持原样。
+
+发行与下载入口：[v0.2.0](https://github.com/Paipai112/Work-with-Agent/releases/tag/v0.2.0)。该页提供固定提交、三个独立包、摘要及同提交安装页；只有页面存在且标为正式发行时才作为稳定来源使用。
 
 包校验需要 Python 3.11+。事件校验和 v0.2 正式 PR 检查另外需要显式准备 PyYAML 与 jsonschema；工具不会自动安装依赖。安装、成套升级与固定提交核验见 [安装页](docs/INSTALL.md)，实际验收证据见 [验证说明](docs/VALIDATION.md)。
 
@@ -32,7 +34,7 @@
 - 新会话中显式调用所选 Skill，确认实际路径和版本，再只读预检。Codex 项目级路径为 `.agents/skills/`，Claude Code 为 `.claude/skills/`，Pi Agent 为 `.agents/skills/`。
 - 首次治理配置需人类明确授予限域 Bootstrap；已有项目核验有效 Leader。逐项批准增量差异后，完成适用的治理 PR、审批、合并与默认分支读回。
 
-本轮原生验收限定 macOS／Codex。Claude Code、Pi 与其他操作系统保留静态适配合同，实际使用前须验证对应客户端的加载行为；不能把旧版或其他平台结果当成本版通过。详见 [平台安装参考](skills/github-collaboration-setup/references/platform-installation.md)。
+本轮 macOS／Codex 原生发现与读取记录绑定 `v0.2.0-rc.1`，后续 helper 修改按最终固定提交重新做包校验与离线回归，未重跑最终完整包原生会话。Claude Code、Pi 与其他操作系统使用前须验证对应客户端的加载行为；本轮没有这些组合的原生通过声明。安装路径见 [平台安装参考](skills/github-collaboration-setup/references/platform-installation.md)。
 
 ## 三、使用边界
 

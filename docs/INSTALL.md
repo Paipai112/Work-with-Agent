@@ -1,14 +1,24 @@
 # 安装与项目接入
 
-本页对应 `v0.2.0` 候选，供项目负责人和协作者准备安装或升级。只有实际 Release／标签存在且来源核验通过后，才能按正式发行接入；候选源码可用于隔离开发验收。安装包不授予 Leader，也不代表消费项目已经完成治理配置。
+本页用于 `v0.2.0` 的安装与升级。正式接入须先核验实际 Release／标签及固定提交；标签尚未存在时停止正式安装，隔离验收应显式选择实际存在的预发布标签。安装包不授予 Leader，也不代表消费项目已经完成治理配置。
 
-现在使用 v0.1.1，请从[该版本的固定安装页](https://github.com/Paipai112/baton/blob/6ef5d6e40571a24ef774dd2a630f91821798db98/docs/INSTALL.md)开始，并核验它与维护者实际 Release／标签的绑定；不要混用本页 v0.2 的包和检查链。
+需要使用 v0.1.1 时，请从[该版本的固定安装页](https://github.com/Paipai112/Work-with-Agent/blob/6ef5d6e40571a24ef774dd2a630f91821798db98/docs/INSTALL.md)开始，并核验它与维护者实际 Release／标签的绑定；不要混用本页 v0.2 的包和检查链。
+
+按自己的任务选择接入范围：
+
+| 任务 | 最小完整路径 |
+| --- | --- |
+| 加入已配置项目 | 核验该项目固定来源；安装完整 daily；准备 helpers 依赖；新会话确认加载；先预检身份和任务，再认领实施 |
+| 配置或升级项目 | 安装完整 setup 并验证加载；取得项目 Leader／限域 Bootstrap 授权；审阅增量差异；按实际授权完成治理 PR、合并与读回 |
+| 只读检查 PR | 安装完整 check；准备 helpers 依赖并确认加载；在不修改项目的情况下执行检查，结果不授予写入权限 |
+
+helpers 需要 Python 3.11+、PyYAML 和 jsonschema；在获批准的隔离环境按固定包的 `requirements-helpers.txt` 准备。安装包和执行项目操作是两项不同授权，已有配置也不能替代当前身份与任务预检。
 
 ## 一、目标与来源
 
 先确认目标项目根目录、客户端名称和版本、操作系统及 native／WSL 环境。查看工作区状态、现有 `.agents/skills/`、其他发现位置中的同名 Skill，以及现有 `AGENTS.md`、`CLAUDE.md` 和 `.github/` 文件。记录实际生效路径、版本、本地改动、符号链接和重复项。
 
-远端源仓当前为 [Paipai112/baton](https://github.com/Paipai112/baton)，目标名称为 `Paipai112/Work-with-Agent`，目标标签为 `v0.2.0`。先核验仓库实际名称、稳定 ID 和维护者的发布记录；改名后使用核验过的新地址。来源不可达、标签不存在或身份不一致时保持只读，不虚填“已发布”。
+公开源仓为 [Paipai112/Work-with-Agent](https://github.com/Paipai112/Work-with-Agent)，仓库稳定 ID 为 `1398932546`，正式安装的目标标签为 `v0.2.0`。先核验实际仓库身份和维护者的发布记录。来源不可达、标签不存在或身份不一致时保持只读，不虚填“已发布”。
 
 使用用户已有安全认证。需要开户时引导用户在 [GitHub](https://github.com/) 注册，再由用户在本机交互式执行认证；不要在聊天、文件或日志中索要、复制或打印密码、Token、私钥。没有 Git 或远端仓库时，先说明初始化／创建的准确目标并取得批准。
 
@@ -20,7 +30,7 @@
 
 ```sh
 set -eu
-source_url='https://github.com/Paipai112/baton'
+source_url='https://github.com/Paipai112/Work-with-Agent'
 release_tag='v0.2.0'
 source_checkout="$(mktemp -d)"
 git clone --filter=blob:none --no-checkout "$source_url" "$source_checkout/source"
@@ -89,7 +99,7 @@ $github-collaboration-check
 
 仅调用实际安装的包，要求 Agent 保持只读，报告实际读取路径、版本、包内资源、项目入口和同名覆盖情况。结果应与固定源包及安装记录一致；只看到文件或菜单不算加载验证。若从嵌套目录或含空格路径使用，也需验证对应入口。
 
-本轮原生验收限 macOS／Codex，实际版本和证据记录在 [验证说明](VALIDATION.md)。其他客户端使用 [平台安装参考](../skills/github-collaboration-setup/references/platform-installation.md) 中的路径和调用方式：Claude Code 项目级为 `.claude/skills/`，Pi Agent 为 `.agents/skills/`；静态适配合同不等于原生验收通过。
+本轮 macOS／Codex 原生发现与读取记录绑定 `v0.2.0-rc.1`；最终 helper 修改后的完整包未重跑原生会话，安装时仍须核对最终固定字节。实际版本和证据记录在 [验证说明](VALIDATION.md)。其他客户端使用 [平台安装参考](../skills/github-collaboration-setup/references/platform-installation.md) 中的路径和调用方式：Claude Code 项目级为 `.claude/skills/`，Pi Agent 为 `.agents/skills/`；静态适配合同不等于原生验收通过。
 
 ## 四、预检与授权
 
@@ -113,12 +123,12 @@ setup 扫描已有文件后，逐项展示项目协议、配置、授权记录�
 
 | 字段 | 消费项目中的值 |
 | --- | --- |
-| `source_repository_url` | `https://github.com/Paipai112/baton` |
+| `source_repository_url` | `https://github.com/Paipai112/Work-with-Agent` |
 | `release_tag` | 实际存在且核验通过的 `v0.2.0` |
 | `resolved_commit_sha` | 本次标签解析并核验的完整 40 位 SHA |
-| `installation_page_permalink` | `https://github.com/Paipai112/baton/blob/<同一完整SHA>/docs/INSTALL.md` |
+| `installation_page_permalink` | `https://github.com/Paipai112/Work-with-Agent/blob/<同一完整SHA>/docs/INSTALL.md` |
 
-仓库完成改名后，上表 URL 使用经过稳定 ID 核验的新名称。将占位符替换为实际 SHA，核验永久链接能读取同 SHA 的安装页，并确认参与者可访问源仓。在经审阅的项目候选中把 `installation_status` 改为 `published`，记录安装路径和调用方式。通用模板保持四个空字段及 `unpublished`；候选不能自己补一条“已批准／已发布”就生效。
+将占位符替换为实际 SHA，核验永久链接能读取同 SHA 的安装页，并确认参与者可访问源仓。在经审阅的项目候选中把 `installation_status` 改为 `published`，记录安装路径和调用方式。通用模板保持四个空字段及 `unpublished`；候选不能自己补一条“已批准／已发布”就生效。
 
 `installation_status: published` 只表示安装来源已发布且可核验，不表示本项目配置已获批准、Leader 已生效或操作已获授权。
 
@@ -172,8 +182,8 @@ PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 "$test_venv/bin/pytho
 ```text
 请在目标项目 <项目目录> 接入 Work-with-Agent v0.2.0，职责身份为 <actor_id>。
 先只读核验目标项目、现有同名 Skill、工作区、GitHub 身份及保护规则。
-源仓固定为 https://github.com/Paipai112/baton；
-先核验实际仓库名称与稳定 ID；若已改名，使用核验过的 Work-with-Agent 地址。
+源仓为 https://github.com/Paipai112/Work-with-Agent；
+先核验实际仓库名称与稳定 ID 1398932546。
 核验实际 v0.2.0 Release/tag 并解析完整 40 位 SHA；若尚未发布，停止正式安装。
 从该提交按角色选择 setup、daily 或可选 check 完整包，
 校验文件清单和资源摘要，展示项目级 .agents/skills 的安装差异。

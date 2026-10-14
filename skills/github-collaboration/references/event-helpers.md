@@ -29,7 +29,7 @@ Obtain external authorization/explicit confirmation of `required_approval` (oper
 python scripts/collaboration_event.py apply --plan event-plan.json --write --receipt event-receipt.json
 ```
 
-Authenticated `gh` GETs repository/account/open Issue/referenced comments, sends one scoped request, then GET-verifies ID/URL/repository/Issue/author/body. Output collector fields: `id`, `url`, `user_id`, `login`, `issue_number`, `body`, `updated_at`. Refresh allocation/permissions separately. Status/exits: `pass`/0, `fail`/1, `unknown`/2; `authorization_verified: false`.
+Authenticated `gh` GETs repository/account/Issue/referenced comments, sends one scoped request, then GET-verifies ID/URL/repository/Issue/author/body. Self-release may target a closed Issue after completion; all other events require an open Issue, with every repository/account/predecessor binding retained. Output collector fields: `id`, `url`, `user_id`, `login`, `issue_number`, `body`, `updated_at`. Refresh allocation/permissions separately. Status/exits: `pass`/0, `fail`/1, `unknown`/2; `authorization_verified: false`.
 
 ## Correction and unknown result
 

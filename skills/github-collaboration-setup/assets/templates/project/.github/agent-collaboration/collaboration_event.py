@@ -231,7 +231,7 @@ def repository_endpoint(plan):
     return f"repos/{repository['owner']}/{repository['name']}"
 
 
-def verify_target(plan):
+def verify_target(plan, event):
     endpoint = repository_endpoint(plan)
     repository = github(plan, "GET", endpoint)
     if not isinstance(repository, dict) or type(repository.get("id")) is not int or repository["id"] != plan["repository"]["id"] or repository.get("full_name") != f"{plan['repository']['owner']}/{plan['repository']['name']}":
@@ -240,8 +240,9 @@ def verify_target(plan):
     if not isinstance(user, dict) or type(user.get("id")) is not int or user["id"] != plan["expected_author"]["user_id"] or user.get("login") != plan["expected_author"]["login"]:
         raise EventError("authenticated author binding mismatch")
     issue = github(plan, "GET", f"{endpoint}/issues/{plan['issue_number']}")
-    if not isinstance(issue, dict) or type(issue.get("number")) is not int or issue["number"] != plan["issue_number"] or "pull_request" in issue or issue.get("state") != "open":
-        raise EventError("target must be the exact open Issue")
+    allowed_states = ("open", "closed") if event["event"] == "release" and event.get("release_mode") == "self" else ("open",)
+    if not isinstance(issue, dict) or type(issue.get("number")) is not int or issue["number"] != plan["issue_number"] or "pull_request" in issue or issue.get("state") not in allowed_states:
+        raise EventError("target must be the exact open Issue, or a closed Issue for self-release")
 
 
 def normalize_comment(plan, comment, expected_id=None, expected_body=None):
@@ -409,7 +410,7 @@ def apply_plan(plan, write=False, receipt=None):
         raise EventError("--write requires --receipt to preserve unknown results across sessions")
     binding = receipt_binding(plan, event)
     prior = read_receipt(receipt, binding)
-    verify_target(plan)
+    verify_target(plan, event)
     verify_predecessors(plan, event)
     old = None
     if plan["operation"] == "edit":
